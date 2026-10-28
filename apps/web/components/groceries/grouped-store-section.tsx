@@ -1,5 +1,18 @@
 "use client";
 
+import { memo, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  EllipsisVerticalIcon,
+  HomeIcon,
+  TrashIcon,
+} from "@heroicons/react/16/solid";
+import { Dropdown, Label } from "@heroui-v3/react";
+import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
+
 import type {
   GroceryDto,
   RecurringGroceryDto,
@@ -7,18 +20,6 @@ import type {
   StoreDto,
 } from "@norish/shared/contracts";
 import type { GroceryGroup } from "@norish/shared/lib/grocery-grouping";
-
-import { memo, useMemo, useState } from "react";
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  EllipsisVerticalIcon,
-  TrashIcon,
-} from "@heroicons/react/16/solid";
-import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from "@heroui/react";
-import { motion } from "motion/react";
-import { useTranslations } from "next-intl";
-
 
 import {
   SortableGroupedStoreContainer,
@@ -43,6 +44,7 @@ interface GroupedStoreSectionProps {
   defaultExpanded?: boolean;
   onMarkAllDone?: () => void;
   onDeleteDone?: () => void;
+  onMoveDoneToPantry?: () => void;
 }
 
 /**
@@ -63,6 +65,7 @@ function GroupedStoreSectionComponent({
   defaultExpanded = true,
   onMarkAllDone,
   onDeleteDone,
+  onMoveDoneToPantry,
 }: GroupedStoreSectionProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const t = useTranslations("groceries.store");
@@ -168,29 +171,46 @@ function GroupedStoreSectionComponent({
       {/* Bulk actions dropdown */}
       {groceries.length > 0 && (
         <Dropdown>
-          <DropdownTrigger>
-            <Button isIconOnly className="shrink-0" size="sm" variant="light">
-              <EllipsisVerticalIcon className="h-5 w-5" />
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu aria-label={t("storeActions")}>
-            <DropdownItem
-              key="mark-done"
-              startContent={<CheckIcon className="h-4 w-4" />}
-              onPress={() => onMarkAllDone?.()}
-            >
-              {t("markAllDone")}
-            </DropdownItem>
-            <DropdownItem
-              key="delete-done"
-              className="text-danger"
-              color="danger"
-              startContent={<TrashIcon className="h-4 w-4" />}
-              onPress={() => onDeleteDone?.()}
-            >
-              {t("deleteDone")}
-            </DropdownItem>
-          </DropdownMenu>
+          <Button
+            isIconOnly
+            aria-label={t("storeActions")}
+            className="shrink-0"
+            size="sm"
+            variant="tertiary"
+          >
+            <EllipsisVerticalIcon className="h-5 w-5" />
+          </Button>
+          <Dropdown.Popover placement="bottom end">
+            <Dropdown.Menu aria-label={t("storeActions")}>
+              <Dropdown.Item
+                id="mark-done"
+                textValue={t("markAllDone")}
+                onAction={() => onMarkAllDone?.()}
+              >
+                <CheckIcon className="h-4 w-4" />
+                <Label>{t("markAllDone")}</Label>
+              </Dropdown.Item>
+              <Dropdown.Item
+                id="move-done-to-pantry"
+                isDisabled={doneCount === 0}
+                textValue={t("moveDoneToPantry")}
+                onAction={() => onMoveDoneToPantry?.()}
+              >
+                <HomeIcon className="h-4 w-4" />
+                <Label>{t("moveDoneToPantry")}</Label>
+              </Dropdown.Item>
+              <Dropdown.Item
+                id="delete-done"
+                isDisabled={doneCount === 0}
+                textValue={t("deleteDone")}
+                variant="danger"
+                onAction={() => onDeleteDone?.()}
+              >
+                <TrashIcon className="h-4 w-4" />
+                <Label>{t("deleteDone")}</Label>
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown.Popover>
         </Dropdown>
       )}
     </div>

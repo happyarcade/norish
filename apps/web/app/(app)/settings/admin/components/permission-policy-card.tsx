@@ -1,12 +1,12 @@
 "use client";
 
-import type { PermissionLevel } from "@norish/config/zod/server-config";
-
 import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Select, SelectItem } from "@/components/ui/select";
 import { ShieldCheckIcon } from "@heroicons/react/24/outline";
-import { Card, CardBody, CardHeader, Select, SelectItem } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
+import type { PermissionLevel } from "@norish/config/zod/server-config";
 
 import { useAdminSettingsContext } from "../context";
 
@@ -51,13 +51,13 @@ export default function PermissionPolicyCard() {
 
   return (
     <Card>
-      <CardHeader>
+      <Card.Header>
         <h2 className="flex items-center gap-2 text-lg font-semibold">
           <ShieldCheckIcon className="h-5 w-5" />
           {t("title")}
         </h2>
-      </CardHeader>
-      <CardBody className="gap-6">
+      </Card.Header>
+      <Card.Content className="gap-6">
         <p className="text-default-500 text-base">{t("description")}</p>
 
         <div className="flex flex-col gap-4">
@@ -161,7 +161,7 @@ export default function PermissionPolicyCard() {
         <div className="bg-content2 text-default-600 mt-2 rounded-lg p-3 text-base">
           <strong>Note:</strong> {t("note")}
         </div>
-      </CardBody>
+      </Card.Content>
     </Card>
   );
 }

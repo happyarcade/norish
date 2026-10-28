@@ -1,15 +1,15 @@
 "use client";
 
 import { QuestionMarkCircleIcon } from "@heroicons/react/16/solid";
-import { Popover, PopoverContent, PopoverTrigger } from "@heroui/react";
+import { Popover } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
 export default function SmartInputHelp() {
   const t = useTranslations("common.formatting");
 
   return (
-    <Popover showArrow placement="top">
-      <PopoverTrigger>
+    <Popover>
+      <Popover.Trigger>
         <button
           aria-label={t("helpAriaLabel")}
           className="text-default-400 hover:text-default-600 hover:bg-default-100 focus:ring-primary/50 inline-flex h-5 w-5 items-center justify-center rounded-full transition-colors focus:ring-2 focus:outline-none"
@@ -17,9 +17,10 @@ export default function SmartInputHelp() {
         >
           <QuestionMarkCircleIcon className="h-4 w-4" />
         </button>
-      </PopoverTrigger>
-      <PopoverContent className="max-w-xs">
-        <div className="px-1 py-2">
+      </Popover.Trigger>
+      <Popover.Content className="max-w-xs" placement="top">
+        <Popover.Arrow />
+        <Popover.Dialog className="px-1 py-2">
           <p className="text-foreground mb-2 text-base font-medium">{t("title")}</p>
           <ul className="text-default-600 space-y-2 text-base">
             <li className="flex items-start gap-2">
@@ -41,8 +42,8 @@ export default function SmartInputHelp() {
               <span dangerouslySetInnerHTML={{ __html: t.raw("recipeLink") }} />
             </li>
           </ul>
-        </div>
-      </PopoverContent>
+        </Popover.Dialog>
+      </Popover.Content>
     </Popover>
   );
 }

@@ -5,6 +5,10 @@ import { createClientLogger } from "@norish/shared/lib/logger";
 
 const logger = createClientLogger("wake-lock");
 
+function isWakeLockVisibilityError(error: unknown) {
+  return error instanceof DOMException && error.name === "NotAllowedError";
+}
+
 interface UseWakeLockReturn {
   isSupported: boolean;
   isActive: boolean;
@@ -31,6 +35,13 @@ export function useWakeLock(): UseWakeLockReturn {
       return;
     }
 
+    if (document.visibilityState !== "visible") {
+      logger.info("Wake lock activation skipped because the page is not visible");
+      setIsActive(false);
+
+      return;
+    }
+
     try {
       // Request wake lock
       wakeLockRef.current = await navigator.wakeLock.request("screen");
@@ -48,7 +59,11 @@ export function useWakeLock(): UseWakeLockReturn {
       // Listen for wake lock release
       wakeLockRef.current.addEventListener("release", handleRelease);
     } catch (err) {
-      logger.error(err, "Failed to activate wake lock");
+      if (isWakeLockVisibilityError(err)) {
+        logger.info("Wake lock activation skipped because the page is not visible");
+      } else {
+        logger.error(err, "Failed to activate wake lock");
+      }
       setIsActive(false);
     }
   }, [isSupported]);

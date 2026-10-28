@@ -1,32 +1,101 @@
 "use client";
 
 import type { RecipeGalleryMedia } from "@/components/recipes/media-gallery-input";
-
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Chip, Input } from "@heroui/react";
-import { useTranslations } from "next-intl";
-import { FullRecipeDTO, MeasurementSystem, RecipeCategory } from "@norish/shared/contracts";
-import { inferSystemUsedFromParsed } from "@norish/shared/lib/determine-recipe-system";
-import { parseIngredientWithDefaults } from "@norish/shared/lib/helpers";
-import { createClientLogger } from "@norish/shared/lib/logger";
-
 import IngredientInput, { ParsedIngredient } from "@/components/recipes/ingredient-input";
 import MeasurementSystemSelector from "@/components/recipes/measurement-system-selector";
 import MediaGalleryInput from "@/components/recipes/media-gallery-input";
+import {
+  PLANNER_RECIPE_TYPE_OPTIONS,
+  SUITABLE_SLOT_OPTIONS,
+} from "@/components/recipes/planner-profile-options";
 import StepInput, { Step } from "@/components/recipes/step-input";
 import TimeInputs from "@/components/recipes/time-inputs";
 import SmartInputHelp from "@/components/shared/smart-input-help";
 import SmartTextInput from "@/components/shared/smart-text-input";
 import TagInput from "@/components/shared/tag-input";
 import EditRecipeSkeleton from "@/components/skeleton/edit-recipe-skeleton";
+import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { useRecipesContext } from "@/context/recipes-context";
 import { useUnitsQuery } from "@/hooks/config";
 import { useRecipeId } from "@/hooks/recipes";
+import { useLocale, useTranslations } from "next-intl";
+
+import { FullRecipeDTO, MeasurementSystem, RecipeCategory } from "@norish/shared/contracts";
+import { inferSystemUsedFromParsed } from "@norish/shared/lib/determine-recipe-system";
+import { parseIngredientWithDefaults } from "@norish/shared/lib/helpers";
+import { createClientLogger } from "@norish/shared/lib/logger";
+import { formatUnit } from "@norish/shared/lib/unit-localization";
 
 const log = createClientLogger("RecipeForm");
 
 const ALL_CATEGORIES: RecipeCategory[] = ["Breakfast", "Lunch", "Dinner", "Snack"];
+const EXTENDED_NUTRIENT_FIELDS = [
+  { key: "fiberContent", label: "Fiber", unit: "g" },
+  { key: "sugarContent", label: "Sugar", unit: "g" },
+  { key: "sodiumContent", label: "Sodium", unit: "mg" },
+  { key: "cholesterolContent", label: "Cholesterol", unit: "mg" },
+  { key: "saturatedFatContent", label: "Saturated Fat", unit: "g" },
+  { key: "unsaturatedFatContent", label: "Unsaturated Fat", unit: "g" },
+] as const;
+
+type ExtendedNutrientKey = (typeof EXTENDED_NUTRIENT_FIELDS)[number]["key"];
+type PlannerProfileState = NonNullable<FullRecipeDTO["plannerProfile"]>;
+
+const DEFAULT_PLANNER_PROFILE: PlannerProfileState = {
+  mealTypes: [],
+  suitableSlots: [],
+  recipeTypes: [],
+  dietaryFlags: [],
+  allergenFlags: [],
+  cuisines: [],
+  heatLevel: null,
+  prepScore: null,
+  fruitVegCount: null,
+  isDivisible: true,
+  isFreezerFriendly: false,
+  sourceYield: null,
+};
+
+function parseNutritionNumber(value: string) {
+  if (!value) return null;
+
+  const parsed = Number.parseFloat(value);
+
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getNutritionMetricValue(
+  details: FullRecipeDTO["nutritionDetails"] | null | undefined,
+  key: ExtendedNutrientKey
+) {
+  const metric = details?.nutrients?.[key];
+
+  if (!metric) return null;
+  if (metric.value != null) return Number(metric.value);
+
+  if (metric.raw) {
+    const parsed = Number.parseFloat(metric.raw.replace(/,/g, ""));
+
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function uniqueStrings(values: Array<string | null | undefined>) {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => value?.trim())
+        .filter((value): value is string => Boolean(value && value.length > 0))
+    )
+  );
+}
 
 export interface RecipeFormProps {
   mode: "create" | "edit";
@@ -36,7 +105,8 @@ export interface RecipeFormProps {
 export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
   const router = useRouter();
   const { createRecipe, updateRecipe } = useRecipesContext();
-  const { units } = useUnitsQuery();
+  const locale = useLocale();
+  const { units, isLoading: isLoadingUnits } = useUnitsQuery();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const t = useTranslations("recipes.form");
@@ -70,6 +140,7 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
   );
   const [detectedSystem, setDetectedSystem] = useState<MeasurementSystem | null>(null);
   const [manuallySetSystem, setManuallySetSystem] = useState(false);
+  const initializedRecipeIdRef = useRef<string | null>(null);
 
   // Media state - unified array of images and videos
   const [media, setMedia] = useState<RecipeGalleryMedia[]>(() => {
@@ -119,6 +190,20 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
   const [protein, setProtein] = useState<number | null>(
     initialData?.protein != null ? Number(initialData.protein) : null
   );
+  const [extendedNutrition, setExtendedNutrition] = useState<
+    Record<ExtendedNutrientKey, number | null>
+  >(
+    () =>
+      Object.fromEntries(
+        EXTENDED_NUTRIENT_FIELDS.map((field) => [
+          field.key,
+          getNutritionMetricValue(initialData?.nutritionDetails, field.key),
+        ])
+      ) as Record<ExtendedNutrientKey, number | null>
+  );
+  const [plannerProfile, setPlannerProfile] = useState<PlannerProfileState>(
+    initialData?.plannerProfile ?? DEFAULT_PLANNER_PROFILE
+  );
 
   // Show recipe ID error if reservation failed
   useEffect(() => {
@@ -130,37 +215,37 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
   // Initialize ingredients and steps from initialData
   // Filter by the current systemUsed to only show items for the active measurement system
   useEffect(() => {
-    if (initialData && mode === "edit") {
-      // Filter ingredients by the recipe's measurement system
-      const filteredIngredients = initialData.recipeIngredients.filter(
-        (ing) => ing.systemUsed === initialData.systemUsed
-      );
+    if (mode !== "edit" || !initialData || isLoadingUnits) return;
+    if (initializedRecipeIdRef.current === initialData.id) return;
 
-      const initIngredients: ParsedIngredient[] = filteredIngredients.map((ing) => ({
-        ingredientName: ing.ingredientName,
-        amount: ing.amount,
-        unit: ing.unit,
-        order: ing.order,
-        systemUsed: ing.systemUsed,
-      }));
+    // Filter ingredients by the recipe's measurement system
+    const filteredIngredients = initialData.recipeIngredients.filter(
+      (ing) => ing.systemUsed === initialData.systemUsed
+    );
 
-      setIngredients(initIngredients);
+    const initIngredients: ParsedIngredient[] = filteredIngredients.map((ing) => ({
+      ingredientName: ing.ingredientName,
+      amount: ing.amount,
+      unit: ing.unit ? formatUnit(ing.unit, locale, units, ing.amount) : null,
+      order: ing.order,
+      systemUsed: ing.systemUsed,
+    }));
 
-      // Filter steps by the recipe's measurement system
-      const filteredSteps = initialData.steps.filter(
-        (s) => s.systemUsed === initialData.systemUsed
-      );
+    setIngredients(initIngredients);
 
-      const initSteps: Step[] = filteredSteps.map((s) => ({
-        step: s.step,
-        order: s.order,
-        systemUsed: s.systemUsed,
-        images: s.images || [],
-      }));
+    // Filter steps by the recipe's measurement system
+    const filteredSteps = initialData.steps.filter((s) => s.systemUsed === initialData.systemUsed);
 
-      setSteps(initSteps);
-    }
-  }, [initialData, mode]);
+    const initSteps: Step[] = filteredSteps.map((s) => ({
+      step: s.step,
+      order: s.order,
+      systemUsed: s.systemUsed,
+      images: s.images || [],
+    }));
+
+    setSteps(initSteps);
+    initializedRecipeIdRef.current = initialData.id;
+  }, [initialData, isLoadingUnits, locale, mode, units]);
 
   // Detect measurement system from ingredients and auto-select
   useEffect(() => {
@@ -184,6 +269,35 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
       prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
     );
   }, []);
+
+  const togglePlannerArrayField = useCallback(
+    (field: "recipeTypes" | "suitableSlots", value: string) => {
+      setPlannerProfile((current) => {
+        const activeValues = current[field] ?? [];
+        const isAdding = !activeValues.includes(value);
+        const nextValues = isAdding
+          ? [...activeValues, value]
+          : activeValues.filter((entry) => entry !== value);
+
+        const nextSuitableSlots =
+          field === "recipeTypes" && isAdding && current.suitableSlots.length === 0
+            ? uniqueStrings([
+                ...current.suitableSlots,
+                ...(value === "main" || value === "soup" ? ["lunch", "dinner"] : []),
+                ...(value === "breakfast" ? ["breakfast"] : []),
+                ...(value === "snack" ? ["snack"] : []),
+              ])
+            : current.suitableSlots;
+
+        return {
+          ...current,
+          [field]: nextValues,
+          suitableSlots: nextSuitableSlots,
+        };
+      });
+    },
+    []
+  );
 
   const validate = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
@@ -239,6 +353,35 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
           duration: vid.duration ?? null,
           order: vid.order,
         }));
+      const nutritionDetails = (() => {
+        const nutrients = { ...(initialData?.nutritionDetails?.nutrients ?? {}) };
+
+        EXTENDED_NUTRIENT_FIELDS.forEach((field) => {
+          const value = extendedNutrition[field.key];
+
+          if (value == null) {
+            delete nutrients[field.key];
+
+            return;
+          }
+
+          nutrients[field.key] = {
+            label: field.label,
+            value,
+            unit: field.unit,
+            raw: `${value} ${field.unit}`,
+          };
+        });
+
+        const servingSize = initialData?.nutritionDetails?.servingSize ?? null;
+
+        if (Object.keys(nutrients).length === 0 && !servingSize) return null;
+
+        return {
+          servingSize,
+          nutrients,
+        };
+      })();
 
       const recipeData = {
         name: name.trim(),
@@ -254,6 +397,7 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
         fat: fat != null ? fat.toString() : null,
         carbs: carbs != null ? carbs.toString() : null,
         protein: protein != null ? protein.toString() : null,
+        nutritionDetails,
         systemUsed,
         tags: tags.map((t) => ({ name: t })),
         categories,
@@ -275,6 +419,15 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
         images,
         // Videos array field
         videos,
+        plannerProfile: {
+          ...plannerProfile,
+          mealTypes:
+            plannerProfile.suitableSlots.length > 0
+              ? uniqueStrings(plannerProfile.suitableSlots)
+              : plannerProfile.mealTypes,
+          sourceYield:
+            plannerProfile.sourceYield?.trim() || `${servings} serving${servings === 1 ? "" : "s"}`,
+        },
       };
 
       if (mode === "create") {
@@ -316,7 +469,9 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
     fat,
     carbs,
     protein,
+    extendedNutrition,
     notes,
+    plannerProfile,
   ]);
 
   const handleTimeChange = useCallback(
@@ -497,11 +652,133 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
           </div>
         </section>
 
-        {/* 6. Nutrition */}
+        {/* 6. Planner Profile */}
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold">
             <span className="bg-primary text-primary-foreground flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold">
               6
+            </span>
+            Planner Profile
+          </h2>
+          <div className="ml-0 space-y-6 md:ml-9">
+            <div>
+              <div className="text-default-500 mb-3 text-base">
+                Use this as the real planner metadata. Set things like side, drink, condiment, and
+                slot suitability here.
+              </div>
+              <div className="text-default-500 mb-3 text-sm">
+                Main and soup recipes will suggest lunch and dinner slots when slot suitability is
+                still blank.
+              </div>
+              <div className="text-foreground mb-3 text-sm font-medium">Recipe type</div>
+              <div className="flex flex-wrap gap-2">
+                {PLANNER_RECIPE_TYPE_OPTIONS.map((option) => {
+                  const active = plannerProfile.recipeTypes.includes(option.key);
+
+                  return (
+                    <Chip
+                      key={option.key}
+                      className="h-8 cursor-pointer px-3 text-sm"
+                      color={active ? "primary" : "default"}
+                      radius="full"
+                      variant={active ? "solid" : "flat"}
+                      onClick={() => togglePlannerArrayField("recipeTypes", option.key)}
+                    >
+                      {option.label}
+                    </Chip>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-foreground mb-3 text-sm font-medium">Suitable slots</div>
+              <div className="text-default-500 mb-3 text-sm">
+                Leave this empty for recipes like sides, drinks, or condiments that are chosen
+                contextually.
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {SUITABLE_SLOT_OPTIONS.map((option) => {
+                  const active = plannerProfile.suitableSlots.includes(option.key);
+
+                  return (
+                    <Chip
+                      key={option.key}
+                      className="h-8 cursor-pointer px-3 text-sm"
+                      color={active ? "primary" : "default"}
+                      radius="full"
+                      variant={active ? "solid" : "flat"}
+                      onClick={() => togglePlannerArrayField("suitableSlots", option.key)}
+                    >
+                      {option.label}
+                    </Chip>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input
+                classNames={{ label: "font-medium text-base" }}
+                label="Source yield"
+                placeholder="e.g. 4 servings"
+                value={plannerProfile.sourceYield ?? ""}
+                onValueChange={(value) =>
+                  setPlannerProfile((current) => ({
+                    ...current,
+                    sourceYield: value || null,
+                  }))
+                }
+              />
+              <Input
+                classNames={{ label: "font-medium text-base" }}
+                label="Prep score"
+                max={5}
+                min={1}
+                placeholder="-"
+                type="number"
+                value={plannerProfile.prepScore != null ? String(plannerProfile.prepScore) : ""}
+                onValueChange={(value) =>
+                  setPlannerProfile((current) => ({
+                    ...current,
+                    prepScore: value ? parseInt(value, 10) || null : null,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Switch
+                isSelected={plannerProfile.isFreezerFriendly}
+                onValueChange={(isSelected) =>
+                  setPlannerProfile((current) => ({
+                    ...current,
+                    isFreezerFriendly: isSelected,
+                  }))
+                }
+              >
+                Freezer-friendly
+              </Switch>
+              <Switch
+                isSelected={plannerProfile.isDivisible}
+                onValueChange={(isSelected) =>
+                  setPlannerProfile((current) => ({
+                    ...current,
+                    isDivisible: isSelected,
+                  }))
+                }
+              >
+                Divisible recipe
+              </Switch>
+            </div>
+          </div>
+        </section>
+
+        {/* 7. Nutrition */}
+        <section>
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold">
+            <span className="bg-primary text-primary-foreground flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold">
+              7
             </span>
             {t("nutrition")}
             <span className="text-default-400 text-sm font-normal">{t("nutritionPerServing")}</span>
@@ -548,14 +825,41 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
                 onValueChange={(v) => setProtein(v ? parseFloat(v) || null : null)}
               />
             </div>
+            <div className="mt-5">
+              <div className="text-default-500 mb-3 text-sm font-medium">Additional nutrition</div>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                {EXTENDED_NUTRIENT_FIELDS.map((field) => (
+                  <Input
+                    key={field.key}
+                    classNames={{ label: "font-medium text-base" }}
+                    label={`${field.label} (${field.unit})`}
+                    min={0}
+                    placeholder="-"
+                    step={0.1}
+                    type="number"
+                    value={
+                      extendedNutrition[field.key] != null
+                        ? String(extendedNutrition[field.key])
+                        : ""
+                    }
+                    onValueChange={(value) =>
+                      setExtendedNutrition((current) => ({
+                        ...current,
+                        [field.key]: parseNutritionNumber(value),
+                      }))
+                    }
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* 7. Details */}
+        {/* 8. Details */}
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold">
             <span className="bg-primary text-primary-foreground flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold">
-              7
+              8
             </span>
             {t("details")}
           </h2>
@@ -593,11 +897,11 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
           </div>
         </section>
 
-        {/* 8. Additional Information */}
+        {/* 9. Additional Information */}
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold">
             <span className="bg-primary text-primary-foreground flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold">
-              8
+              9
             </span>
             {t("additionalInfo")}
           </h2>

@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Listbox, ListboxItem, Spinner, Textarea, User } from "@heroui/react";
-import { useTranslations } from "next-intl";
-
+import Image from "next/image";
 import { useRecipeAutocomplete } from "@/hooks/recipes";
+import { Spinner } from "@heroui-v3/react";
+import { useTranslations } from "next-intl";
 
 interface SmartTextInputProps {
   value: string;
@@ -122,19 +122,15 @@ export default function SmartTextInput({
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <Textarea
+      <textarea
         ref={textareaRef}
-        classNames={{
-          base: "w-full",
-          input: "text-base",
-          inputWrapper: "border-default-200 dark:border-default-800",
-        }}
-        minRows={minRows}
+        className="border-default-200 bg-content1 text-foreground placeholder:text-default-400 focus:border-primary focus:ring-primary/20 dark:border-default-800 w-full resize-y rounded-lg border px-3 py-2 text-base transition outline-none focus:ring-2"
         placeholder={placeholder}
+        rows={minRows}
         value={value}
         onBlur={handleBlur}
         onKeyDown={onKeyDown}
-        onValueChange={handleChange}
+        onChange={(event) => handleChange(event.currentTarget.value)}
       />
 
       {showAutocomplete && (
@@ -148,30 +144,35 @@ export default function SmartTextInput({
               <Spinner size="sm" />
             </div>
           ) : suggestions.length > 0 ? (
-            <Listbox
-              aria-label="Recipe suggestions"
-              items={suggestions}
-              variant="flat"
-              onAction={(key) => {
-                const recipe = suggestions.find((r) => r.id === key);
-
-                if (recipe) handleSelect(recipe.id, recipe.name);
-              }}
-            >
-              {(recipe) => (
-                <ListboxItem key={recipe.id} textValue={recipe.name}>
-                  <User
-                    avatarProps={{
-                      src: recipe.image || undefined,
-                      size: "sm",
-                      radius: "md",
-                      fallback: <span className="text-default-400 text-xs">🍽</span>,
-                    }}
-                    name={recipe.name}
-                  />
-                </ListboxItem>
-              )}
-            </Listbox>
+            <div aria-label="Recipe suggestions" role="listbox">
+              {suggestions.map((recipe) => (
+                <button
+                  key={recipe.id}
+                  aria-selected="false"
+                  className="hover:bg-default-100 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors"
+                  role="option"
+                  type="button"
+                  onClick={() => handleSelect(recipe.id, recipe.name)}
+                  onMouseDown={(event) => event.preventDefault()}
+                >
+                  <span className="bg-default-100 relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md">
+                    {recipe.image ? (
+                      <Image
+                        unoptimized
+                        alt=""
+                        className="h-full w-full object-cover"
+                        height={32}
+                        src={recipe.image}
+                        width={32}
+                      />
+                    ) : (
+                      <span className="text-default-400 text-xs">R</span>
+                    )}
+                  </span>
+                  <span className="truncate text-sm font-medium">{recipe.name}</span>
+                </button>
+              ))}
+            </div>
           ) : autocompleteQuery.length >= 1 ? (
             <div className="text-default-500 px-4 py-3 text-sm">{t("noResults")}</div>
           ) : null}

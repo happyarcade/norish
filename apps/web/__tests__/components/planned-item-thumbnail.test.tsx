@@ -6,7 +6,7 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-vi.mock("@heroui/react", () => ({
+vi.mock("@heroui-v3/react", () => ({
   Image: ({ alt, className, onError, src }: any) => (
     <img alt={alt} className={className} src={src} onError={onError} />
   ),

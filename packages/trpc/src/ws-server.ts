@@ -1,9 +1,8 @@
-import type { Server } from "node:http";
-
 import { randomUUID } from "node:crypto";
-
+import type { Server } from "node:http";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import * as wsModule from "ws";
+
 import { auth } from "@norish/auth/auth";
 import { SERVER_CONFIG } from "@norish/config/env-config-server";
 import { trpcLogger } from "@norish/shared-server/logger";
@@ -16,6 +15,7 @@ import {
 } from "./connection-manager";
 import { createWsContext } from "./context";
 import { appRouter } from "./router";
+import { isTrustedWebSocketOrigin } from "./ws-origin";
 
 // Extend IncomingMessage to include connectionId
 declare module "node:http" {
@@ -78,6 +78,17 @@ export function initTrpcWebSocket(server: Server) {
         socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
         socket.destroy();
       }
+
+      return;
+    }
+
+    if (!isTrustedWebSocketOrigin(req.headers.origin, req.headers.host)) {
+      trpcLogger.warn(
+        { origin: req.headers.origin, host },
+        "Rejecting cross-origin WebSocket upgrade"
+      );
+      socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+      socket.destroy();
 
       return;
     }

@@ -1,5 +1,10 @@
 import type { InfiniteData, QueryKey } from "@tanstack/react-query";
-import type { RecipeCategory, RecipeDashboardDTO, SearchField } from "@norish/shared/contracts";
+import type {
+  NutritionDetailFilter,
+  RecipeCategory,
+  RecipeDashboardDTO,
+  SearchField,
+} from "@norish/shared/contracts";
 import type { CreateRecipeHooksOptions } from "../types";
 import type { RecipesCacheHelpers } from "./use-recipes-cache";
 
@@ -12,10 +17,17 @@ export type RecipeFilters = {
   searchFields?: SearchField[];
   tags?: string[];
   categories?: RecipeCategory[];
+  recipeTypes?: string[];
+  suitableSlots?: string[];
   filterMode?: "AND" | "OR";
   sortMode?: "titleAsc" | "titleDesc" | "dateAsc" | "dateDesc" | "none";
   minRating?: number;
   maxCookingTime?: number;
+  maxSodium?: number;
+  maxCholesterol?: number;
+  minFiber?: number;
+  sourceDomains?: string[];
+  nutritionDetail?: NutritionDetailFilter;
 };
 
 type InfiniteRecipeData = InfiniteData<{
@@ -77,10 +89,17 @@ export function createUseRecipesQuery(
       searchFields,
       tags,
       categories,
+      recipeTypes,
+      suitableSlots,
       filterMode = "OR",
       sortMode = "dateDesc",
       minRating,
       maxCookingTime,
+      maxSodium,
+      maxCholesterol,
+      minFiber,
+      sourceDomains,
+      nutritionDetail,
     } = filters;
 
     const { pendingRecipeIds } = usePendingRecipesQuery();
@@ -103,10 +122,17 @@ export function createUseRecipesQuery(
         searchFields,
         tags,
         categories,
+        recipeTypes,
+        suitableSlots,
         filterMode,
         sortMode,
         minRating,
         maxCookingTime,
+        maxSodium,
+        maxCholesterol,
+        minFiber,
+        sourceDomains,
+        nutritionDetail,
       },
       {
         getNextPageParam: (lastPage) => lastPage.nextCursor,

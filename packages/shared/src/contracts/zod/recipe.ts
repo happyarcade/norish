@@ -8,22 +8,68 @@ import {
   RecipeIngredientInputSchema,
   RecipeIngredientsWithIdSchema,
 } from "./recipe-ingredients";
+import { RecipePlannerProfileSelectBaseSchema } from "./recipe-planner-profiles";
 import { RecipeVideosArraySchema, RecipeVideoSchema } from "./recipe-videos";
 import { StepStepSchema } from "./steps";
 import { TagNameSchema } from "./tag";
 
 export const recipeCategorySchema = z.enum(["Breakfast", "Lunch", "Dinner", "Snack"]);
 
+export const RecipeNutritionMetricSchema = z.object({
+  label: z.string().nullable().optional(),
+  value: z.number().nullable().optional(),
+  unit: z.string().nullable().optional(),
+  raw: z.string().nullable().optional(),
+});
+
+export const RecipeNutritionDetailsSchema = z.object({
+  servingSize: z.string().nullable().optional(),
+  nutrients: z.record(z.string(), RecipeNutritionMetricSchema).default({}),
+});
+
+export const RecipeIngredientGroupSchema = z.object({
+  purpose: z.string().nullable().optional(),
+  ingredients: z.array(z.string()).default([]),
+});
+
+const NutritionDetailFilterSchema = z.preprocess((value) => {
+  if (value === "extended") return "core";
+  if (value === "missingExtended") return "missingCore";
+
+  return value;
+}, z.enum(["core", "complete", "missingCore"]));
+
+export const RecipeSourceSummarySchema = z.object({
+  siteName: z.string().nullable().optional(),
+  sourceDomain: z.string().nullable().optional(),
+  sourceUrl: z.string().nullable().optional(),
+});
+
+export const EmbeddedRecipePlannerProfileSchema = RecipePlannerProfileSelectBaseSchema.omit({
+  id: true,
+  recipeId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const RecipeSelectBaseSchema = createSelectSchema(recipes).extend({
   userId: z.string().nullable(),
+  nutritionDetails: RecipeNutritionDetailsSchema.nullable().optional(),
+  ingredientGroups: z.array(RecipeIngredientGroupSchema).default([]),
 });
 export const RecipeInsertBaseSchema = createInsertSchema(recipes).omit({
   id: true,
   updatedAt: true,
   createdAt: true,
   userId: true, // set from session server-side
+}).extend({
+  nutritionDetails: RecipeNutritionDetailsSchema.nullable().optional(),
+  ingredientGroups: z.array(RecipeIngredientGroupSchema).default([]),
 });
-export const RecipeUpdateBaseSchema = createUpdateSchema(recipes);
+export const RecipeUpdateBaseSchema = createUpdateSchema(recipes).extend({
+  nutritionDetails: RecipeNutritionDetailsSchema.nullable().optional(),
+  ingredientGroups: z.array(RecipeIngredientGroupSchema).optional(),
+});
 
 export const AuthorSchema = z
   .object({
@@ -35,15 +81,19 @@ export const AuthorSchema = z
 
 export const RecipeDashboardSchema = RecipeSelectBaseSchema.omit({
   systemUsed: true,
-  fat: true,
-  carbs: true,
-  protein: true,
 }).extend({
+  fat: z.coerce.number().nullable().optional(),
+  carbs: z.coerce.number().nullable().optional(),
+  protein: z.coerce.number().nullable().optional(),
+  recipeTypes: z.array(z.string()).default([]),
   tags: z.array(TagNameSchema).default([]),
   categories: z.array(recipeCategorySchema).default([]),
   author: AuthorSchema,
   averageRating: z.number().nullable().optional(),
   ratingCount: z.number().optional(),
+  lastCookedAt: z.coerce.date().nullable().optional(),
+  cookCount: z.number().optional(),
+  source: RecipeSourceSummarySchema.nullable().optional(),
 });
 
 export const FullRecipeSchema = RecipeSelectBaseSchema.extend({
@@ -51,9 +101,13 @@ export const FullRecipeSchema = RecipeSelectBaseSchema.extend({
   steps: z.array(StepStepSchema).default([]),
   tags: z.array(TagNameSchema).default([]),
   categories: z.array(recipeCategorySchema).default([]),
+  plannerProfile: EmbeddedRecipePlannerProfileSchema.nullable().optional(),
   author: AuthorSchema,
   images: RecipeImagesArraySchema.default([]),
   videos: RecipeVideosArraySchema.default([]),
+  lastCookedAt: z.coerce.date().nullable().optional(),
+  cookCount: z.number().optional(),
+  source: RecipeSourceSummarySchema.nullable().optional(),
 });
 
 export const FullRecipeInsertSchema = RecipeInsertBaseSchema.extend({
@@ -61,6 +115,7 @@ export const FullRecipeInsertSchema = RecipeInsertBaseSchema.extend({
   recipeIngredients: z.array(RecipeIngredientInputSchema).default([]),
   tags: z.array(TagNameSchema).default([]),
   categories: z.array(recipeCategorySchema).default([]),
+  plannerProfile: EmbeddedRecipePlannerProfileSchema.optional(),
   steps: z.array(StepStepSchema).default([]),
   images: z.array(RecipeImageSchema).max(10).default([]),
   videos: z.array(RecipeVideoSchema).default([]),
@@ -69,6 +124,7 @@ export const FullRecipeInsertSchema = RecipeInsertBaseSchema.extend({
 export const FullRecipeUpdateSchema = RecipeUpdateBaseSchema.extend({
   recipeIngredients: z.array(RecipeIngredientInputBaseSchema.partial()).optional(),
   tags: z.array(TagNameSchema).optional(),
+  plannerProfile: EmbeddedRecipePlannerProfileSchema.optional(),
   steps: z.array(StepStepSchema).optional(),
   images: z.array(RecipeImageSchema).max(10).optional(),
   videos: z.array(RecipeVideoSchema).optional(),
@@ -86,10 +142,17 @@ export const RecipeListInputSchema = z.object({
     .default(["title", "ingredients"]),
   tags: z.array(z.string()).optional(),
   categories: z.array(z.enum(["Breakfast", "Lunch", "Dinner", "Snack"])).optional(),
+  recipeTypes: z.array(z.string()).optional(),
+  suitableSlots: z.array(z.string()).optional(),
   filterMode: z.enum(["AND", "OR"]).default("OR"),
   sortMode: z.enum(["titleAsc", "titleDesc", "dateAsc", "dateDesc", "none"]).default("dateDesc"),
   minRating: z.number().min(1).max(5).optional(),
   maxCookingTime: z.number().int().min(1).optional(),
+  maxSodium: z.number().nonnegative().optional(),
+  maxCholesterol: z.number().nonnegative().optional(),
+  minFiber: z.number().nonnegative().optional(),
+  sourceDomains: z.array(z.string()).optional(),
+  nutritionDetail: NutritionDetailFilterSchema.optional(),
 });
 
 export const RecipeGetInputSchema = z.object({

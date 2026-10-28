@@ -3,7 +3,6 @@
 import type { HTTPHeaders } from "@trpc/client";
 import type { AnyTRPCRouter } from "@trpc/server";
 import type { ReactNode } from "react";
-
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -69,7 +68,7 @@ export function createTRPCProviderBundle<TRouter extends AnyTRPCRouter>({
   getWsUrl = defaultGetWsUrl,
   getHeaders = defaultGetHeaders,
   getWebSocketImpl,
-  maxRetries = 10,
+  maxRetries = Number.POSITIVE_INFINITY,
   enableLoggerLink = true,
 }: CreateTRPCProviderBundleOptions) {
   const { TRPCProvider, useTRPC } = createTRPCContext<TRouter>();

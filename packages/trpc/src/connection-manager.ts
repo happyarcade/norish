@@ -4,7 +4,12 @@ import type { WebSocket } from "ws";
 import { on } from "node:events";
 
 import superjson from "superjson";
-import { createSubscriberClient, getPublisherClient } from "@norish/queue/redis/client";
+import {
+  INVALIDATION_CHANNEL,
+  type InvalidationMessage,
+  emitConnectionInvalidation,
+} from "@norish/queue/events/connection-invalidation";
+import { createSubscriberClient } from "@norish/queue/redis/client";
 import { closeMultiplexer } from "@norish/queue/redis/subscription-multiplexer";
 import { trpcLogger as log } from "@norish/shared-server/logger";
 
@@ -80,21 +85,7 @@ export function terminateUserConnections(userId: string, reason: string): void {
   }
 }
 
-// Redis channel for cross-process connection invalidation
-const INVALIDATION_CHANNEL = "norish:connection:invalidate";
-
-type InvalidationMessage = {
-  userId: string;
-  reason: string;
-};
-
-export async function emitConnectionInvalidation(userId: string, reason: string): Promise<void> {
-  const client = await getPublisherClient();
-  const message: InvalidationMessage = { userId, reason };
-
-  await client.publish(INVALIDATION_CHANNEL, superjson.stringify(message));
-  log.debug({ userId, reason }, "Emitted connection invalidation");
-}
+export { emitConnectionInvalidation };
 
 export async function startInvalidationListener(): Promise<void> {
   // Prevent duplicate listeners

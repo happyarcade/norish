@@ -1,18 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { useRecipesContext } from "@/context/recipes-context";
+import { useRecipesFiltersContext } from "@/context/recipes-filters-context";
 import { MagnifyingGlassIcon } from "@heroicons/react/16/solid";
-import { Input } from "@heroui/react";
 import { useTranslations } from "next-intl";
 import { useDebounceValue } from "usehooks-ts";
+
 import { isUrl } from "@norish/shared/lib/helpers";
 
 import Filters from "../shared/filters";
-
+import QuickFilterRow from "./quick-filter-row";
 import SearchFieldToggles from "./search-field-toggles";
-
-import { useRecipesFiltersContext } from "@/context/recipes-filters-context";
-import { useRecipesContext } from "@/context/recipes-context";
 
 export default function SearchInput() {
   const t = useTranslations("recipes.dashboard");
@@ -129,6 +129,7 @@ export default function SearchInput() {
         />
         <Filters isGlass={false} />
       </div>
+      <QuickFilterRow />
       {/* Use grid for height animation - avoids layout thrashing on desktop */}
       <div
         className="grid transition-[grid-template-rows] duration-200 ease-out"

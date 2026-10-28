@@ -23,29 +23,41 @@ vi.mock("@/app/(app)/settings/user/context", () => ({
   useUserSettingsContext: () => ({ ...mockContext, user: mockUser }),
 }));
 
-vi.mock("@heroui/react", () => ({
-  Card: ({ children }: any) => <div>{children}</div>,
-  CardHeader: ({ children }: any) => <div>{children}</div>,
-  CardBody: ({ children }: any) => <div>{children}</div>,
-  Avatar: ({ onClick, src }: any) => (
+vi.mock("@heroui-v3/react", () => {
+  const Avatar = ({ children, onClick }: any) => (
     <button aria-label="avatar-trigger" type="button" onClick={onClick}>
-      <img alt="profile avatar" src={src} />
-    </button>
-  ),
-  Input: ({ value, onValueChange, isReadOnly, isDisabled }: any) => (
-    <input
-      disabled={isDisabled}
-      readOnly={isReadOnly}
-      value={value}
-      onChange={(event) => onValueChange?.(event.target.value)}
-    />
-  ),
-  Button: ({ children, onPress, isDisabled, type = "button" }: any) => (
-    <button disabled={isDisabled} type={type} onClick={onPress}>
       {children}
     </button>
-  ),
-}));
+  );
+  const Card = ({ children }: any) => <div>{children}</div>;
+  const InputGroup = ({ children }: any) => <>{children}</>;
+
+  Avatar.Image = ({ src }: any) => <img alt="profile avatar" src={src} />;
+  Avatar.Fallback = ({ children }: any) => <span>{children}</span>;
+  Card.Header = ({ children }: any) => <div>{children}</div>;
+  Card.Content = ({ children }: any) => <div>{children}</div>;
+  InputGroup.Input = () => null;
+
+  return {
+    Avatar,
+    Button: ({ children, onPress, isDisabled, type = "button" }: any) => (
+      <button disabled={isDisabled} type={type} onClick={onPress}>
+        {children}
+      </button>
+    ),
+    Card,
+    InputGroup,
+    Label: ({ children }: any) => <label>{children}</label>,
+    TextField: ({ value, onChange, isReadOnly, isDisabled }: any) => (
+      <input
+        disabled={isDisabled}
+        readOnly={isReadOnly}
+        value={value}
+        onChange={(event) => onChange?.(event.target.value)}
+      />
+    ),
+  };
+});
 
 class MockFileReader {
   public onload: ((event: { target: { result: string } }) => void) | null = null;

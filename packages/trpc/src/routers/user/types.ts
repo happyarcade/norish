@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { UserDtoSchema } from "@norish/shared/contracts/zod/user";
+import { UserDtoSchema, UserPreferencesSchema } from "@norish/shared/contracts/zod/user";
 
 // API Key metadata schema (matches ApiKeyMetadata type)
 export const ApiKeyMetadataSchema = z.object({
@@ -41,13 +41,5 @@ export const ToggleApiKeyInputSchema = z.object({
 
 // Preferences
 export const UpdatePreferencesInputSchema = z.object({
-  preferences: z
-    .object({
-      timersEnabled: z.boolean().optional(),
-      showConversionButton: z.boolean().optional(),
-      showRatings: z.boolean().optional(),
-      showFavorites: z.boolean().optional(),
-      locale: z.string().nullable().optional(),
-    })
-    .partial(),
+  preferences: UserPreferencesSchema.partial(),
 });

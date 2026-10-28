@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 type IngredientWithAmount = { amount?: number | string | null };
 
@@ -25,16 +25,10 @@ export function useServingsScaler<T extends IngredientWithAmount>(
   const [servings, setServingsState] = useState<number>(
     Math.max(0.125, initialServings ?? originalServings)
   );
-  const [scaledIngredients, setScaledIngredients] = useState<ScaledIngredient<T>[]>([]);
+  const scaledIngredients = useMemo<ScaledIngredient<T>[]>(() => {
+    if (ingredients.length === 0) return [];
 
-  useEffect(() => {
-    if (ingredients.length === 0) {
-      setScaledIngredients([]);
-
-      return;
-    }
-
-    const scaled = ingredients.map((ing) => {
+    return ingredients.map((ing) => {
       const baseAmount = ing.amount?.toString() ?? null;
       let displayAmount = baseAmount;
 
@@ -54,8 +48,6 @@ export function useServingsScaler<T extends IngredientWithAmount>(
         originalAmount: baseAmount,
       } as ScaledIngredient<T>;
     });
-
-    setScaledIngredients(scaled);
   }, [ingredients, servings, originalServings]);
 
   const setServings = useCallback((newServings: number) => {

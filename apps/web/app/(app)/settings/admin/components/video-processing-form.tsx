@@ -1,20 +1,17 @@
 "use client";
 
-import type { TranscriptionProvider } from "@norish/config/zod/server-config";
-
 import { useCallback, useEffect, useMemo, useState } from "react";
+import SecretInput from "@/components/shared/secret-input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Autocomplete, AutocompleteItem, Select, SelectItem } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useAvailableTranscriptionModelsQuery } from "@/hooks/admin";
 import { CheckIcon } from "@heroicons/react/16/solid";
-import {
-  Autocomplete,
-  AutocompleteItem,
-  Button,
-  Divider,
-  Input,
-  Select,
-  SelectItem,
-  Switch,
-} from "@heroui/react";
+import { Separator } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
+
+import type { TranscriptionProvider } from "@norish/config/zod/server-config";
 import {
   isCloudTranscriptionProvider,
   ServerConfigKeys,
@@ -23,9 +20,6 @@ import {
 } from "@norish/config/zod/server-config";
 
 import { useAdminSettingsContext } from "../context";
-
-import { useAvailableTranscriptionModelsQuery } from "@/hooks/admin";
-import SecretInput from "@/components/shared/secret-input";
 
 interface VideoProcessingFormProps {
   onDirtyChange?: (isDirty: boolean) => void;
@@ -288,7 +282,7 @@ export default function VideoProcessingForm({ onDirtyChange }: VideoProcessingFo
         onValueChange={setYtDlpVersion}
       />
 
-      <Divider className="my-2" />
+      <Separator className="my-2" />
 
       {/* Transcription Section */}
       <div className="flex flex-col gap-1">

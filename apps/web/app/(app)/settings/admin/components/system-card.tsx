@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { ArrowPathIcon, CheckIcon } from "@heroicons/react/16/solid";
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
-import { Button, Card, CardBody, CardHeader, Input, useDisclosure } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
 import { useAdminSettingsContext } from "../context";
-
 import RestartConfirmationModal from "./restart-confirmation-modal";
 import { UnsavedChangesChip } from "./unsaved-changes-chip";
 
@@ -19,7 +20,7 @@ export default function SystemCard() {
 
   const [months, setMonths] = useState(schedulerCleanupMonths ?? 3);
   const [saving, setSaving] = useState(false);
-  const restartModal = useDisclosure();
+  const [isRestartModalOpen, setRestartModalOpen] = useState(false);
   const hasSchedulerChanges =
     schedulerCleanupMonths !== undefined && months !== schedulerCleanupMonths;
 
@@ -40,18 +41,18 @@ export default function SystemCard() {
 
   const handleRestart = async () => {
     await restartServer();
-    restartModal.onClose();
+    setRestartModalOpen(false);
   };
 
   return (
     <Card>
-      <CardHeader>
+      <Card.Header>
         <h2 className="flex items-center gap-2 text-lg font-semibold">
           <Cog6ToothIcon className="h-5 w-5" />
           {t("title")}
         </h2>
-      </CardHeader>
-      <CardBody className="gap-6">
+      </Card.Header>
+      <Card.Content className="gap-6">
         {/* Scheduler Settings */}
         <div className="flex flex-col gap-4">
           <h3 className="flex items-center gap-2 font-medium">
@@ -92,18 +93,18 @@ export default function SystemCard() {
                 color="warning"
                 startContent={<ArrowPathIcon className="h-5 w-5" />}
                 variant="flat"
-                onPress={restartModal.onOpen}
+                onPress={() => setRestartModalOpen(true)}
               >
                 {t("server.restartButton")}
               </Button>
             </div>
           </div>
         </div>
-      </CardBody>
+      </Card.Content>
 
       <RestartConfirmationModal
-        isOpen={restartModal.isOpen}
-        onClose={restartModal.onClose}
+        isOpen={isRestartModalOpen}
+        onClose={() => setRestartModalOpen(false)}
         onConfirm={handleRestart}
       />
     </Card>

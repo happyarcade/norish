@@ -1,21 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDownTrayIcon, SparklesIcon } from "@heroicons/react/16/solid";
-import {
-  Button,
-  Input,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from "@heroui/react";
-import { useTranslations } from "next-intl";
-
+import { Button } from "@/components/ui/button";
 import { usePermissionsContext } from "@/context/permissions-context";
 import { useRecipesContext } from "@/context/recipes-context";
 import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
+import { ArrowDownTrayIcon, SparklesIcon } from "@heroicons/react/16/solid";
+import { InputGroup, Label, Modal, TextField, useOverlayState } from "@heroui-v3/react";
+import { useTranslations } from "next-intl";
 
 interface ImportRecipeModalProps {
   isOpen: boolean;
@@ -29,6 +21,7 @@ export default function ImportRecipeModal({ isOpen, onOpenChange }: ImportRecipe
   const { importRecipe, importRecipeWithAI } = useRecipesContext();
   const { isAIEnabled } = usePermissionsContext();
   const [importUrl, setImportUrl] = useState("");
+  const modalState = useOverlayState({ isOpen, onOpenChange });
 
   useEffect(() => {
     if (!isOpen || typeof navigator === "undefined" || !navigator.clipboard?.readText) {
@@ -104,46 +97,46 @@ export default function ImportRecipeModal({ isOpen, onOpenChange }: ImportRecipe
   }
 
   return (
-    <Modal
-      classNames={{ wrapper: "z-[1100]", backdrop: "z-[1099]" }}
-      isOpen={isOpen}
-      size="md"
-      onOpenChange={onOpenChange}
-    >
-      <ModalContent>
-        {() => (
-          <>
-            <ModalHeader className="flex flex-col gap-1">{t("title")}</ModalHeader>
-            <ModalBody>
-              <Input
-                label={t("label")}
-                placeholder={t("placeholder")}
-                type="url"
-                value={importUrl}
-                onChange={(e) => setImportUrl(e.target.value)}
-              />
-            </ModalBody>
-            <ModalFooter>
+    <Modal state={modalState}>
+      <Modal.Backdrop className="z-[1100]" variant="blur">
+        <Modal.Container placement="center" size="md">
+          <Modal.Dialog>
+            <Modal.CloseTrigger aria-label={tActions("close")} />
+            <Modal.Header>
+              <Modal.Heading>{t("title")}</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
+              <TextField fullWidth value={importUrl} onChange={setImportUrl}>
+                <Label>{t("label")}</Label>
+                <InputGroup fullWidth variant="secondary">
+                  <InputGroup.Input placeholder={t("placeholder")} type="url" />
+                </InputGroup>
+              </TextField>
+            </Modal.Body>
+            <Modal.Footer>
               {isAIEnabled && (
                 <Button
                   className="bg-gradient-to-r from-rose-400 via-fuchsia-500 to-indigo-500 text-white hover:brightness-110"
-                  startContent={<SparklesIcon className="h-4 w-4" />}
+                  isDisabled={importUrl.trim() === ""}
+                  variant="secondary"
                   onPress={handleAIImport}
                 >
+                  <SparklesIcon className="h-4 w-4" />
                   {tActions("aiImport")}
                 </Button>
               )}
               <Button
-                color="primary"
-                startContent={<ArrowDownTrayIcon className="h-4 w-4" />}
+                isDisabled={importUrl.trim() === ""}
+                variant="primary"
                 onPress={handleImportFromUrl}
               >
+                <ArrowDownTrayIcon className="h-4 w-4" />
                 {tActions("import")}
               </Button>
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Modal>
   );
 }

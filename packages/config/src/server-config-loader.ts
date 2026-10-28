@@ -54,7 +54,13 @@ export async function isRegistrationEnabled(): Promise<boolean> {
  * Get units configuration
  */
 export async function getUnits(): Promise<UnitsMap> {
-  const value = await getConfig<unknown>(ServerConfigKeys.UNITS);
+  let value: unknown;
+
+  try {
+    value = await getConfig<unknown>(ServerConfigKeys.UNITS);
+  } catch {
+    return defaultUnits as UnitsMap;
+  }
 
   const wrapped = UnitsConfigSchema.safeParse(value);
 

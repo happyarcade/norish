@@ -25,6 +25,7 @@
   "nav": {
     "home": "Rezepte",
     "calendar": "Kalender",
+    "prep": "Prep Table",
     "groceries": "Einkaufsliste"
   },
   "mobile": {

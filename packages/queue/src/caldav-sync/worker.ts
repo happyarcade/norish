@@ -14,8 +14,8 @@ import {
   getCaldavSyncStatusByItemId,
   updateCaldavSyncStatus,
 } from "@norish/db/repositories/caldav-sync-status";
+import { caldavEmitter } from "@norish/queue/events/caldav";
 import { getBullClient } from "@norish/queue/redis/bullmq";
-import { caldavEmitter } from "@norish/trpc/routers/caldav/emitter";
 
 import { baseWorkerOptions, QUEUE_NAMES, STALLED_INTERVAL, WORKER_CONCURRENCY } from "../config";
 import { createLazyWorker, stopLazyWorker } from "../lazy-worker-manager";

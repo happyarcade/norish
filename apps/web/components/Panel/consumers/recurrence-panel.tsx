@@ -1,20 +1,20 @@
 "use client";
 
-import type { RecurrencePattern } from "@norish/shared/contracts/recurrence";
-import type { RecurrenceTranslations } from "@norish/shared/lib/recurrence/formatter";
-
+import { useEffect, useState } from "react";
+import Panel, { PANEL_HEIGHT_MEDIUM } from "@/components/Panel/Panel";
+import { Button } from "@/components/ui/button";
 import { CalendarIcon, MinusIcon, PlusIcon } from "@heroicons/react/16/solid";
-import { Button, ButtonGroup } from "@heroui/react";
+import { ButtonGroup } from "@heroui-v3/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+
+import type { RecurrencePattern } from "@norish/shared/contracts/recurrence";
+import type { RecurrenceTranslations } from "@norish/shared/lib/recurrence/formatter";
 import { calculateNextOccurrence, getTodayString } from "@norish/shared/lib/recurrence/calculator";
 import {
   formatNextOccurrence,
   formatRecurrenceSummary,
 } from "@norish/shared/lib/recurrence/formatter";
-
-import Panel, { PANEL_HEIGHT_MEDIUM } from "@/components/Panel/Panel";
 
 type RecurrencePanelProps = {
   open: boolean;
@@ -140,24 +140,21 @@ export function RecurrencePanel({
           <ButtonGroup fullWidth className="shadow-sm" size="md">
             <Button
               className="font-medium"
-              color={pattern?.rule === "day" ? "primary" : "default"}
-              variant={pattern?.rule === "day" ? "solid" : "flat"}
+              variant={pattern?.rule === "day" ? "primary" : "tertiary"}
               onPress={() => handleFrequencyChange("day")}
             >
               {t("daily")}
             </Button>
             <Button
               className="font-medium"
-              color={pattern?.rule === "week" ? "primary" : "default"}
-              variant={pattern?.rule === "week" ? "solid" : "flat"}
+              variant={pattern?.rule === "week" ? "primary" : "tertiary"}
               onPress={() => handleFrequencyChange("week")}
             >
               {t("weekly")}
             </Button>
             <Button
               className="font-medium"
-              color={pattern?.rule === "month" ? "primary" : "default"}
-              variant={pattern?.rule === "month" ? "solid" : "flat"}
+              variant={pattern?.rule === "month" ? "primary" : "tertiary"}
               onPress={() => handleFrequencyChange("month")}
             >
               {t("monthly")}
@@ -181,7 +178,7 @@ export function RecurrencePanel({
                 className="h-8 min-w-8 shrink-0"
                 isDisabled={pattern.interval <= 1}
                 size="sm"
-                variant="flat"
+                variant="tertiary"
                 onPress={() => handleIntervalChange(-1)}
               >
                 <MinusIcon className="h-4 w-4" />
@@ -206,7 +203,7 @@ export function RecurrencePanel({
                 isIconOnly
                 className="h-8 min-w-8 shrink-0"
                 size="sm"
-                variant="flat"
+                variant="tertiary"
                 onPress={() => handleIntervalChange(1)}
               >
                 <PlusIcon className="h-4 w-4" />
@@ -232,9 +229,8 @@ export function RecurrencePanel({
                   <Button
                     key={index}
                     className="min-w-0 flex-1 text-xs font-medium"
-                    color={pattern.weekday === index ? "primary" : "default"}
                     size="sm"
-                    variant={pattern.weekday === index ? "solid" : "flat"}
+                    variant={pattern.weekday === index ? "primary" : "tertiary"}
                     onPress={() => handleWeekdayChange(index)}
                   >
                     {t(`weekdays.${key}`)}
@@ -281,21 +277,15 @@ export function RecurrencePanel({
         {/* Action Buttons */}
         <div className="flex justify-end gap-2 pt-1">
           {initialPattern && (
-            <Button
-              className="font-medium"
-              color="danger"
-              size="sm"
-              variant="light"
-              onPress={handleRemove}
-            >
+            <Button className="font-medium" size="sm" variant="danger" onPress={handleRemove}>
               {tActions("remove")}
             </Button>
           )}
           <Button
             className="min-w-16 font-medium"
-            color="primary"
             isDisabled={!pattern}
             size="sm"
+            variant="primary"
             onPress={handleSave}
           >
             {tActions("done")}

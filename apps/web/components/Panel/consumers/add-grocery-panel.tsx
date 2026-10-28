@@ -1,19 +1,20 @@
 "use client";
 
-import type { StoreDto } from "@norish/shared/contracts";
-import type { RecurrencePattern } from "@norish/shared/contracts/recurrence";
-
 import { useEffect, useState } from "react";
-import { Button, Input } from "@heroui/react";
-import { AnimatePresence } from "motion/react";
-import { useTranslations } from "next-intl";
-import { useGroceryFormState } from "@norish/shared-react/hooks";
-
 import { RecurrenceSuggestion } from "@/app/(app)/groceries/components/recurrence-suggestion";
 import { StoreSelector } from "@/components/groceries/store-selector";
 import { RecurrencePanel } from "@/components/Panel/consumers/recurrence-panel";
 import Panel, { PANEL_HEIGHT_COMPACT } from "@/components/Panel/Panel";
+import { useIsDesktop } from "@/components/planner/use-is-desktop";
+import { Button } from "@/components/ui/button";
 import { useRecurrenceDetection } from "@/hooks/use-recurrence-detection";
+import { InputGroup, Modal, TextField, useOverlayState } from "@heroui-v3/react";
+import { AnimatePresence } from "motion/react";
+import { useTranslations } from "next-intl";
+
+import type { StoreDto } from "@norish/shared/contracts";
+import type { RecurrencePattern } from "@norish/shared/contracts/recurrence";
+import { useGroceryFormState } from "@norish/shared-react/hooks";
 
 type AddGroceryPanelProps = {
   open: boolean;
@@ -36,8 +37,13 @@ export default function AddGroceryPanel({
 }: AddGroceryPanelProps) {
   const t = useTranslations("groceries.panel");
   const tActions = useTranslations("common.actions");
+  const isDesktop = useIsDesktop();
   const [recurrencePanelOpen, setRecurrencePanelOpen] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  const modalState = useOverlayState({
+    isOpen: open && !recurrencePanelOpen,
+    onOpenChange,
+  });
 
   const {
     itemName,
@@ -83,107 +89,123 @@ export default function AddGroceryPanel({
     setRecurrencePanelOpen(false);
   };
 
-  return (
-    <>
-      <Panel
-        height={PANEL_HEIGHT_COMPACT}
-        open={open && !recurrencePanelOpen}
-        title={t("addTitle")}
-        onOpenChange={onOpenChange}
+  const content = (
+    <div className="flex flex-col gap-4">
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
       >
-        <div className="flex flex-col gap-4">
-          <form
-            className="flex flex-col gap-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-          >
-            <div className="space-y-3">
-              <Input
-                classNames={{
-                  input: "text-lg font-medium",
-                  inputWrapper: "border-primary-200 dark:border-primary-800",
-                }}
+        <div className="space-y-3">
+          <TextField fullWidth value={itemName} onChange={setItemName}>
+            <InputGroup
+              fullWidth
+              className="border-primary-200 dark:border-primary-800"
+              variant="secondary"
+            >
+              <InputGroup.Input
+                className="text-base font-medium"
                 placeholder={t("placeholder")}
-                size="lg"
-                style={{ fontSize: "16px" }}
-                value={itemName}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
                     handleSubmit();
                   }
                 }}
-                onValueChange={setItemName}
               />
+            </InputGroup>
+          </TextField>
 
-              {/* Store selection */}
-              <StoreSelector
-                label={t("storeOptional")}
-                noStoreDescription={t("autoDetectFromHistory")}
-                placeholder={t("autoDetectOrSelect")}
-                selectedStoreId={selectedStoreId}
-                size="sm"
-                stores={stores}
-                onSelectionChange={setSelectedStoreId}
-              />
+          <StoreSelector
+            label={t("storeOptional")}
+            noStoreDescription={t("autoDetectFromHistory")}
+            placeholder={t("autoDetectOrSelect")}
+            selectedStoreId={selectedStoreId}
+            size="sm"
+            stores={stores}
+            onSelectionChange={setSelectedStoreId}
+          />
 
-              {/* Recurrence Pills Container */}
-              <AnimatePresence mode="popLayout">
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Suggested pill  */}
-                  {detectedPattern && (
-                    <RecurrenceSuggestion
-                      key="detected"
-                      itemName={itemName}
-                      pattern={detectedPattern.pattern}
-                      type="detected"
-                      onReplace={() => handleConfirmPattern(detectedPattern)}
-                    />
-                  )}
+          <AnimatePresence mode="popLayout">
+            <div className="flex flex-wrap items-center gap-2">
+              {detectedPattern && (
+                <RecurrenceSuggestion
+                  key="detected"
+                  itemName={itemName}
+                  pattern={detectedPattern.pattern}
+                  type="detected"
+                  onReplace={() => handleConfirmPattern(detectedPattern)}
+                />
+              )}
 
-                  {/* Active pill */}
-                  {confirmedPattern && (
-                    <RecurrenceSuggestion
-                      key="confirmed"
-                      itemName={itemName}
-                      pattern={confirmedPattern}
-                      type="confirmed"
-                      onEdit={() => setRecurrencePanelOpen(true)}
-                      onRemove={handleRemovePattern}
-                    />
-                  )}
-                </div>
-              </AnimatePresence>
-
-              {/* Link to manual recurrence editor */}
-              {!confirmedPattern && !detectedPattern && (
-                <Button
-                  className="font-medium"
-                  size="sm"
-                  variant="light"
-                  onPress={() => setRecurrencePanelOpen(true)}
-                >
-                  {t("addRepeat")}
-                </Button>
+              {confirmedPattern && (
+                <RecurrenceSuggestion
+                  key="confirmed"
+                  itemName={itemName}
+                  pattern={confirmedPattern}
+                  type="confirmed"
+                  onEdit={() => setRecurrencePanelOpen(true)}
+                  onRemove={handleRemovePattern}
+                />
               )}
             </div>
+          </AnimatePresence>
 
-            <div className="flex justify-end gap-2">
-              <Button
-                className="min-w-16"
-                color="primary"
-                isDisabled={!itemName.trim()}
-                size="sm"
-                onPress={handleSubmit}
-              >
-                {tActions("add")}
-              </Button>
-            </div>
-          </form>
+          {!confirmedPattern && !detectedPattern ? (
+            <Button
+              className="font-medium"
+              size="sm"
+              variant="tertiary"
+              onPress={() => setRecurrencePanelOpen(true)}
+            >
+              {t("addRepeat")}
+            </Button>
+          ) : null}
         </div>
-      </Panel>
+
+        <div className="flex justify-end gap-2">
+          <Button
+            className="min-w-16"
+            isDisabled={!itemName.trim()}
+            size="sm"
+            variant="primary"
+            onPress={handleSubmit}
+          >
+            {tActions("add")}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+
+  return (
+    <>
+      {isDesktop ? (
+        <Modal state={modalState}>
+          <Modal.Backdrop variant="blur">
+            <Modal.Container placement="center" size="md">
+              <Modal.Dialog className="max-w-md">
+                <Modal.CloseTrigger aria-label={tActions("close")} />
+                <Modal.Header>
+                  <Modal.Heading>{t("addTitle")}</Modal.Heading>
+                </Modal.Header>
+                <Modal.Body className="pb-6">{content}</Modal.Body>
+              </Modal.Dialog>
+            </Modal.Container>
+          </Modal.Backdrop>
+        </Modal>
+      ) : (
+        <Panel
+          height={PANEL_HEIGHT_COMPACT}
+          open={open && !recurrencePanelOpen}
+          title={t("addTitle")}
+          onOpenChange={onOpenChange}
+        >
+          {content}
+        </Panel>
+      )}
 
       <RecurrencePanel
         initialPattern={confirmedPattern}

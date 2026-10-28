@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FunnelIcon } from "@heroicons/react/16/solid";
-import { Button } from "@heroui/react";
-import { cssGlassBackdrop } from "@norish/web/config/css-tokens";
-
-import { useRecipesFiltersContext } from "@/context/recipes-filters-context";
 import { FiltersPanel } from "@/components/Panel/consumers";
+import { Button } from "@/components/ui/button";
+import { useRecipesFiltersContext } from "@/context/recipes-filters-context";
+import { FunnelIcon } from "@heroicons/react/16/solid";
+
+import { cssGlassBackdrop } from "@norish/web/config/css-tokens";
 
 type FiltersProps = {
   isGlass: boolean;
@@ -20,16 +20,40 @@ export default function Filters({ isGlass = false }: FiltersProps) {
     const hasSearch = filters.rawInput.trim().length > 0;
     const hasTags = filters.searchTags.length > 0;
     const hasCategories = filters.categories.length > 0;
+    const hasSuitableSlots = filters.suitableSlots.length > 0;
     const hasRating = filters.minRating !== null;
     const hasCookingTime = filters.maxCookingTime !== null;
+    const hasSodiumLimit = filters.maxSodium !== null;
+    const hasCholesterolLimit = filters.maxCholesterol !== null;
+    const hasFiberMinimum = filters.minFiber !== null;
+    const hasSources = filters.sourceDomains.length > 0;
+    const hasNutritionDetail = filters.nutritionDetail !== null;
 
-    return hasSearch || hasTags || hasCategories || hasRating || hasCookingTime;
+    return (
+      hasSearch ||
+      hasTags ||
+      hasCategories ||
+      hasSuitableSlots ||
+      hasRating ||
+      hasCookingTime ||
+      hasSodiumLimit ||
+      hasCholesterolLimit ||
+      hasFiberMinimum ||
+      hasSources ||
+      hasNutritionDetail
+    );
   }, [
     filters.rawInput,
     filters.searchTags,
     filters.categories,
+    filters.suitableSlots,
     filters.minRating,
     filters.maxCookingTime,
+    filters.maxSodium,
+    filters.maxCholesterol,
+    filters.minFiber,
+    filters.sourceDomains,
+    filters.nutritionDetail,
   ]);
 
   return (

@@ -1,0 +1,2 @@
+ALTER TABLE "plan_slot_items" ADD COLUMN "dairy_free" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "plan_slot_items" ADD COLUMN "ingredient_overrides" jsonb DEFAULT '[]'::jsonb NOT NULL;

@@ -146,6 +146,9 @@
     },
     "menu": {
       "description": "URL에서 가져오거나 사진을 스캔하거나 처음부터 시작하세요."
+    },
+    "clipboard": {
+      "title": "Import a recipe from the link you copied?"
     }
   },
   "formatting": {

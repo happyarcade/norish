@@ -58,16 +58,37 @@ function createEncryptedEmailAdapter<T extends BetterAuthOptions>(
           );
 
           if (emailWhere) {
-            // Lookup by email - convert to emailHmac
-            const emailHmacValue = hmacIndex(emailWhere.value as string);
-            const modifiedWhere = params.where.map((w: Where) =>
-              w.field === "email" ? { ...w, field: "emailHmac", value: emailHmacValue } : w
+            // Lookup by email - convert to emailHmac. Try the normalized form first,
+            // then fall back to the raw value for older rows created before normalization.
+            const rawEmail = emailWhere.value as string;
+            const normalizedEmail = normalizeEmailForAuth(rawEmail);
+            const normalizedWhere = params.where.map((w: Where) =>
+              w.field === "email" ? { ...w, field: "emailHmac", value: hmacIndex(normalizedEmail) } : w
             );
 
-            return baseAdapter.findOne({
+            const normalizedResult = await baseAdapter.findOne({
               ...params,
-              where: modifiedWhere,
+              where: normalizedWhere,
             });
+
+            if (normalizedResult) return normalizedResult;
+
+            if (normalizedEmail === rawEmail) {
+              return findLegacyUserByNormalizedEmail(normalizedEmail);
+            }
+
+            const rawWhere = params.where.map((w: Where) =>
+              w.field === "email" ? { ...w, field: "emailHmac", value: hmacIndex(rawEmail) } : w
+            );
+
+            const rawResult = await baseAdapter.findOne({
+              ...params,
+              where: rawWhere,
+            });
+
+            if (rawResult) return rawResult;
+
+            return findLegacyUserByNormalizedEmail(normalizedEmail);
           }
         }
 
@@ -75,6 +96,29 @@ function createEncryptedEmailAdapter<T extends BetterAuthOptions>(
       },
     };
   };
+}
+
+function normalizeEmailForAuth(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+async function findLegacyUserByNormalizedEmail(normalizedEmail: string) {
+  const rows = await db.select().from(schema.users);
+
+  for (const row of rows) {
+    const decryptedEmail = safeDecrypt(row.email);
+
+    if (decryptedEmail && normalizeEmailForAuth(decryptedEmail) === normalizedEmail) {
+      authLogger.warn(
+        { userId: row.id },
+        "Matched legacy encrypted email with non-normalized HMAC; update the email once to refresh the index"
+      );
+
+      return row;
+    }
+  }
+
+  return null;
 }
 
 // Helper to decrypt user object fields
@@ -220,6 +264,7 @@ function createAuth() {
       ...(process.env.NODE_ENV === "development"
         ? [
             "http://*/*",
+            "http://10.*.*.*:*/*",
             "http://10.0.0.*:*/*",
             "http://192.168.*.*:*/*",
             "http://172.*.*.*:*/*",
@@ -314,8 +359,10 @@ function createAuth() {
               });
             }
 
+            const normalizedEmailValue = user.email ? normalizeEmailForAuth(user.email) : user.email;
+
             // Encrypt the PII values - BetterAuth writes these directly to email, name, image columns
-            const encryptedEmail = user.email ? encrypt(user.email) : user.email;
+            const encryptedEmail = normalizedEmailValue ? encrypt(normalizedEmailValue) : normalizedEmailValue;
             const encryptedName = user.name ? encrypt(user.name) : user.name;
             const encryptedImage = user.image ? encrypt(user.image) : user.image;
 
@@ -325,7 +372,7 @@ function createAuth() {
                 email: encryptedEmail,
                 name: encryptedName,
                 image: encryptedImage,
-                emailHmac: user.email ? hmacIndex(user.email) : undefined,
+                emailHmac: normalizedEmailValue ? hmacIndex(normalizedEmailValue) : undefined,
                 // Set owner/admin for first user
                 isServerOwner: isFirstUser,
                 isServerAdmin: isFirstUser,
@@ -353,8 +400,10 @@ function createAuth() {
             const updates: any = { ...user };
 
             if (user.email !== undefined) {
-              updates.email = user.email ? encrypt(user.email) : user.email;
-              updates.emailHmac = user.email ? hmacIndex(user.email) : undefined;
+              const normalizedEmailValue = user.email ? normalizeEmailForAuth(user.email) : user.email;
+
+              updates.email = normalizedEmailValue ? encrypt(normalizedEmailValue) : normalizedEmailValue;
+              updates.emailHmac = normalizedEmailValue ? hmacIndex(normalizedEmailValue) : undefined;
             }
             if (user.name !== undefined) {
               updates.name = user.name ? encrypt(user.name) : user.name;

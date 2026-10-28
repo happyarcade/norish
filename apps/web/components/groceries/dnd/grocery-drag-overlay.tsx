@@ -1,14 +1,13 @@
 "use client";
 
-import type { GroceryDto, RecurringGroceryDto } from "@norish/shared/contracts";
-
-import { Bars3Icon } from "@heroicons/react/16/solid";
-import { Checkbox } from "@heroui/react";
-import { useTranslations } from "next-intl";
-
 import { RecurrencePill } from "@/app/(app)/groceries/components/recurrence-pill";
 import { useUnitFormatter } from "@/hooks/use-unit-formatter";
+import { Bars3Icon } from "@heroicons/react/16/solid";
+import { useTranslations } from "next-intl";
 
+import type { GroceryDto, RecurringGroceryDto } from "@norish/shared/contracts";
+
+import { GroceryCheckbox } from "../grocery-checkbox";
 
 interface GroceryDragOverlayProps {
   grocery: GroceryDto;
@@ -37,7 +36,11 @@ export function GroceryDragOverlay({
         <Bars3Icon className="h-5 w-5" />
       </div>
 
-      <Checkbox isDisabled isSelected={grocery.isDone} radius="full" size="lg" />
+      <GroceryCheckbox
+        isDisabled
+        ariaLabel={grocery.name || t("unnamedItem")}
+        isSelected={grocery.isDone}
+      />
 
       <div className={contentClass}>
         <div className={rowClass}>

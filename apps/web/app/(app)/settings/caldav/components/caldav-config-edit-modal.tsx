@@ -1,29 +1,27 @@
 "use client";
 
-import type { CalDavCalendarInfo } from "@norish/shared/contracts";
-
 import { useCallback, useEffect, useRef, useState } from "react";
+import SecretInput from "@/components/shared/secret-input";
+import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { ServerIcon } from "@heroicons/react/24/outline";
 import {
   Accordion,
-  AccordionItem,
-  Button,
-  Chip,
-  Input,
+  Description,
+  FieldError,
+  InputGroup,
+  Label,
+  ListBox,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
   Select,
-  SelectItem,
-} from "@heroui/react";
+  TextField,
+  useOverlayState,
+} from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
+import type { CalDavCalendarInfo } from "@norish/shared/contracts";
 
 import { useCalDavSettingsContext } from "../context";
-
-import SecretInput from "@/components/shared/secret-input";
 
 interface CalDavConfigEditModalProps {
   isOpen: boolean;
@@ -34,6 +32,12 @@ export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigE
   const t = useTranslations("settings.caldav.setup");
   const tConfig = useTranslations("settings.caldav.config");
   const { config, saveConfig, testConnection, getCaldavPassword } = useCalDavSettingsContext();
+  const modalState = useOverlayState({
+    isOpen,
+    onOpenChange: (open) => {
+      if (!open) onClose();
+    },
+  });
 
   const [serverUrl, setServerUrl] = useState("");
   const [calendarUrl, setCalendarUrl] = useState<string | null>(null);
@@ -200,166 +204,198 @@ export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigE
   const canSave = serverUrl && username && (password || config) && calendarUrl;
 
   return (
-    <Modal
-      classNames={{ wrapper: "z-[1100]", backdrop: "z-[1099]" }}
-      isOpen={isOpen}
-      scrollBehavior="inside"
-      size="2xl"
-      onClose={onClose}
-    >
-      <ModalContent>
-        <ModalHeader className="flex items-center gap-2">
-          <ServerIcon className="h-5 w-5" />
-          {tConfig("editTitle")}
-        </ModalHeader>
-        <ModalBody>
-          <div className="flex flex-col gap-4">
-            <Input
-              isRequired
-              description={t("serverUrlDescription")}
-              label={t("serverUrlLabel")}
-              placeholder={t("serverUrlPlaceholder")}
-              value={serverUrl}
-              onValueChange={setServerUrl}
-            />
+    <Modal state={modalState}>
+      <Modal.Backdrop className="z-[1099]" variant="blur">
+        <Modal.Container className="z-[1100] max-w-2xl" placement="center" size="lg">
+          <Modal.Dialog className="max-h-[90vh]">
+            <Modal.CloseTrigger aria-label="Close" />
+            <Modal.Header>
+              <Modal.Heading className="flex items-center gap-2">
+                <ServerIcon className="h-5 w-5" />
+                {tConfig("editTitle")}
+              </Modal.Heading>
+            </Modal.Header>
+            <Modal.Body className="overflow-y-auto">
+              <div className="flex flex-col gap-4">
+                <TextField fullWidth isRequired value={serverUrl} onChange={setServerUrl}>
+                  <Label>{t("serverUrlLabel")}</Label>
+                  <InputGroup fullWidth variant="secondary">
+                    <InputGroup.Input placeholder={t("serverUrlPlaceholder")} />
+                  </InputGroup>
+                  <Description>{t("serverUrlDescription")}</Description>
+                </TextField>
 
-            <Input
-              isRequired
-              label={t("usernameLabel")}
-              placeholder={t("usernamePlaceholder")}
-              value={username}
-              onValueChange={setUsername}
-            />
+                <TextField fullWidth isRequired value={username} onChange={setUsername}>
+                  <Label>{t("usernameLabel")}</Label>
+                  <InputGroup fullWidth variant="secondary">
+                    <InputGroup.Input placeholder={t("usernamePlaceholder")} />
+                  </InputGroup>
+                </TextField>
 
-            {/* Password Section */}
-            <SecretInput
-              isRequired
-              isConfigured={!!config}
-              label={t("passwordLabel")}
-              placeholder={t("passwordPlaceholder")}
-              value={password}
-              onReveal={handleRevealPassword}
-              onValueChange={setPassword}
-            />
+                {/* Password Section */}
+                <SecretInput
+                  isRequired
+                  isConfigured={!!config}
+                  label={t("passwordLabel")}
+                  placeholder={t("passwordPlaceholder")}
+                  value={password}
+                  onReveal={handleRevealPassword}
+                  onValueChange={setPassword}
+                />
 
-            {/* Test Connection Result */}
-            {testResult && (
-              <Chip color={testResult.success ? "success" : "danger"} size="sm" variant="flat">
-                {testResult.message}
-              </Chip>
-            )}
+                {/* Test Connection Result */}
+                {testResult && (
+                  <Chip color={testResult.success ? "success" : "danger"} size="sm" variant="soft">
+                    <Chip.Label>{testResult.message}</Chip.Label>
+                  </Chip>
+                )}
 
-            {/* Calendar Selection - always visible, disabled until calendars fetched */}
-            <Select
-              description={
-                calendars.length === 0 ? t("calendarDescriptionDisabled") : t("calendarDescription")
-              }
-              isDisabled={calendars.length === 0}
-              label={t("calendarLabel")}
-              placeholder={
-                calendars.length === 0 ? t("calendarPlaceholderDisabled") : t("calendarPlaceholder")
-              }
-              selectedKeys={calendarUrl ? [calendarUrl] : []}
-              onSelectionChange={(keys) => {
-                const selected = Array.from(keys)[0] as string;
+                {/* Calendar Selection - always visible, disabled until calendars fetched */}
+                <Select
+                  fullWidth
+                  isDisabled={calendars.length === 0}
+                  placeholder={
+                    calendars.length === 0
+                      ? t("calendarPlaceholderDisabled")
+                      : t("calendarPlaceholder")
+                  }
+                  selectedKey={calendarUrl}
+                  variant="secondary"
+                  onSelectionChange={(selected) => {
+                    setCalendarUrl(typeof selected === "string" ? selected : null);
+                  }}
+                >
+                  <Label>{t("calendarLabel")}</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox aria-label={t("calendarLabel")}>
+                      {calendars.map((cal) => (
+                        <ListBox.Item key={cal.url} id={cal.url} textValue={cal.displayName}>
+                          {cal.displayName}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                  <Description>
+                    {calendars.length === 0
+                      ? t("calendarDescriptionDisabled")
+                      : t("calendarDescription")}
+                  </Description>
+                </Select>
 
-                setCalendarUrl(selected || null);
-              }}
-            >
-              {calendars.map((cal) => (
-                <SelectItem key={cal.url}>{cal.displayName}</SelectItem>
-              ))}
-            </Select>
+                {/* Advanced Settings */}
+                <Accordion>
+                  <Accordion.Item id="advanced">
+                    <Accordion.Heading>
+                      <Accordion.Trigger>
+                        {tConfig("advancedSettings")}
+                        <Accordion.Indicator />
+                      </Accordion.Trigger>
+                    </Accordion.Heading>
+                    <Accordion.Panel>
+                      <Accordion.Body className="flex flex-col gap-4 pb-4">
+                        <p className="text-default-500 text-xs">
+                          {tConfig("timezone", { timezone })}
+                        </p>
 
-            {/* Advanced Settings */}
-            <Accordion>
-              <AccordionItem
-                key="advanced"
-                aria-label={tConfig("advancedSettings")}
-                title={tConfig("advancedSettings")}
+                        <TextField
+                          fullWidth
+                          isInvalid={!!timeErrors.breakfast}
+                          value={breakfastTime}
+                          onChange={(value) => {
+                            setBreakfastTime(value);
+                            validateTimeFormat(value, "breakfast");
+                          }}
+                        >
+                          <Label>{t("breakfastTime")}</Label>
+                          <InputGroup fullWidth variant="secondary">
+                            <InputGroup.Input placeholder="07:00-08:00" />
+                          </InputGroup>
+                          <Description>{t("timeFormat")}</Description>
+                          <FieldError>{t("timeFormatError")}</FieldError>
+                        </TextField>
+
+                        <TextField
+                          fullWidth
+                          isInvalid={!!timeErrors.lunch}
+                          value={lunchTime}
+                          onChange={(value) => {
+                            setLunchTime(value);
+                            validateTimeFormat(value, "lunch");
+                          }}
+                        >
+                          <Label>{t("lunchTime")}</Label>
+                          <InputGroup fullWidth variant="secondary">
+                            <InputGroup.Input placeholder="12:00-13:00" />
+                          </InputGroup>
+                          <Description>{t("timeFormat")}</Description>
+                          <FieldError>{t("timeFormatError")}</FieldError>
+                        </TextField>
+
+                        <TextField
+                          fullWidth
+                          isInvalid={!!timeErrors.dinner}
+                          value={dinnerTime}
+                          onChange={(value) => {
+                            setDinnerTime(value);
+                            validateTimeFormat(value, "dinner");
+                          }}
+                        >
+                          <Label>{t("dinnerTime")}</Label>
+                          <InputGroup fullWidth variant="secondary">
+                            <InputGroup.Input placeholder="18:00-19:00" />
+                          </InputGroup>
+                          <Description>{t("timeFormat")}</Description>
+                          <FieldError>{t("timeFormatError")}</FieldError>
+                        </TextField>
+
+                        <TextField
+                          fullWidth
+                          isInvalid={!!timeErrors.snack}
+                          value={snackTime}
+                          onChange={(value) => {
+                            setSnackTime(value);
+                            validateTimeFormat(value, "snack");
+                          }}
+                        >
+                          <Label>{t("snackTime")}</Label>
+                          <InputGroup fullWidth variant="secondary">
+                            <InputGroup.Input placeholder="15:00-16:00" />
+                          </InputGroup>
+                          <Description>{t("timeFormat")}</Description>
+                          <FieldError>{t("timeFormatError")}</FieldError>
+                        </TextField>
+                      </Accordion.Body>
+                    </Accordion.Panel>
+                  </Accordion.Item>
+                </Accordion>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                isDisabled={!serverUrl || !username || (!password && !config)}
+                isPending={testing}
+                variant="outline"
+                onPress={handleTestConnection}
               >
-                <div className="flex flex-col gap-4 pb-4">
-                  <p className="text-default-500 text-xs">{tConfig("timezone", { timezone })}</p>
-
-                  <Input
-                    description={t("timeFormat")}
-                    errorMessage={timeErrors.breakfast ? t("timeFormatError") : undefined}
-                    isInvalid={!!timeErrors.breakfast}
-                    label={t("breakfastTime")}
-                    placeholder="07:00-08:00"
-                    size="sm"
-                    value={breakfastTime}
-                    onValueChange={(value) => {
-                      setBreakfastTime(value);
-                      validateTimeFormat(value, "breakfast");
-                    }}
-                  />
-
-                  <Input
-                    description={t("timeFormat")}
-                    errorMessage={timeErrors.lunch ? t("timeFormatError") : undefined}
-                    isInvalid={!!timeErrors.lunch}
-                    label={t("lunchTime")}
-                    placeholder="12:00-13:00"
-                    size="sm"
-                    value={lunchTime}
-                    onValueChange={(value) => {
-                      setLunchTime(value);
-                      validateTimeFormat(value, "lunch");
-                    }}
-                  />
-
-                  <Input
-                    description={t("timeFormat")}
-                    errorMessage={timeErrors.dinner ? t("timeFormatError") : undefined}
-                    isInvalid={!!timeErrors.dinner}
-                    label={t("dinnerTime")}
-                    placeholder="18:00-19:00"
-                    size="sm"
-                    value={dinnerTime}
-                    onValueChange={(value) => {
-                      setDinnerTime(value);
-                      validateTimeFormat(value, "dinner");
-                    }}
-                  />
-
-                  <Input
-                    description={t("timeFormat")}
-                    errorMessage={timeErrors.snack ? t("timeFormatError") : undefined}
-                    isInvalid={!!timeErrors.snack}
-                    label={t("snackTime")}
-                    placeholder="15:00-16:00"
-                    size="sm"
-                    value={snackTime}
-                    onValueChange={(value) => {
-                      setSnackTime(value);
-                      validateTimeFormat(value, "snack");
-                    }}
-                  />
-                </div>
-              </AccordionItem>
-            </Accordion>
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            isDisabled={!serverUrl || !username || (!password && !config)}
-            isLoading={testing}
-            variant="bordered"
-            onPress={handleTestConnection}
-          >
-            {t("testConnection")}
-          </Button>
-          <Button
-            color="primary"
-            isDisabled={!canSave || Object.keys(timeErrors).length > 0}
-            isLoading={saving}
-            onPress={handleSave}
-          >
-            {tConfig("saveChanges")}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
+                {t("testConnection")}
+              </Button>
+              <Button
+                isDisabled={!canSave || Object.keys(timeErrors).length > 0}
+                isPending={saving}
+                variant="primary"
+                onPress={handleSave}
+              >
+                {tConfig("saveChanges")}
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Modal>
   );
 }

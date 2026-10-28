@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
 import {
   ClipboardDocumentIcon,
   KeyIcon,
@@ -9,25 +12,7 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import {
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Chip,
-  Input,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@heroui/react";
+import { InputGroup, Label, Modal, Table, TextField, useOverlayState } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
 import { useUserSettingsContext } from "../context";
@@ -42,6 +27,14 @@ export default function ApiKeyCard() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
   const [newKeyName, setNewKeyName] = useState("");
+  const tokenModalState = useOverlayState({
+    isOpen: showTokenModal,
+    onOpenChange: setShowTokenModal,
+  });
+  const deleteModalState = useOverlayState({
+    isOpen: showDeleteModal,
+    onOpenChange: setShowDeleteModal,
+  });
 
   const handleGenerateKey = async () => {
     setGeneratingKey(true);
@@ -73,31 +66,26 @@ export default function ApiKeyCard() {
   return (
     <>
       <Card>
-        <CardHeader>
+        <Card.Header>
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <KeyIcon className="h-5 w-5" />
             {t("title")}
           </h2>
-        </CardHeader>
-        <CardBody className="gap-4">
+        </Card.Header>
+        <Card.Content className="gap-4">
           <p className="text-default-600 text-base">{t("description")}</p>
 
           {/* Create new key section */}
           <div className="flex flex-col gap-3">
-            <Input
-              label={t("keyNameLabel")}
-              placeholder={t("keyNamePlaceholder")}
-              size="sm"
-              value={newKeyName}
-              onValueChange={setNewKeyName}
-            />
+            <TextField fullWidth value={newKeyName} onChange={setNewKeyName}>
+              <Label>{t("keyNameLabel")}</Label>
+              <InputGroup fullWidth variant="secondary">
+                <InputGroup.Input placeholder={t("keyNamePlaceholder")} />
+              </InputGroup>
+            </TextField>
             <div className="flex justify-end">
-              <Button
-                color="primary"
-                isLoading={generatingKey}
-                startContent={<PlusIcon className="h-4 w-4" />}
-                onPress={handleGenerateKey}
-              >
+              <Button isPending={generatingKey} variant="primary" onPress={handleGenerateKey}>
+                <PlusIcon className="h-4 w-4" />
                 {t("createKey")}
               </Button>
             </div>
@@ -107,91 +95,100 @@ export default function ApiKeyCard() {
           {apiKeys.length > 0 && (
             <div className="mt-4">
               <h3 className="mb-2 text-base font-medium">{t("yourKeys")}</h3>
-              <Table aria-label={t("title")}>
-                <TableHeader>
-                  <TableColumn>{t("tableHeaders.name")}</TableColumn>
-                  <TableColumn>{t("tableHeaders.keyPrefix")}</TableColumn>
-                  <TableColumn>{t("tableHeaders.created")}</TableColumn>
-                  <TableColumn>{t("tableHeaders.status")}</TableColumn>
-                  <TableColumn>{t("tableHeaders.actions")}</TableColumn>
-                </TableHeader>
-                <TableBody>
-                  {apiKeys.map((key) => (
-                    <TableRow key={key.id}>
-                      <TableCell>{key.name || t("unnamed")}</TableCell>
-                      <TableCell>
-                        <code className="bg-default-100 rounded px-2 py-1 text-xs">
-                          {key.start || "***"}...
-                        </code>
-                      </TableCell>
-                      <TableCell>{new Date(key.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Chip color={key.enabled ? "success" : "danger"} size="sm" variant="flat">
-                          {key.enabled ? t("active") : t("disabled")}
-                        </Chip>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            isIconOnly
-                            color={key.enabled ? "warning" : "success"}
-                            size="sm"
-                            title={key.enabled ? t("disableKey") : t("enableKey")}
-                            variant="light"
-                            onPress={() => toggleApiKey(key.id, !key.enabled)}
-                          >
-                            {key.enabled ? (
-                              <PauseIcon className="h-4 w-4" />
-                            ) : (
-                              <PlayIcon className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            isIconOnly
-                            color="danger"
-                            size="sm"
-                            title={t("deleteKey")}
-                            variant="light"
-                            onPress={() => {
-                              setKeyToDelete(key.id);
-                              setShowDeleteModal(true);
-                            }}
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+              <Table>
+                <Table.ScrollContainer>
+                  <Table.Content aria-label={t("title")}>
+                    <Table.Header>
+                      <Table.Column isRowHeader>{t("tableHeaders.name")}</Table.Column>
+                      <Table.Column>{t("tableHeaders.keyPrefix")}</Table.Column>
+                      <Table.Column>{t("tableHeaders.created")}</Table.Column>
+                      <Table.Column>{t("tableHeaders.status")}</Table.Column>
+                      <Table.Column>{t("tableHeaders.actions")}</Table.Column>
+                    </Table.Header>
+                    <Table.Body>
+                      {apiKeys.map((key) => (
+                        <Table.Row key={key.id} id={key.id}>
+                          <Table.Cell>{key.name || t("unnamed")}</Table.Cell>
+                          <Table.Cell>
+                            <code className="bg-default-100 rounded px-2 py-1 text-xs">
+                              {key.start || "***"}...
+                            </code>
+                          </Table.Cell>
+                          <Table.Cell>{new Date(key.createdAt).toLocaleDateString()}</Table.Cell>
+                          <Table.Cell>
+                            <Chip
+                              color={key.enabled ? "success" : "danger"}
+                              size="sm"
+                              variant="soft"
+                            >
+                              <Chip.Label>{key.enabled ? t("active") : t("disabled")}</Chip.Label>
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <div className="flex gap-1">
+                              <Button
+                                isIconOnly
+                                aria-label={key.enabled ? t("disableKey") : t("enableKey")}
+                                size="sm"
+                                title={key.enabled ? t("disableKey") : t("enableKey")}
+                                variant={key.enabled ? "warning-soft" : "success-soft"}
+                                onPress={() => toggleApiKey(key.id, !key.enabled)}
+                              >
+                                {key.enabled ? (
+                                  <PauseIcon className="h-4 w-4" />
+                                ) : (
+                                  <PlayIcon className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                isIconOnly
+                                aria-label={t("deleteKey")}
+                                size="sm"
+                                title={t("deleteKey")}
+                                variant="danger-soft"
+                                onPress={() => {
+                                  setKeyToDelete(key.id);
+                                  setShowDeleteModal(true);
+                                }}
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </Table.Cell>
+                        </Table.Row>
+                      ))}
+                    </Table.Body>
+                  </Table.Content>
+                </Table.ScrollContainer>
               </Table>
             </div>
           )}
 
           {apiKeys.length === 0 && <p className="text-default-500 py-4 text-base">{t("noKeys")}</p>}
-        </CardBody>
+        </Card.Content>
       </Card>
 
       {/* Key Generation Modal */}
-      <Modal
-        classNames={{ wrapper: "z-[1100]", backdrop: "z-[1099]" }}
-        isDismissable={false}
-        isOpen={showTokenModal}
-        onOpenChange={setShowTokenModal}
-      >
-        <ModalContent>
-          {(onClose: () => void) => (
-            <>
-              <ModalHeader>{t("generatedModal.title")}</ModalHeader>
-              <ModalBody>
+      <Modal state={tokenModalState}>
+        <Modal.Backdrop className="z-[1099]" isDismissable={false} variant="blur">
+          <Modal.Container className="z-[1100]" placement="center">
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>{t("generatedModal.title")}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
                 <p className="text-warning mb-4 text-base">{t("generatedModal.warning")}</p>
                 <div className="flex gap-2">
-                  <Input
-                    isReadOnly
-                    classNames={{ input: "font-mono text-xs" }}
-                    value={generatedKey || ""}
-                  />
-                  <Button isIconOnly onPress={handleCopyKey}>
+                  <TextField fullWidth isReadOnly value={generatedKey || ""}>
+                    <InputGroup fullWidth variant="secondary">
+                      <InputGroup.Input className="font-mono text-xs" />
+                    </InputGroup>
+                  </TextField>
+                  <Button
+                    isIconOnly
+                    aria-label={t("generatedModal.confirmButton")}
+                    onPress={handleCopyKey}
+                  >
                     <ClipboardDocumentIcon className="h-4 w-4" />
                   </Button>
                 </div>
@@ -200,47 +197,49 @@ export default function ApiKeyCard() {
                     code: (chunks) => <code className="bg-default-100 rounded px-1">{chunks}</code>,
                   })}
                 </p>
-              </ModalBody>
-              <ModalFooter>
+              </Modal.Body>
+              <Modal.Footer>
                 <Button
-                  color="primary"
+                  variant="primary"
                   onPress={() => {
                     setGeneratedKey(null);
-                    onClose();
+                    tokenModalState.close();
                   }}
                 >
                   {t("generatedModal.confirmButton")}
                 </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       {/* Delete Key Confirmation */}
-      <Modal
-        classNames={{ wrapper: "z-[1100]", backdrop: "z-[1099]" }}
-        isOpen={showDeleteModal}
-        onOpenChange={setShowDeleteModal}
-      >
-        <ModalContent>
-          {(onClose: () => void) => (
-            <>
-              <ModalHeader>{t("deleteModal.title")}</ModalHeader>
-              <ModalBody>
+      <Modal state={deleteModalState}>
+        <Modal.Backdrop className="z-[1099]" variant="blur">
+          <Modal.Container className="z-[1100]" placement="center">
+            <Modal.Dialog>
+              <Modal.CloseTrigger aria-label={tActions("cancel")} />
+              <Modal.Header>
+                <Modal.Heading>{t("deleteModal.title")}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
                 <p>{t("deleteModal.message")}</p>
-              </ModalBody>
-              <ModalFooter>
-                <Button variant="flat" onPress={onClose}>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="tertiary" onPress={deleteModalState.close}>
                   {tActions("cancel")}
                 </Button>
-                <Button color="danger" onPress={() => keyToDelete && handleDeleteKey(keyToDelete)}>
+                <Button
+                  variant="danger"
+                  onPress={() => keyToDelete && handleDeleteKey(keyToDelete)}
+                >
                   {t("deleteModal.confirmButton")}
                 </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </>
   );

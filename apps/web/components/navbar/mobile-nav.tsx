@@ -1,9 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDaysIcon, ClipboardDocumentListIcon, HomeIcon } from "@heroicons/react/20/solid";
+import {
+  BookOpenIcon,
+  CalendarDaysIcon,
+  ClipboardDocumentCheckIcon,
+  ShoppingCartIcon,
+  Squares2X2Icon,
+} from "@heroicons/react/20/solid";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { cssGlassBackdrop } from "@norish/web/config/css-tokens";
@@ -14,16 +20,27 @@ import { useUserContext } from "@/context/user-context";
 import NavbarUserMenu from "@/components/navbar/navbar-user-menu";
 
 // Map hrefs to translation keys (same as navbar.tsx)
-const navLabelKeys: Record<string, "home" | "calendar" | "groceries"> = {
+const navLabelKeys: Record<string, "dashboard" | "home" | "calendar" | "prep" | "groceries"> = {
+  "/dashboard": "dashboard",
   "/": "home",
   "/groceries": "groceries",
   "/calendar": "calendar",
+  "/prep-table": "prep",
+};
+
+const mobileNavLabels: Record<string, string> = {
+  "/dashboard": "Home",
+  "/": "Recipes",
+  "/calendar": "Planner",
+  "/prep-table": "Prep",
+  "/groceries": "Shop",
 };
 
 export const MobileNav = () => {
   const tNav = useTranslations("navbar.nav");
   const pathname = usePathname();
   const { userMenuOpen, setUserMenuOpen } = useUserContext();
+  const [isMounted, setIsMounted] = useState(false);
 
   const rootRef = useRef<HTMLDivElement | null>(null);
 
@@ -32,6 +49,10 @@ export const MobileNav = () => {
   });
 
   // Keep visible while user menu is open
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   useEffect(() => {
     if (userMenuOpen) {
       show();
@@ -44,6 +65,8 @@ export const MobileNav = () => {
       setUserMenuOpen(false);
     }
   }, [userMenuOpen, setUserMenuOpen]);
+
+  if (!isMounted) return null;
 
   return (
     <>
@@ -69,32 +92,36 @@ export const MobileNav = () => {
           y: isVisible ? 0 : 100,
           opacity: isVisible ? 1 : 0,
         }}
-        className="fixed inset-x-0 z-[60] px-4 md:hidden"
+        className="fixed inset-x-0 z-[60] px-3 md:hidden"
         initial={false}
         style={{ bottom: "max(calc(env(safe-area-inset-bottom) - 0.2rem), 1rem)" }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        <div ref={rootRef} className="flex items-center justify-center gap-3">
+        <div ref={rootRef} className="mx-auto flex max-w-md items-center justify-center gap-2">
           {/* Nav items - full width */}
           <div
-            className={`flex h-13 flex-1 items-center justify-center rounded-full px-4 ${cssGlassBackdrop}`}
+            className={`flex h-14 min-w-0 flex-1 items-center justify-center rounded-full px-2 ${cssGlassBackdrop}`}
           >
-            <ul className="flex w-full items-center justify-around text-[11px]">
+            <ul className="grid w-full grid-cols-5 items-center text-[10px]">
               {siteConfig.navItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
                   (item.href !== "/" && pathname?.startsWith(item.href + "/"));
                 const Icon =
-                  item.href === "/"
-                    ? HomeIcon
+                  item.href === "/dashboard"
+                    ? Squares2X2Icon
+                    : item.href === "/"
+                    ? BookOpenIcon
                     : item.href.startsWith("/calendar")
                       ? CalendarDaysIcon
-                      : ClipboardDocumentListIcon;
+                      : item.href.startsWith("/prep-table")
+                        ? ClipboardDocumentCheckIcon
+                      : ShoppingCartIcon;
 
                 return (
-                  <li key={item.href}>
+                  <li key={item.href} className="min-w-0">
                     <NextLink
-                      className={`flex flex-col items-center justify-center gap-1 rounded-full px-4 py-2 transition-colors ${
+                      className={`flex h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-full px-1 transition-colors ${
                         isActive
                           ? "text-primary font-semibold"
                           : "text-default-600 hover:text-foreground hover:bg-default-100/70"
@@ -108,8 +135,8 @@ export const MobileNav = () => {
                       }}
                     >
                       <Icon className="h-5 w-5" />
-                      <span className="leading-none">
-                        {tNav(navLabelKeys[item.href] ?? "home")}
+                      <span className="block max-w-full truncate text-center leading-none">
+                        {mobileNavLabels[item.href] ?? tNav(navLabelKeys[item.href] ?? "home")}
                       </span>
                     </NextLink>
                   </li>
@@ -120,7 +147,7 @@ export const MobileNav = () => {
 
           {/* User menu */}
           <div
-            className={`flex h-13 w-13 shrink-0 items-center justify-center rounded-full ${cssGlassBackdrop}`}
+            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${cssGlassBackdrop}`}
           >
             <NavbarUserMenu />
           </div>

@@ -7,7 +7,7 @@
 
 import type { Job } from "bullmq";
 import type { RecipeImportJobData } from "@norish/queue/contracts/job-types";
-import type { PolicyEmitContext } from "@norish/trpc/helpers";
+import type { PolicyEmitContext } from "@norish/queue/events/policy";
 
 import { deleteRecipeImagesDir } from "@norish/shared-server/media/storage";
 import { createLogger } from "@norish/shared-server/logger";
@@ -23,10 +23,10 @@ import { getDecryptedTokensByUserId } from "@norish/db/repositories/site-auth-to
 import { addAllergyDetectionJob } from "@norish/queue/allergy-detection/producer";
 import { addAutoCategorizationJob } from "@norish/queue/auto-categorization/producer";
 import { addAutoTaggingJob } from "@norish/queue/auto-tagging/producer";
+import { emitByPolicy } from "@norish/queue/events/policy";
+import { recipeEmitter } from "@norish/queue/events/recipes";
 import { getBullClient } from "@norish/queue/redis/bullmq";
 import { getQueues } from "@norish/queue/registry";
-import { emitByPolicy } from "@norish/trpc/helpers";
-import { recipeEmitter } from "@norish/trpc/routers/recipes/emitter";
 
 import {
   baseWorkerOptions,
@@ -119,7 +119,9 @@ async function processImportJob(job: Job<RecipeImportJobData>): Promise<void> {
     throw new Error("Failed to parse recipe from URL");
   }
 
-  const createdId = await createRecipeWithRefs(recipeId, userId, parseResult.recipe);
+  const createdId = await createRecipeWithRefs(recipeId, userId, parseResult.recipe, {
+    source: parseResult.source,
+  });
 
   if (!createdId) {
     throw new Error("Failed to save imported recipe");

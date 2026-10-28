@@ -66,7 +66,7 @@ export function parseIngredients(
   const ingredients: ParsedIngredient[] = parsed.map((ing, i) => ({
     ingredientId: null,
     ingredientName: ing.description,
-    amount: ing.quantity != null ? ing.quantity : null,
+    amount: ing.quantity != null && Number.isFinite(ing.quantity) ? ing.quantity : null,
     unit: normalizeUnit(ing.unitOfMeasure ?? "", units),
     systemUsed,
     order: i,

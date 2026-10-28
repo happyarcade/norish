@@ -8,6 +8,7 @@ export type * from "./dto/planned-item";
 export type * from "./dto/planned-item-from-query";
 export type * from "./dto/notes";
 export type * from "./dto/groceries";
+export type * from "./dto/pantry";
 export type * from "./dto/recurring-groceries";
 export type * from "./dto/stores";
 export type * from "./dto/recipe-ingredient";

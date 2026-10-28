@@ -1,7 +1,7 @@
-import type { GroceryUpdateDto } from "@norish/shared/contracts";
-
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+
+import type { GroceryUpdateDto } from "@norish/shared/contracts";
 import { assertHouseholdAccess } from "@norish/auth/permissions";
 import { getUnits } from "@norish/config/server-config-loader";
 import {
@@ -19,6 +19,7 @@ import {
   GroceryUpdateInputSchema,
   listGroceriesByUsers,
   markAllDoneInStore,
+  moveDoneGroceriesToPantry,
   reorderGroceriesInStore,
   updateGroceries,
 } from "@norish/db";
@@ -34,7 +35,7 @@ import { parseIngredientWithDefaults } from "@norish/shared/lib/helpers";
 
 import { authedProcedure } from "../../middleware";
 import { router } from "../../trpc";
-
+import { pantryEmitter } from "../pantry/emitter";
 import { groceryEmitter } from "./emitter";
 
 /**
@@ -607,6 +608,65 @@ const deleteDone = authedProcedure
     return { success: true };
   });
 
+const moveDoneToPantry = authedProcedure
+  .input(
+    z.object({
+      groceryIds: z.array(z.uuid()).min(1).max(500),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    try {
+      const result = await moveDoneGroceriesToPantry({
+        userId: ctx.user.id,
+        userIds: ctx.userIds,
+        groceryIds: input.groceryIds,
+      });
+
+      for (const item of result.createdItems) {
+        pantryEmitter.emitToHousehold(ctx.householdKey, "added", { item });
+      }
+      const createdItemIds = new Set(result.createdItems.map((item) => item.id));
+
+      for (const item of result.pantryItems) {
+        if (!createdItemIds.has(item.id)) {
+          pantryEmitter.emitToHousehold(ctx.householdKey, "updated", { item });
+        }
+      }
+      groceryEmitter.emitToHousehold(ctx.householdKey, "deleted", {
+        groceryIds: result.groceryIds,
+      });
+
+      log.info(
+        {
+          userId: ctx.user.id,
+          groceryCount: result.groceryIds.length,
+          pantryItemCount: result.pantryItems.length,
+          createdPantryItemCount: result.createdItems.length,
+        },
+        "Moved completed groceries to pantry"
+      );
+
+      return {
+        groceryIds: result.groceryIds,
+        pantryItems: result.pantryItems,
+        createdPantryItemCount: result.createdItems.length,
+      };
+    } catch (error) {
+      log.error(
+        { error, userId: ctx.user.id, groceryIds: input.groceryIds },
+        "Failed to move completed groceries to pantry"
+      );
+
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to move completed groceries to the pantry",
+      });
+    }
+  });
+
 export const groceriesProcedures = router({
   list,
   create,
@@ -617,4 +677,5 @@ export const groceriesProcedures = router({
   reorderInStore,
   markAllDone,
   deleteDone,
+  moveDoneToPantry,
 });

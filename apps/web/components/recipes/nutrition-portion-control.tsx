@@ -1,7 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { MinusIcon, PlusIcon } from "@heroicons/react/16/solid";
-import { Button } from "@heroui/react";
 
 export interface NutritionPortionControlProps {
   portions: number;

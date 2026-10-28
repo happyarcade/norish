@@ -141,6 +141,9 @@
     },
     "menu": {
       "description": "Импортируйте по URL, отсканируйте фото или начните с нуля."
+    },
+    "clipboard": {
+      "title": "Import a recipe from the link you copied?"
     }
   },
   "formatting": {

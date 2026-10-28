@@ -1,6 +1,7 @@
 import {
   index,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -14,6 +15,23 @@ import { users } from "./auth";
 import { recipeCategoryEnum } from "./recipe-categories";
 
 export const measurementSystemEnum = pgEnum("measurement_system", ["metric", "us"]);
+
+type RecipeNutritionMetric = {
+  label?: string | null;
+  value?: number | null;
+  unit?: string | null;
+  raw?: string | null;
+};
+
+type RecipeNutritionDetails = {
+  servingSize?: string | null;
+  nutrients?: Record<string, RecipeNutritionMetric>;
+};
+
+type RecipeIngredientGroup = {
+  purpose?: string | null;
+  ingredients?: string[];
+};
 
 export const recipes = pgTable(
   "recipes",
@@ -36,6 +54,8 @@ export const recipes = pgTable(
     fat: numeric("fat", { precision: 6, scale: 2 }),
     carbs: numeric("carbs", { precision: 6, scale: 2 }),
     protein: numeric("protein", { precision: 6, scale: 2 }),
+    nutritionDetails: jsonb("nutrition_details").$type<RecipeNutritionDetails>(),
+    ingredientGroups: jsonb("ingredient_groups").$type<RecipeIngredientGroup[]>().notNull().default([]),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     categories: recipeCategoryEnum("categories").array().notNull().default([]),

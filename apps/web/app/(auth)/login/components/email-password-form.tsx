@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
-import { Button, Input, Link } from "@heroui/react";
+import { InputGroup, Label, TextField } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
+
 import { signIn } from "@norish/shared/lib/auth/client";
 
 interface EmailPasswordFormProps {
@@ -30,7 +33,7 @@ export function EmailPasswordForm({
 
     try {
       const result = await signIn.email({
-        email,
+        email: email.trim().toLowerCase(),
         password,
         callbackURL: callbackUrl,
       });
@@ -49,42 +52,62 @@ export function EmailPasswordForm({
 
   return (
     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-      <Input
+      <TextField
+        fullWidth
         isRequired
-        autoComplete="email"
-        label={t("email")}
-        placeholder={t("emailPlaceholder")}
-        startContent={<EnvelopeIcon className="text-default-400 h-4 w-4" />}
-        type="email"
         value={email}
-        onValueChange={(value) => {
+        onChange={(value) => {
           setEmail(value);
           setError(null);
         }}
-      />
+      >
+        <Label>{t("email")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Prefix>
+            <EnvelopeIcon className="text-default-400 h-4 w-4" />
+          </InputGroup.Prefix>
+          <InputGroup.Input
+            autoCapitalize="none"
+            autoComplete="email"
+            autoCorrect="off"
+            placeholder={t("emailPlaceholder")}
+            spellCheck={false}
+            type="email"
+          />
+        </InputGroup>
+      </TextField>
 
-      <Input
+      <TextField
+        fullWidth
         isRequired
-        autoComplete="current-password"
-        label={t("password")}
-        placeholder={t("passwordPlaceholder")}
-        startContent={<LockClosedIcon className="text-default-400 h-4 w-4" />}
-        type="password"
         value={password}
-        onValueChange={(value) => {
+        onChange={(value) => {
           setPassword(value);
           setError(null);
         }}
-      />
+      >
+        <Label>{t("password")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Prefix>
+            <LockClosedIcon className="text-default-400 h-4 w-4" />
+          </InputGroup.Prefix>
+          <InputGroup.Input
+            autoComplete="current-password"
+            placeholder={t("passwordPlaceholder")}
+            type="password"
+          />
+        </InputGroup>
+      </TextField>
 
       {error && <p className="text-small text-danger text-center">{error}</p>}
 
       <Button
+        fullWidth
         className="mt-2"
-        color="primary"
         isDisabled={!email || !password}
-        isLoading={isLoading}
+        isPending={isLoading}
         type="submit"
+        variant="primary"
       >
         {t("signIn")}
       </Button>
@@ -93,7 +116,7 @@ export function EmailPasswordForm({
         <p className="text-small text-default-500 text-center">
           {t("noAccount")}{" "}
           <Link
-            className="text-small"
+            className="text-primary text-sm font-medium hover:underline"
             href={`/signup${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
           >
             {t("signUp")}

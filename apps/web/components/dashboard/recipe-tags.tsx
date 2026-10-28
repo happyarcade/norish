@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Chip } from "@heroui/react";
+import { Chip } from "@/components/ui/chip";
 import { motion, useMotionValue } from "motion/react";
+
 import { isAllergenTag, sortTagsWithAllergyPriority } from "@norish/shared/lib/helpers";
 import { cssGlassBackdropChip } from "@norish/web/config/css-tokens";
 

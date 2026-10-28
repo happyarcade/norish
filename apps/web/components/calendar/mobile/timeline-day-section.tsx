@@ -1,25 +1,16 @@
 "use client";
 
-import type { Slot } from "@norish/shared/contracts";
-import type { PlannedItemDisplay } from "./types";
-
 import { memo, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useDroppable } from "@dnd-kit/core";
 import { PlusIcon } from "@heroicons/react/16/solid";
-import {
-  Button,
-  Card,
-  CardBody,
-  Divider,
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownTrigger,
-} from "@heroui/react";
+import { Dropdown, Separator } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
+import type { Slot } from "@norish/shared/contracts";
 
-
+import type { PlannedItemDisplay } from "./types";
 import { TimelineSlotContainer } from "./timeline-slot-container";
 import { SLOTS } from "./types";
 
@@ -106,7 +97,7 @@ export const TimelineDaySection = memo(function TimelineDaySection({
       className={`transition-all duration-200 ${showDragHighlight ? "ring-primary ring-2" : ""} ${isToday ? "ring-primary/50 shadow-md ring-2" : ""}`}
       shadow={isToday ? "md" : "sm"}
     >
-      <CardBody className="flex flex-col gap-2 px-4 py-3">
+      <Card.Content className="flex flex-col gap-2 px-4 py-3">
         {/* Day header */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col">
@@ -128,30 +119,30 @@ export const TimelineDaySection = memo(function TimelineDaySection({
           </div>
 
           <Dropdown>
-            <DropdownTrigger>
-              <Button
-                isIconOnly
-                aria-label={t("addItem")}
-                className="bg-default-100 text-default-500 hover:text-primary h-8 min-w-8 rounded-full shadow-sm transition-transform active:scale-95"
-                size="sm"
-                variant="flat"
-              >
-                <PlusIcon className="h-4 w-4" />
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              aria-label={tSlots("chooseSlot")}
-              onAction={(slot) => onAddItem(dateKey, slot as Slot)}
+            <Button
+              isIconOnly
+              aria-label={t("addItem")}
+              className="bg-default-100 text-default-500 hover:text-primary h-8 min-w-8 rounded-full shadow-sm transition-transform active:scale-95"
+              size="sm"
+              variant="flat"
             >
-              <DropdownItem key="Breakfast">{slotLabels.Breakfast}</DropdownItem>
-              <DropdownItem key="Lunch">{slotLabels.Lunch}</DropdownItem>
-              <DropdownItem key="Dinner">{slotLabels.Dinner}</DropdownItem>
-              <DropdownItem key="Snack">{slotLabels.Snack}</DropdownItem>
-            </DropdownMenu>
+              <PlusIcon className="h-4 w-4" />
+            </Button>
+            <Dropdown.Popover placement="bottom end">
+              <Dropdown.Menu
+                aria-label={tSlots("chooseSlot")}
+                onAction={(slot) => onAddItem(dateKey, slot as Slot)}
+              >
+                <Dropdown.Item id="Breakfast">{slotLabels.Breakfast}</Dropdown.Item>
+                <Dropdown.Item id="Lunch">{slotLabels.Lunch}</Dropdown.Item>
+                <Dropdown.Item id="Dinner">{slotLabels.Dinner}</Dropdown.Item>
+                <Dropdown.Item id="Snack">{slotLabels.Snack}</Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown.Popover>
           </Dropdown>
         </div>
 
-        <Divider />
+        <Separator />
 
         {/* Slot containers */}
         {hasItems ? (
@@ -177,7 +168,7 @@ export const TimelineDaySection = memo(function TimelineDaySection({
         ) : (
           <span className="text-default-400 py-1 text-xs italic">{t("noItems")}</span>
         )}
-      </CardBody>
+      </Card.Content>
     </Card>
   );
 });

@@ -1,11 +1,7 @@
 "use client";
 
-import type { RecipeMap } from "@/hooks/groceries";
-import type { GroceryDto, RecurringGroceryDto } from "@norish/shared/contracts";
-import type { RecurrencePattern } from "@norish/shared/contracts/recurrence";
-
+import type { GroceryCreateData, RecipeMap } from "@/hooks/groceries";
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from "react";
-
 import {
   useGroceriesMutations,
   useGroceriesQuery,
@@ -13,19 +9,21 @@ import {
 } from "@/hooks/groceries";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 
+import type { GroceryDto, RecurringGroceryDto } from "@norish/shared/contracts";
+import type { RecurrencePattern } from "@norish/shared/contracts/recurrence";
 
 // =============================================================================
 // View Mode Types
 // =============================================================================
 
-export type GroceryViewMode = "store" | "recipe";
+export type GroceryViewMode = "planner" | "store" | "recipe";
 
 const GROCERY_VIEW_MODE_KEY = "norish:grocery-view-mode";
 const GROCERY_GROUP_SIMILAR_KEY = "norish:grocery-group-similar";
 
 // Validation function defined outside component to prevent re-renders
 function validateViewMode(data: unknown): GroceryViewMode | null {
-  return data === "store" || data === "recipe" ? data : null;
+  return data === "planner" || data === "store" || data === "recipe" ? data : null;
 }
 
 // Validation function for group similar toggle
@@ -50,6 +48,7 @@ type DataCtx = {
 
   // Grocery Actions
   createGrocery: (raw: string, storeId?: string | null) => void;
+  createGroceriesFromData: (groceries: GroceryCreateData[]) => Promise<string[]>;
   createRecurringGrocery: (
     raw: string,
     pattern: RecurrencePattern,
@@ -77,6 +76,11 @@ type DataCtx = {
   ) => void;
   markAllDoneInStore: (storeId: string | null) => void;
   deleteDoneInStore: (storeId: string | null) => void;
+  moveDoneToPantry: (ids: string[]) => Promise<{
+    movedCount: number;
+    pantryItemCount: number;
+    createdPantryItemCount: number;
+  }>;
 };
 
 const GroceriesContext = createContext<DataCtx | null>(null);
@@ -126,7 +130,7 @@ export function GroceriesContextProvider({ children }: { children: ReactNode }) 
   // View mode with localStorage persistence
   const [viewMode, setViewMode] = useLocalStorage<GroceryViewMode>(
     GROCERY_VIEW_MODE_KEY,
-    "store",
+    "planner",
     validateViewMode
   );
 

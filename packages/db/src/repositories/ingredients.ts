@@ -1,3 +1,5 @@
+﻿import { eq, inArray, sql } from "drizzle-orm";
+import z from "zod";
 
 import type { UnitsMap } from "@norish/config/zod/server-config";
 import type { IngredientDto } from "@norish/shared/contracts/dto/ingredient";
@@ -6,10 +8,6 @@ import type {
   RecipeIngredientInsertDto,
   RecipeIngredientsDto,
 } from "@norish/shared/contracts/dto/recipe-ingredient";
-
-import z from "zod";
-import { eq, inArray, sql } from "drizzle-orm";
-import { dbLogger } from "@norish/db/logger";
 import defaultUnits from "@norish/config/units.default.json";
 import {
   ServerConfigKeys,
@@ -17,6 +15,7 @@ import {
   UnitsMapSchema,
 } from "@norish/config/zod/server-config";
 import { db } from "@norish/db/drizzle";
+import { dbLogger } from "@norish/db/logger";
 import { getConfig } from "@norish/db/repositories/server-config";
 import { ingredients, recipeIngredients } from "@norish/db/schema";
 import { IngredientSelectBaseSchema } from "@norish/shared/contracts/zod";
@@ -214,6 +213,7 @@ export async function attachIngredientsToRecipeByInputTx(
     ingredientId: ri.ingredientId!,
     amount: ri.amount != null ? Number(ri.amount) : null,
     unit: normalizeUnit(ri.unit ?? "", units),
+    rawLine: ri.rawLine ?? null,
     order: ri.order,
     systemUsed: (ri.systemUsed as MeasurementSystem) || "metric",
   }));
@@ -235,7 +235,8 @@ export async function attachIngredientsToRecipeByInputTx(
         recipeId: ri.recipeId,
         ingredientId: ing.id,
         amount: ri.amount != null ? Number(ri.amount) : null,
-        unit: normalizeUnit(ri.unit ?? "", units), // ← Normalize unit to canonical ID
+        unit: normalizeUnit(ri.unit ?? "", units), // Normalize unit to canonical ID
+        rawLine: ri.rawLine ?? null,
         order: ri.order,
         systemUsed: (ri.systemUsed as MeasurementSystem) || "metric",
       };
@@ -285,4 +286,24 @@ export async function attachIngredientsToRecipeByInputTx(
   }
 
   return parsedInserted.data;
+}
+export type RecipeIngredientSubstitutionCandidate = {
+  recipeIngredientId: string;
+  ingredientName: string;
+  rawLine: string | null;
+};
+
+export async function listRecipeIngredientSubstitutionCandidates(
+  recipeId: string
+): Promise<RecipeIngredientSubstitutionCandidate[]> {
+  return db
+    .select({
+      recipeIngredientId: recipeIngredients.id,
+      ingredientName: ingredients.name,
+      rawLine: recipeIngredients.rawLine,
+    })
+    .from(recipeIngredients)
+    .innerJoin(ingredients, eq(recipeIngredients.ingredientId, ingredients.id))
+    .where(eq(recipeIngredients.recipeId, recipeId))
+    .orderBy(recipeIngredients.order);
 }

@@ -27,6 +27,7 @@
   "nav": {
     "home": "레시피",
     "calendar": "달력",
+    "prep": "Prep Table",
     "groceries": "장보기"
   },
   "mobile": {

@@ -1,18 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { TrashIcon } from "@heroicons/react/16/solid";
-import {
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from "@heroui/react";
+import { Modal, useOverlayState } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
 import { useUserSettingsContext } from "../context";
@@ -22,6 +14,10 @@ export default function DangerZoneCard() {
   const tActions = useTranslations("common.actions");
   const { deleteAccount } = useUserSettingsContext();
   const [showAccountDeleteModal, setShowAccountDeleteModal] = useState(false);
+  const accountDeleteModalState = useOverlayState({
+    isOpen: showAccountDeleteModal,
+    onOpenChange: setShowAccountDeleteModal,
+  });
 
   const handleDeleteAccount = async () => {
     await deleteAccount();
@@ -30,53 +26,48 @@ export default function DangerZoneCard() {
   return (
     <>
       <Card className="border-danger-200 dark:border-danger-900">
-        <CardHeader>
+        <Card.Header>
           <h2 className="text-danger text-lg font-semibold">{t("title")}</h2>
-        </CardHeader>
-        <CardBody className="gap-4">
+        </Card.Header>
+        <Card.Content className="gap-4">
           <p className="text-default-600 text-base">{t("description")}</p>
           <div className="flex justify-end">
-            <Button
-              color="danger"
-              startContent={<TrashIcon className="h-4 w-4" />}
-              variant="flat"
-              onPress={() => setShowAccountDeleteModal(true)}
-            >
+            <Button variant="danger-soft" onPress={() => setShowAccountDeleteModal(true)}>
+              <TrashIcon className="h-4 w-4" />
               {t("deleteButton")}
             </Button>
           </div>
-        </CardBody>
+        </Card.Content>
       </Card>
 
       {/* Delete Account Confirmation */}
-      <Modal
-        classNames={{ wrapper: "z-[1100]", backdrop: "z-[1099]" }}
-        isOpen={showAccountDeleteModal}
-        onOpenChange={setShowAccountDeleteModal}
-      >
-        <ModalContent>
-          {(onClose: () => void) => (
-            <>
-              <ModalHeader className="text-danger">{t("deleteModal.title")}</ModalHeader>
-              <ModalBody>
+      <Modal state={accountDeleteModalState}>
+        <Modal.Backdrop className="z-[1099]" variant="blur">
+          <Modal.Container className="z-[1100]" placement="center">
+            <Modal.Dialog>
+              <Modal.CloseTrigger aria-label={tActions("cancel")} />
+              <Modal.Header className="text-danger">
+                <Modal.Heading>{t("deleteModal.title")}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
                 <p className="text-danger mb-2 font-semibold">
                   {t("deleteModal.permanentWarning")}
                 </p>
                 <p>{t("deleteModal.dataWarning")}</p>
                 <p className="mt-2">{t("deleteModal.recipesNote")}</p>
                 <p className="mt-2">{t("deleteModal.adminNote")}</p>
-              </ModalBody>
-              <ModalFooter>
-                <Button variant="flat" onPress={onClose}>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="tertiary" onPress={accountDeleteModalState.close}>
                   {tActions("cancel")}
                 </Button>
-                <Button color="danger" onPress={handleDeleteAccount}>
+                <Button variant="danger" onPress={handleDeleteAccount}>
                   {t("deleteModal.confirmButton")}
                 </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </>
   );

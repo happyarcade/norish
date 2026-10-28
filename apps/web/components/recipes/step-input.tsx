@@ -1,14 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import SmartTextInput from "@/components/shared/smart-text-input";
+import { Button } from "@/components/ui/button";
+import { useRecipeImages } from "@/hooks/recipes";
 import { Bars3Icon, PhotoIcon, XMarkIcon } from "@heroicons/react/16/solid";
-import { Button, Image } from "@heroui/react";
 import { Reorder, useDragControls } from "motion/react";
 import { useTranslations } from "next-intl";
-import { MeasurementSystem } from "@norish/shared/contracts";
 
-import { useRecipeImages } from "@/hooks/recipes";
-import SmartTextInput from "@/components/shared/smart-text-input";
+import { MeasurementSystem } from "@norish/shared/contracts";
 
 export interface StepImage {
   image: string;
@@ -392,9 +393,12 @@ function StepRow({
               {item.images.map((img, imgIndex) => (
                 <div key={imgIndex} className="relative h-18 w-18 md:h-20 md:w-20">
                   <Image
+                    unoptimized
                     alt={`Step ${index + 1} image ${imgIndex + 1}`}
                     className="h-14 w-14 rounded-lg object-cover md:h-16 md:w-16"
+                    height={64}
                     src={img.image}
+                    width={64}
                   />
                   <button
                     className="bg-danger hover:bg-danger-600 absolute top-0 right-0 z-10 flex h-6 w-6 items-center justify-center rounded-full shadow-lg transition-colors"

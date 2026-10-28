@@ -16,7 +16,9 @@ import {
   HouseholdWithUsersNamesSchema,
 } from "@norish/shared/contracts/zod/household";
 
-import { getUsersByIds } from "./users";
+import { ensureHouseholdPlannerFoundation, ensureHouseholdPlannerFoundationTx } from "./planner-foundation";
+import { deactivateLinkedHouseholdPersonTx, ensureLinkedHouseholdPersonTx } from "./household-people";
+import { getUserById, getUsersByIds } from "./users";
 
 export async function getUsersByHouseholdId(householdId: string): Promise<HouseholdUserDto[]> {
   const rows = await db.query.householdUsers.findMany({
@@ -35,15 +37,19 @@ export async function createHousehold(input: HouseholdInsertDto): Promise<Househ
   const code = await generateUniqueJoinCode();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-  const [row] = await db
-    .insert(households)
-    .values({ ...parsed.data, joinCode: code, joinCodeExpiresAt: expiresAt })
-    .returning();
-  const validated = HouseholdSelectBaseSchema.safeParse(row);
+  return await db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(households)
+      .values({ ...parsed.data, joinCode: code, joinCodeExpiresAt: expiresAt })
+      .returning();
+    const validated = HouseholdSelectBaseSchema.safeParse(row);
 
-  if (!validated.success) throw new Error("Failed to parse created household");
+    if (!validated.success) throw new Error("Failed to parse created household");
 
-  return validated.data;
+    await ensureHouseholdPlannerFoundationTx(tx, validated.data.id);
+
+    return validated.data;
+  });
 }
 
 export async function deleteHousehold(id: string): Promise<void> {
@@ -141,32 +147,44 @@ export async function addUserToHousehold(input: HouseholdUserInsertDto): Promise
     throw new Error("User is already in a household. Leave the current household first.");
   }
 
-  const [row] = await db
-    .insert(householdUsers)
-    .values(parsed.data as any)
-    .onConflictDoNothing()
-    .returning();
+  const user = await getUserById(parsed.data.userId);
+  const displayName = user?.name?.trim() || "Household member";
 
-  const resolved = row
-    ? row
-    : (
-        await db
-          .select()
-          .from(householdUsers)
-          .where(
-            and(
-              eq(householdUsers.householdId, parsed.data.householdId),
-              eq(householdUsers.userId, parsed.data.userId)
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(householdUsers)
+      .values(parsed.data as any)
+      .onConflictDoNothing()
+      .returning();
+
+    const resolved = row
+      ? row
+      : (
+          await tx
+            .select()
+            .from(householdUsers)
+            .where(
+              and(
+                eq(householdUsers.householdId, parsed.data.householdId),
+                eq(householdUsers.userId, parsed.data.userId)
+              )
             )
-          )
-          .limit(1)
-      )[0];
+            .limit(1)
+        )[0];
 
-  const validated = HouseholdUserInsertBaseSchema.safeParse(resolved);
+    const validated = HouseholdUserInsertBaseSchema.safeParse(resolved);
 
-  if (!validated.success) throw new Error("Failed to add user to household");
+    if (!validated.success) throw new Error("Failed to add user to household");
 
-  return validated.data as HouseholdUserDto;
+    await ensureHouseholdPlannerFoundationTx(tx, parsed.data.householdId);
+    await ensureLinkedHouseholdPersonTx(tx, {
+      householdId: parsed.data.householdId,
+      linkedUserId: parsed.data.userId,
+      displayName,
+    });
+
+    return validated.data as HouseholdUserDto;
+  });
 }
 
 export async function removeUserFromHousehold(householdId: string, userId: string): Promise<void> {
@@ -174,6 +192,7 @@ export async function removeUserFromHousehold(householdId: string, userId: strin
     await tx
       .delete(householdUsers)
       .where(and(eq(householdUsers.householdId, householdId), eq(householdUsers.userId, userId)));
+    await deactivateLinkedHouseholdPersonTx(tx, householdId, userId);
 
     const rows = await tx
       .select({ count: sql<number>`count(*)` })
@@ -328,27 +347,34 @@ export async function findOrCreateHouseholdByName(
   // Try to find existing (case-insensitive)
   const existing = await findHouseholdByName(normalizedName);
 
-  if (existing) return existing;
+  if (existing) {
+    await ensureHouseholdPlannerFoundation(existing.id);
+    return existing;
+  }
 
   // Create new household with this user as admin
   const code = await generateUniqueJoinCode();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-  const [row] = await db
-    .insert(households)
-    .values({
-      name: normalizedName,
-      adminUserId: creatorUserId,
-      joinCode: code,
-      joinCodeExpiresAt: expiresAt,
-    })
-    .returning();
+  return await db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(households)
+      .values({
+        name: normalizedName,
+        adminUserId: creatorUserId,
+        joinCode: code,
+        joinCodeExpiresAt: expiresAt,
+      })
+      .returning();
 
-  const validated = HouseholdSelectBaseSchema.safeParse(row);
+    const validated = HouseholdSelectBaseSchema.safeParse(row);
 
-  if (!validated.success) throw new Error("Failed to create household");
+    if (!validated.success) throw new Error("Failed to create household");
 
-  return validated.data;
+    await ensureHouseholdPlannerFoundationTx(tx, validated.data.id);
+
+    return validated.data;
+  });
 }
 
 async function generateUniqueJoinCode(): Promise<string> {

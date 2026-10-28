@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import TagInput from "@/components/shared/tag-input";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { Button, Card, CardBody, CardHeader } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
 import { useUserSettingsContext } from "../context";
-
-import TagInput from "@/components/shared/tag-input";
 
 export default function AllergiesCard() {
   const t = useTranslations("settings.user.allergies");
@@ -31,13 +31,13 @@ export default function AllergiesCard() {
 
   return (
     <Card>
-      <CardHeader>
+      <Card.Header>
         <h2 className="flex items-center gap-2 text-lg font-semibold">
           <ExclamationTriangleIcon className="h-5 w-5" />
           {t("title")}
         </h2>
-      </CardHeader>
-      <CardBody className="gap-4">
+      </Card.Header>
+      <Card.Content className="gap-4">
         <p className="text-default-500 text-base">{t("description")}</p>
         <TagInput
           placeholder={t("placeholder")}
@@ -46,16 +46,16 @@ export default function AllergiesCard() {
         />
         <div className="flex justify-end">
           <Button
-            color="primary"
             isDisabled={!hasChanges}
-            isLoading={isUpdatingAllergies}
-            startContent={<CheckIcon className="h-4 w-4" />}
+            isPending={isUpdatingAllergies}
+            variant="primary"
             onPress={handleSave}
           >
+            <CheckIcon className="h-4 w-4" />
             {t("saveButton")}
           </Button>
         </div>
-      </CardBody>
+      </Card.Content>
     </Card>
   );
 }

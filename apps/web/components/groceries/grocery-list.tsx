@@ -1,18 +1,17 @@
 "use client";
 
-import type { GroceryDto, RecurringGroceryDto, StoreDto } from "@norish/shared/contracts";
-
+import { useMemo } from "react";
+import { useUnitsQuery } from "@/hooks/config/use-units-query";
 import { ShoppingCartIcon } from "@heroicons/react/24/outline";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+
+import type { GroceryDto, RecurringGroceryDto, StoreDto } from "@norish/shared/contracts";
 import { groupGroceriesByIngredient } from "@norish/shared/lib/grocery-grouping";
 
 import { DndGroceryProvider, DndGroupedGroceryProvider } from "./dnd";
 import { GroupedStoreSection } from "./grouped-store-section";
 import { StoreSection } from "./store-section";
-
-import { useUnitsQuery } from "@/hooks/config/use-units-query";
 
 interface GroceryListProps {
   groceries: GroceryDto[];
@@ -29,6 +28,7 @@ interface GroceryListProps {
   ) => void;
   onMarkAllDoneInStore?: (storeId: string | null) => void;
   onDeleteDoneInStore?: (storeId: string | null) => void;
+  onMoveDoneToPantry?: (storeId: string | null) => void;
   getRecipeNameForGrocery?: (grocery: GroceryDto) => string | null;
   /** Whether to group similar ingredients together */
   groupSimilarIngredients?: boolean;
@@ -45,6 +45,7 @@ export function GroceryList({
   onReorderInStore,
   onMarkAllDoneInStore,
   onDeleteDoneInStore,
+  onMoveDoneToPantry,
   getRecipeNameForGrocery,
   groupSimilarIngredients = false,
 }: GroceryListProps) {
@@ -105,9 +106,8 @@ export function GroceryList({
 
   // Check if there are any groceries at all
   const hasGroceries = groceries.length > 0;
-  const hasStores = stores.length > 0;
 
-  if (!hasGroceries && !hasStores) {
+  if (!hasGroceries) {
     return (
       <div className="flex flex-col items-center justify-center px-4 py-20">
         <div className="bg-content1/90 shadow-large relative w-full max-w-xl rounded-xl backdrop-blur-xl">
@@ -160,6 +160,7 @@ export function GroceryList({
               onDeleteDone={() => onDeleteDoneInStore?.(null)}
               onEdit={onEdit}
               onMarkAllDone={() => onMarkAllDoneInStore?.(null)}
+              onMoveDoneToPantry={() => onMoveDoneToPantry?.(null)}
               onToggle={onToggle}
               onToggleGroup={onToggleGroup}
             />
@@ -169,6 +170,10 @@ export function GroceryList({
           {sortedStores.map((store) => {
             const storeGroceries = groupedGroceries.get(store.id) ?? [];
             const storeGroups = ingredientGroups.get(store.id) ?? [];
+
+            if (storeGroceries.length === 0) {
+              return null;
+            }
 
             return (
               <motion.div
@@ -189,6 +194,7 @@ export function GroceryList({
                   onDeleteDone={() => onDeleteDoneInStore?.(store.id)}
                   onEdit={onEdit}
                   onMarkAllDone={() => onMarkAllDoneInStore?.(store.id)}
+                  onMoveDoneToPantry={() => onMoveDoneToPantry?.(store.id)}
                   onToggle={onToggle}
                   onToggleGroup={onToggleGroup}
                 />
@@ -229,34 +235,42 @@ export function GroceryList({
             onDeleteDone={() => onDeleteDoneInStore?.(null)}
             onEdit={onEdit}
             onMarkAllDone={() => onMarkAllDoneInStore?.(null)}
+            onMoveDoneToPantry={() => onMoveDoneToPantry?.(null)}
             onToggle={onToggle}
           />
         </motion.div>
 
         {/* Store sections */}
-        {storeWithGroceries.map(({ store, groceries: storeGroceries }) => (
-          <motion.div
-            key={store.id}
-            layout
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            initial={{ opacity: 0, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 500, damping: 35 }}
-          >
-            <StoreSection
-              allGroceries={groceries}
-              getRecipeNameForGrocery={getRecipeNameForGrocery}
-              groceries={storeGroceries}
-              recurringGroceries={recurringGroceries}
-              store={store}
-              onDelete={onDelete}
-              onDeleteDone={() => onDeleteDoneInStore?.(store.id)}
-              onEdit={onEdit}
-              onMarkAllDone={() => onMarkAllDoneInStore?.(store.id)}
-              onToggle={onToggle}
-            />
-          </motion.div>
-        ))}
+        {storeWithGroceries.map(({ store, groceries: storeGroceries }) => {
+          if (storeGroceries.length === 0) {
+            return null;
+          }
+
+          return (
+            <motion.div
+              key={store.id}
+              layout
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 500, damping: 35 }}
+            >
+              <StoreSection
+                allGroceries={groceries}
+                getRecipeNameForGrocery={getRecipeNameForGrocery}
+                groceries={storeGroceries}
+                recurringGroceries={recurringGroceries}
+                store={store}
+                onDelete={onDelete}
+                onDeleteDone={() => onDeleteDoneInStore?.(store.id)}
+                onEdit={onEdit}
+                onMarkAllDone={() => onMarkAllDoneInStore?.(store.id)}
+                onMoveDoneToPantry={() => onMoveDoneToPantry?.(store.id)}
+                onToggle={onToggle}
+              />
+            </motion.div>
+          );
+        })}
       </div>
     </DndGroceryProvider>
   );

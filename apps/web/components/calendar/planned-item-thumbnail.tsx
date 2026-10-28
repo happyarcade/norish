@@ -1,7 +1,6 @@
 "use client";
 
 import { memo, useState } from "react";
-import { Image } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
 type Size = "sm" | "md";
@@ -44,8 +43,9 @@ export const PlannedItemThumbnail = memo(function PlannedItemThumbnail({
   if (imageSrc) {
     return (
       <div className={`relative ${dim} shrink-0 overflow-hidden rounded-lg`}>
-        <Image
-          removeWrapper
+        {/* Imported recipes can use arbitrary remote image hosts. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           alt={alt}
           className="h-full w-full object-cover"
           src={imageSrc}

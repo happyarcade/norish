@@ -1,23 +1,21 @@
 "use client";
 
-import type { ClaimMappingValues } from "./oidc-claim-mapping";
-import type { TestResult } from "./types";
-
-import { Input, useDisclosure } from "@heroui/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import SecretInput from "@/components/shared/secret-input";
+import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
+import { InputGroup, Label, TextField } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
+
 import { ServerConfigKeys } from "@norish/config/zod/server-config";
 import { useDirtyState } from "@norish/shared-react/hooks";
-import { useCallback, useEffect, useMemo, useState } from "react";
 
+import type { ClaimMappingValues } from "./oidc-claim-mapping";
+import type { TestResult } from "./types";
 import { useAdminSettingsContext } from "../../context";
-
 import { DeleteProviderModal } from "./delete-provider-modal";
 import { OIDCClaimMapping } from "./oidc-claim-mapping";
 import { ProviderActions } from "./provider-actions";
 import { TestResultDisplay } from "./test-result-display";
-
-import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
-import SecretInput from "@/components/shared/secret-input";
 
 interface OIDCProviderFormProps {
   config: Record<string, unknown> | undefined;
@@ -60,7 +58,7 @@ export function OIDCProviderForm({ config, onDirtyChange }: OIDCProviderFormProp
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [saving, setSaving] = useState(false);
-  const deleteModal = useDisclosure();
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const configClaim = config?.claimConfig as
     | {
@@ -167,7 +165,7 @@ export function OIDCProviderForm({ config, onDirtyChange }: OIDCProviderFormProp
     const result = await deleteAuthProvider("oidc");
 
     if (!result.success) {
-      deleteModal.onClose();
+      setIsDeleteOpen(false);
       showSafeErrorToast({
         title: tErrors("operationFailed"),
         description: tErrors("technicalDetails"),
@@ -178,7 +176,7 @@ export function OIDCProviderForm({ config, onDirtyChange }: OIDCProviderFormProp
       return;
     }
 
-    deleteModal.onClose();
+    setIsDeleteOpen(false);
     // Reset all fields
     setName("");
     setIssuer("");
@@ -197,19 +195,24 @@ export function OIDCProviderForm({ config, onDirtyChange }: OIDCProviderFormProp
   return (
     <div className="flex flex-col gap-4 p-2">
       {/* Core OIDC Fields */}
-      <Input
-        label={tOidc("name")}
-        placeholder={tOidc("namePlaceholder")}
-        value={name}
-        onValueChange={setName}
-      />
-      <Input
-        label={tOidc("issuer")}
-        placeholder={tOidc("issuerPlaceholder")}
-        value={issuer}
-        onValueChange={setIssuer}
-      />
-      <Input label={tOidc("clientId")} value={clientId} onValueChange={setClientId} />
+      <TextField fullWidth value={name} onChange={setName}>
+        <Label>{tOidc("name")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Input placeholder={tOidc("namePlaceholder")} />
+        </InputGroup>
+      </TextField>
+      <TextField fullWidth value={issuer} onChange={setIssuer}>
+        <Label>{tOidc("issuer")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Input placeholder={tOidc("issuerPlaceholder")} />
+        </InputGroup>
+      </TextField>
+      <TextField fullWidth value={clientId} onChange={setClientId}>
+        <Label>{tOidc("clientId")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Input />
+        </InputGroup>
+      </TextField>
       <SecretInput
         isConfigured={!!config?.clientSecret}
         label={tOidc("clientSecret")}
@@ -217,12 +220,12 @@ export function OIDCProviderForm({ config, onDirtyChange }: OIDCProviderFormProp
         onReveal={handleRevealSecret("clientSecret")}
         onValueChange={setClientSecret}
       />
-      <Input
-        label={tOidc("wellknown")}
-        placeholder={tOidc("wellknownPlaceholder")}
-        value={wellknown}
-        onValueChange={setWellknown}
-      />
+      <TextField fullWidth value={wellknown} onChange={setWellknown}>
+        <Label>{tOidc("wellknown")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Input placeholder={tOidc("wellknownPlaceholder")} />
+        </InputGroup>
+      </TextField>
 
       {/* Claim Mapping Section */}
       <OIDCClaimMapping
@@ -238,15 +241,15 @@ export function OIDCProviderForm({ config, onDirtyChange }: OIDCProviderFormProp
         hasConfig={!!config}
         saving={saving}
         testing={testing}
-        onDeleteClick={deleteModal.onOpen}
+        onDeleteClick={() => setIsDeleteOpen(true)}
         onSave={handleSave}
         onTest={handleTest}
       />
 
       <DeleteProviderModal
-        isOpen={deleteModal.isOpen}
+        isOpen={isDeleteOpen}
         providerName="OIDC"
-        onClose={deleteModal.onClose}
+        onClose={() => setIsDeleteOpen(false)}
         onConfirm={handleDelete}
       />
     </div>

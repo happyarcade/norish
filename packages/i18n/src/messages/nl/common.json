@@ -146,6 +146,9 @@
     },
     "menu": {
       "description": "Importeer via een URL, scan een foto of begin vanaf nul."
+    },
+    "clipboard": {
+      "title": "Import a recipe from the link you copied?"
     }
   },
   "formatting": {

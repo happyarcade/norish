@@ -8,7 +8,10 @@
     "viewMode": "Modo de vista",
     "manageStores": "Gestionar tiendas",
     "storeViewOptions": "Opciones de vista de tienda",
-    "groupIngredients": "Agrupar ingredientes"
+    "groupIngredients": "Agrupar ingredientes",
+    "pantry": "Pantry",
+    "sectionLabel": "Groceries sections",
+    "shopping": "Shopping"
   },
   "empty": {
     "title": "Tu lista de la compra te espera",
@@ -26,6 +29,7 @@
     "storeActions": "Acciones de la tienda",
     "markAllDone": "Marcar todo como comprado",
     "deleteDone": "Eliminar productos comprados",
+    "moveDoneToPantry": "Mover lo comprado a la despensa",
     "done": "{count} comprados"
   },
   "storeManager": {
@@ -73,6 +77,68 @@
     "addSelectedToGroceries": "Añadir a la lista de la compra",
     "ingredientsAdded": "Ingredientes añadidos a la lista de la compra.",
     "ingredientsFailed": "No se han podido añadir los ingredientes a la lista de la compra.",
-    "addToGroceries": "Añadir a la lista de la compra"
+    "addToGroceries": "Añadir a la lista de la compra",
+    "inYourPantry": "In your pantry"
+  },
+  "pantry": {
+    "title": "Pantry",
+    "add": "Add pantry item",
+    "remove": "Remove {name} from pantry",
+    "namePlaceholder": "e.g., olive oil",
+    "empty": "No pantry items yet",
+    "loading": "Loading pantry...",
+    "duplicate": "Already in your pantry",
+    "failed": "Could not save this item",
+    "plannedTitle": "In your pantry",
+    "plannedSubtitle": "Already at home",
+    "atHome": "{count, plural, one {# item at home} other {# items at home}}",
+    "addAnyway": "Add anyway",
+    "added": "Added",
+    "addAnywayFailed": "Could not add this grocery",
+    "onHand": "On hand",
+    "low": "Running low",
+    "staple": "Staple",
+    "onHandCount": "{count, plural, one {# on hand} other {# on hand}}",
+    "lowCount": "{count, plural, one {# running low} other {# running low}}",
+    "checkCount": "{count, plural, one {# needs checking} other {# need checking}}",
+    "checkStock": "Check stock - last confirmed over 45 days ago",
+    "markLow": "Mark {name} as running low",
+    "markLowShort": "Mark as running low",
+    "markOnHand": "Mark {name} as on hand",
+    "markOnHandShort": "Mark as on hand",
+    "makeStaple": "Always keep {name} stocked",
+    "makeStapleShort": "Always keep stocked",
+    "removeStaple": "Stop treating {name} as a staple",
+    "removeStapleShort": "Remove staple status",
+    "removeShort": "Remove from pantry",
+    "search": "Search pantry",
+    "searchPlaceholder": "Search household ingredients...",
+    "noMatches": "No pantry items match your search",
+    "checkStockGroup": "Check stock",
+    "staples": "Staples"
+  },
+  "pantryTransfer": {
+    "title": "Guardar las compras",
+    "description": "Revisa lo que compraste. Desmarca los artículos del hogar o lo que no quieras registrar en la despensa.",
+    "loading": "Cargando despensa...",
+    "empty": "No hay productos completados para mover.",
+    "selectAll": "Seleccionar todo",
+    "completedEntries": "{count, plural, one {# entrada completada} other {# entradas completadas}}",
+    "alreadyInPantry": "Ya está registrado",
+    "confirm": "Mover {count, plural, one {# artículo} other {# artículos}} a la despensa",
+    "success": "Se movieron {count, plural, one {# artículo} other {# artículos}} a la despensa",
+    "failed": "No se pudieron mover estos productos. No se eliminó nada."
+  },
+  "pantryUsage": {
+    "title": "Actualizar despensa",
+    "description": "Elige el estado de cada ingrediente coincidente después de cocinar.",
+    "loading": "Buscando coincidencias en la despensa...",
+    "nothingAutomatic": "Nada cambia hasta que confirmes.",
+    "keepUnchanged": "Mantener la despensa sin cambios",
+    "onHand": "Disponible",
+    "runningLow": "Queda poco",
+    "usedUp": "Agotado",
+    "statusFor": "Estado de {name} en la despensa",
+    "failed": "La comida se marcó como cocinada, pero no se pudo actualizar la despensa. Inténtalo de nuevo."
   }
 }

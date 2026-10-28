@@ -55,16 +55,32 @@
     "favoritesAndRating": "Favorites & Rating",
     "favorites": "Favorites",
     "cookingTime": "Cooking time",
+    "nutrition": "Nutrition",
+    "maxSodium": "Max sodium",
+    "maxCholesterol": "Max cholesterol",
+    "minFiber": "Min fibre",
     "cookingTimeUnder15": "<15 min",
     "cookingTimeUnder30": "<30 min",
     "cookingTimeUnder60": "<60 min",
     "cookingTimeUnder120": "<120 min",
     "categories": "Categories",
+    "suitableSlots": "Suitable slots",
     "category": {
       "breakfast": "Breakfast",
       "lunch": "Lunch",
       "dinner": "Dinner",
       "snack": "Snack"
+    },
+    "slot": {
+      "breakfast": "Breakfast",
+      "mid-morning": "Mid-Morning",
+      "lunch": "Lunch",
+      "afternoon": "Afternoon",
+      "dinner": "Dinner",
+      "evening": "Evening",
+      "snack": "Snack",
+      "pre-workout": "Pre-Workout",
+      "post-workout": "Post-Workout"
     },
     "sortByTitle": "Title",
     "sortByDate": "Date",
@@ -105,6 +121,9 @@
     "message": "Oops! Nora couldn't find what you're looking for.\nThe page may have been moved or doesn't exist."
   },
   "import": {
+    "clipboard": {
+      "title": "Import a recipe from the link you copied?"
+    },
     "url": {
       "title": "Import recipe",
       "label": "Recipe URL",

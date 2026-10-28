@@ -1,7 +1,7 @@
 "use client";
 
 import { ExclamationTriangleIcon, UserGroupIcon } from "@heroicons/react/16/solid";
-import { Divider, Input, Switch } from "@heroui/react";
+import { Description, InputGroup, Label, Separator, Switch, TextField } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
 import { RestartRequiredChip } from "../restart-required-chip";
@@ -33,7 +33,7 @@ export function OIDCClaimMapping({ values, onChange, isDirty = false }: OIDCClai
 
   return (
     <>
-      <Divider className="my-2" />
+      <Separator className="my-2" />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <UserGroupIcon className="text-default-500 h-4 w-4" />
@@ -42,10 +42,16 @@ export function OIDCClaimMapping({ values, onChange, isDirty = false }: OIDCClai
           <RestartRequiredChip />
         </div>
         <Switch
-          color="success"
+          aria-label={tClaimMapping("title")}
           isSelected={values.enabled}
-          onValueChange={(enabled) => updateField("enabled", enabled)}
-        />
+          onChange={(enabled) => updateField("enabled", enabled)}
+        >
+          <Switch.Content>
+            <Switch.Control>
+              <Switch.Thumb />
+            </Switch.Control>
+          </Switch.Content>
+        </Switch>
       </div>
       <p className="text-default-500 text-sm">{tClaimMapping("description")}</p>
 
@@ -56,38 +62,54 @@ export function OIDCClaimMapping({ values, onChange, isDirty = false }: OIDCClai
         </div>
       )}
 
-      <Input
-        description={tClaimMapping("scopesDescription")}
+      <TextField
+        fullWidth
         isDisabled={!values.enabled}
-        label={tClaimMapping("scopes")}
-        placeholder={tClaimMapping("scopesPlaceholder")}
         value={values.scopes}
-        onValueChange={(v) => updateField("scopes", v)}
-      />
-      <Input
-        description={tClaimMapping("groupsClaimDescription")}
+        onChange={(value) => updateField("scopes", value)}
+      >
+        <Label>{tClaimMapping("scopes")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Input placeholder={tClaimMapping("scopesPlaceholder")} />
+        </InputGroup>
+        <Description>{tClaimMapping("scopesDescription")}</Description>
+      </TextField>
+      <TextField
+        fullWidth
         isDisabled={!values.enabled}
-        label={tClaimMapping("groupsClaim")}
-        placeholder="groups"
         value={values.groupsClaim}
-        onValueChange={(v) => updateField("groupsClaim", v)}
-      />
-      <Input
-        description={tClaimMapping("adminGroupDescription")}
+        onChange={(value) => updateField("groupsClaim", value)}
+      >
+        <Label>{tClaimMapping("groupsClaim")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Input placeholder="groups" />
+        </InputGroup>
+        <Description>{tClaimMapping("groupsClaimDescription")}</Description>
+      </TextField>
+      <TextField
+        fullWidth
         isDisabled={!values.enabled}
-        label={tClaimMapping("adminGroup")}
-        placeholder="norish_admin"
         value={values.adminGroup}
-        onValueChange={(v) => updateField("adminGroup", v)}
-      />
-      <Input
-        description={tClaimMapping("householdPrefixDescription")}
+        onChange={(value) => updateField("adminGroup", value)}
+      >
+        <Label>{tClaimMapping("adminGroup")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Input placeholder="norish_admin" />
+        </InputGroup>
+        <Description>{tClaimMapping("adminGroupDescription")}</Description>
+      </TextField>
+      <TextField
+        fullWidth
         isDisabled={!values.enabled}
-        label={tClaimMapping("householdPrefix")}
-        placeholder="norish_household_"
         value={values.householdPrefix}
-        onValueChange={(v) => updateField("householdPrefix", v)}
-      />
+        onChange={(value) => updateField("householdPrefix", value)}
+      >
+        <Label>{tClaimMapping("householdPrefix")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Input placeholder="norish_household_" />
+        </InputGroup>
+        <Description>{tClaimMapping("householdPrefixDescription")}</Description>
+      </TextField>
     </>
   );
 }

@@ -1,7 +1,8 @@
-import { ReactNode } from "react";
-import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from "@heroui/react";
+import type { ReactNode } from "react";
+import { Dropdown, Label } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
-import { Slot } from "@norish/shared/contracts";
+
+import type { Slot } from "@norish/shared/contracts";
 
 type SlotDropdownProps = {
   children: ReactNode;
@@ -14,16 +15,26 @@ export function SlotDropdown({ children, onSelectSlot, ariaLabel }: SlotDropdown
 
   return (
     <Dropdown>
-      <DropdownTrigger>{children}</DropdownTrigger>
-      <DropdownMenu
-        aria-label={ariaLabel ?? t("chooseSlot")}
-        onAction={(slot) => onSelectSlot(slot as Slot)}
-      >
-        <DropdownItem key="Breakfast">{t("breakfast")}</DropdownItem>
-        <DropdownItem key="Lunch">{t("lunch")}</DropdownItem>
-        <DropdownItem key="Dinner">{t("dinner")}</DropdownItem>
-        <DropdownItem key="Snack">{t("snack")}</DropdownItem>
-      </DropdownMenu>
+      {children}
+      <Dropdown.Popover>
+        <Dropdown.Menu
+          aria-label={ariaLabel ?? t("chooseSlot")}
+          onAction={(slot) => onSelectSlot(slot as Slot)}
+        >
+          <Dropdown.Item id="Breakfast" textValue={t("breakfast")}>
+            <Label>{t("breakfast")}</Label>
+          </Dropdown.Item>
+          <Dropdown.Item id="Lunch" textValue={t("lunch")}>
+            <Label>{t("lunch")}</Label>
+          </Dropdown.Item>
+          <Dropdown.Item id="Dinner" textValue={t("dinner")}>
+            <Label>{t("dinner")}</Label>
+          </Dropdown.Item>
+          <Dropdown.Item id="Snack" textValue={t("snack")}>
+            <Label>{t("snack")}</Label>
+          </Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown.Popover>
     </Dropdown>
   );
 }

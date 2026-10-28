@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { ArrowPathIcon, CheckIcon } from "@heroicons/react/16/solid";
-import { Button, Spinner, Textarea } from "@heroui/react";
+import { Spinner } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
+
 import { ServerConfigKeys } from "@norish/config/zod/server-config";
 
 import { useAdminSettingsContext } from "../context";

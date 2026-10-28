@@ -1,13 +1,11 @@
 "use client";
 
-import type { ProviderInfo } from "@norish/shared/contracts";
-
-import { Divider } from "@heroui/react";
+import { Separator } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
+import type { ProviderInfo } from "@norish/shared/contracts";
 
 import { AuthCard } from "../../components/auth-card";
-
 import { AutoSignIn } from "./auto-sign-in";
 import { EmailPasswordForm } from "./email-password-form";
 import { ProviderButton } from "./provider-button";
@@ -58,9 +56,9 @@ export function LoginClient({
       {/* Divider between form and OAuth */}
       {hasCredential && hasOAuth && (
         <div className="flex items-center gap-4">
-          <Divider className="flex-1" />
+          <Separator className="flex-1" />
           <span className="text-small text-default-400">{t("divider")}</span>
-          <Divider className="flex-1" />
+          <Separator className="flex-1" />
         </div>
       )}
 

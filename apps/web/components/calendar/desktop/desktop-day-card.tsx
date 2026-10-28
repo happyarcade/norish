@@ -1,26 +1,17 @@
 "use client";
 
 import type { PlannedItemDisplay } from "@/components/calendar/mobile/types";
-import type { Slot } from "@norish/shared/contracts";
-
 import { memo, useMemo } from "react";
+import { TimelineSlotContainer } from "@/components/calendar/mobile/timeline-slot-container";
+import { SLOTS } from "@/components/calendar/mobile/types";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useDroppable } from "@dnd-kit/core";
 import { PlusIcon } from "@heroicons/react/16/solid";
-import {
-  Button,
-  Card,
-  CardBody,
-  Divider,
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownTrigger,
-} from "@heroui/react";
+import { Dropdown, Separator } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
-import { SLOTS } from "@/components/calendar/mobile/types";
-import { TimelineSlotContainer } from "@/components/calendar/mobile/timeline-slot-container";
-
+import type { Slot } from "@norish/shared/contracts";
 
 type DesktopDayCardProps = {
   date: Date;
@@ -108,7 +99,7 @@ export const DesktopDayCard = memo(function DesktopDayCard({
       shadow={isToday ? "md" : "sm"}
       style={{ height: CARD_HEIGHT }}
     >
-      <CardBody className="flex flex-col gap-2 overflow-hidden px-4 py-3">
+      <Card.Content className="flex flex-col gap-2 overflow-hidden px-4 py-3">
         {/* Day header - fixed */}
         <div className="flex shrink-0 items-start justify-between gap-3">
           <div className="flex flex-col">
@@ -130,30 +121,30 @@ export const DesktopDayCard = memo(function DesktopDayCard({
           </div>
 
           <Dropdown>
-            <DropdownTrigger>
-              <Button
-                isIconOnly
-                aria-label={t("addItem")}
-                className="bg-default-100 text-default-500 hover:text-primary h-8 min-w-8 rounded-full shadow-sm transition-transform active:scale-95"
-                size="sm"
-                variant="flat"
-              >
-                <PlusIcon className="h-4 w-4" />
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              aria-label={tSlots("chooseSlot")}
-              onAction={(slot) => onAddItem(dateKey, slot as Slot)}
+            <Button
+              isIconOnly
+              aria-label={t("addItem")}
+              className="bg-default-100 text-default-500 hover:text-primary h-8 min-w-8 rounded-full shadow-sm transition-transform active:scale-95"
+              size="sm"
+              variant="flat"
             >
-              <DropdownItem key="Breakfast">{slotLabels.Breakfast}</DropdownItem>
-              <DropdownItem key="Lunch">{slotLabels.Lunch}</DropdownItem>
-              <DropdownItem key="Dinner">{slotLabels.Dinner}</DropdownItem>
-              <DropdownItem key="Snack">{slotLabels.Snack}</DropdownItem>
-            </DropdownMenu>
+              <PlusIcon className="h-4 w-4" />
+            </Button>
+            <Dropdown.Popover placement="bottom end">
+              <Dropdown.Menu
+                aria-label={tSlots("chooseSlot")}
+                onAction={(slot) => onAddItem(dateKey, slot as Slot)}
+              >
+                <Dropdown.Item id="Breakfast">{slotLabels.Breakfast}</Dropdown.Item>
+                <Dropdown.Item id="Lunch">{slotLabels.Lunch}</Dropdown.Item>
+                <Dropdown.Item id="Dinner">{slotLabels.Dinner}</Dropdown.Item>
+                <Dropdown.Item id="Snack">{slotLabels.Snack}</Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown.Popover>
           </Dropdown>
         </div>
 
-        <Divider className="shrink-0" />
+        <Separator className="shrink-0" />
 
         {/* Scrollable content area */}
         <div className="min-h-0 flex-1 overflow-y-auto">
@@ -181,7 +172,7 @@ export const DesktopDayCard = memo(function DesktopDayCard({
             <span className="text-default-400 py-1 text-xs italic">{t("noItems")}</span>
           )}
         </div>
-      </CardBody>
+      </Card.Content>
     </Card>
   );
 });

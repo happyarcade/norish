@@ -8,7 +8,10 @@
     "viewMode": "Weergave",
     "manageStores": "Winkels beheren",
     "storeViewOptions": "Winkelweergave opties",
-    "groupIngredients": "Groepeer ingrediënten"
+    "groupIngredients": "Groepeer ingrediënten",
+    "pantry": "Pantry",
+    "sectionLabel": "Groceries sections",
+    "shopping": "Shopping"
   },
   "empty": {
     "title": "Je boodschappenlijst wacht op je",
@@ -26,6 +29,7 @@
     "storeActions": "Winkelacties",
     "markAllDone": "Markeer alles als gekocht",
     "deleteDone": "Verwijder gekocht",
+    "moveDoneToPantry": "Verplaats gekocht naar voorraad",
     "done": "{count} gedaan"
   },
   "storeManager": {
@@ -73,6 +77,68 @@
     "addSelectedToGroceries": "Voeg toe aan boodschappen",
     "ingredientsAdded": "Ingrediënten toegevoegd aan boodschappenlijst.",
     "ingredientsFailed": "Kan ingrediënten niet toevoegen aan boodschappenlijst.",
-    "addToGroceries": "Toevoegen aan boodschappen"
+    "addToGroceries": "Toevoegen aan boodschappen",
+    "inYourPantry": "In your pantry"
+  },
+  "pantry": {
+    "title": "Pantry",
+    "add": "Add pantry item",
+    "remove": "Remove {name} from pantry",
+    "namePlaceholder": "e.g., olive oil",
+    "empty": "No pantry items yet",
+    "loading": "Loading pantry...",
+    "duplicate": "Already in your pantry",
+    "failed": "Could not save this item",
+    "plannedTitle": "In your pantry",
+    "plannedSubtitle": "Already at home",
+    "atHome": "{count, plural, one {# item at home} other {# items at home}}",
+    "addAnyway": "Add anyway",
+    "added": "Added",
+    "addAnywayFailed": "Could not add this grocery",
+    "onHand": "On hand",
+    "low": "Running low",
+    "staple": "Staple",
+    "onHandCount": "{count, plural, one {# on hand} other {# on hand}}",
+    "lowCount": "{count, plural, one {# running low} other {# running low}}",
+    "checkCount": "{count, plural, one {# needs checking} other {# need checking}}",
+    "checkStock": "Check stock - last confirmed over 45 days ago",
+    "markLow": "Mark {name} as running low",
+    "markLowShort": "Mark as running low",
+    "markOnHand": "Mark {name} as on hand",
+    "markOnHandShort": "Mark as on hand",
+    "makeStaple": "Always keep {name} stocked",
+    "makeStapleShort": "Always keep stocked",
+    "removeStaple": "Stop treating {name} as a staple",
+    "removeStapleShort": "Remove staple status",
+    "removeShort": "Remove from pantry",
+    "search": "Search pantry",
+    "searchPlaceholder": "Search household ingredients...",
+    "noMatches": "No pantry items match your search",
+    "checkStockGroup": "Check stock",
+    "staples": "Staples"
+  },
+  "pantryTransfer": {
+    "title": "Boodschappen opbergen",
+    "description": "Controleer wat je hebt gekocht. Deselecteer huishoudelijke artikelen of wat je niet in de voorraad wilt bijhouden.",
+    "loading": "Voorraad laden...",
+    "empty": "Er zijn geen voltooide boodschappen om te verplaatsen.",
+    "selectAll": "Alles selecteren",
+    "completedEntries": "{count, plural, one {# voltooid item} other {# voltooide items}}",
+    "alreadyInPantry": "Al geregistreerd",
+    "confirm": "Verplaats {count, plural, one {# item} other {# items}} naar voorraad",
+    "success": "{count, plural, one {# item verplaatst} other {# items verplaatst}} naar voorraad",
+    "failed": "Deze boodschappen konden niet worden verplaatst. Er is niets verwijderd."
+  },
+  "pantryUsage": {
+    "title": "Voorraad bijwerken",
+    "description": "Kies na het koken de status van elk overeenkomend ingrediënt.",
+    "loading": "Voorraad controleren...",
+    "nothingAutomatic": "Er verandert niets totdat je bevestigt.",
+    "keepUnchanged": "Voorraad ongewijzigd laten",
+    "onHand": "Op voorraad",
+    "runningLow": "Bijna op",
+    "usedUp": "Opgebruikt",
+    "statusFor": "Voorraadstatus voor {name}",
+    "failed": "De maaltijd is als bereid gemarkeerd, maar de voorraad kon niet worden bijgewerkt. Probeer het opnieuw."
   }
 }

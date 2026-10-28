@@ -30,7 +30,7 @@ vi.mock("@trpc/tanstack-react-query", () => ({
   }),
 }));
 
-vi.mock("@heroui/react", () => ({
+vi.mock("@/lib/ui/toast", () => ({
   addToast: vi.fn(),
 }));
 
@@ -397,7 +397,7 @@ describe("useGroceriesSubscription", () => {
 
   describe("onFailed handler", () => {
     it("shows toast notification on failure", async () => {
-      const { addToast } = await import("@heroui/react");
+      const { addToast } = await import("@/lib/ui/toast");
       const initialData = createMockGroceriesData();
 
       queryClient.setQueryData(mockQueryKey, initialData);

@@ -40,6 +40,7 @@ vi.mock("@tanstack/react-query", async () => {
 });
 
 vi.mock("@/app/providers/trpc-provider", () => ({
+  useConnectionStatus: () => ({ isConnected: true }),
   useTRPC: () => ({
     groceries: {
       list: {
@@ -59,6 +60,7 @@ vi.mock("@/app/providers/trpc-provider", () => ({
       checkRecurring: { mutationOptions: vi.fn() },
       markAllDone: { mutationOptions: vi.fn() },
       deleteDone: { mutationOptions: vi.fn() },
+      moveDoneToPantry: { mutationOptions: vi.fn() },
       assignToStore: { mutationOptions: vi.fn() },
       reorderInStore: { mutationOptions: vi.fn() },
     },

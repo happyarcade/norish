@@ -1,18 +1,23 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import { useConnectionStatus, useTRPC } from "@/app/providers/trpc-provider";
+import { useUnitsQuery } from "@/hooks/config";
+import {
+  queueGroceryToggle,
+  readGroceryToggleOutbox,
+  removeGroceryToggle,
+  shouldQueueGroceryToggle,
+} from "@/lib/grocery-toggle-outbox";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { RecurringGroceryDto } from "@norish/shared/contracts";
 import type { RecurrencePattern } from "@norish/shared/contracts/recurrence";
-
-import { useMutation } from "@tanstack/react-query";
 import { parseIngredientWithDefaults } from "@norish/shared/lib/helpers";
 import { createClientLogger } from "@norish/shared/lib/logger";
 import { calculateNextOccurrence, getTodayString } from "@norish/shared/lib/recurrence/calculator";
 
 import { useGroceriesQuery } from "./use-groceries-query";
-
-import { useUnitsQuery } from "@/hooks/config";
-import { useTRPC } from "@/app/providers/trpc-provider";
 
 const log = createClientLogger("GroceriesMutations");
 
@@ -54,10 +59,17 @@ export type GroceriesMutationsResult = {
   ) => void;
   markAllDoneInStore: (storeId: string | null) => void;
   deleteDoneInStore: (storeId: string | null) => void;
+  moveDoneToPantry: (ids: string[]) => Promise<{
+    movedCount: number;
+    pantryItemCount: number;
+    createdPantryItemCount: number;
+  }>;
 };
 
 export function useGroceriesMutations(): GroceriesMutationsResult {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const { isConnected } = useConnectionStatus();
   const { units } = useUnitsQuery();
   const { setGroceriesData, invalidate, groceries, recurringGroceries } = useGroceriesQuery();
 
@@ -71,6 +83,41 @@ export function useGroceriesMutations(): GroceriesMutationsResult {
   const checkRecurringMutation = useMutation(trpc.groceries.checkRecurring.mutationOptions());
   const markAllDoneMutation = useMutation(trpc.groceries.markAllDone.mutationOptions());
   const deleteDoneMutation = useMutation(trpc.groceries.deleteDone.mutationOptions());
+  const moveDoneToPantryMutation = useMutation(trpc.groceries.moveDoneToPantry.mutationOptions());
+  const replayingTogglesRef = useRef(false);
+  const replayPendingTogglesRef = useRef<() => Promise<void>>(async () => undefined);
+
+  replayPendingTogglesRef.current = async () => {
+    if (replayingTogglesRef.current || !isConnected) return;
+    replayingTogglesRef.current = true;
+
+    try {
+      for (const entry of readGroceryToggleOutbox()) {
+        try {
+          await toggleMutation.mutateAsync({
+            groceryIds: entry.groceryIds,
+            isDone: entry.isDone,
+          });
+          removeGroceryToggle(entry.id);
+        } catch {
+          break;
+        }
+      }
+
+      invalidate();
+    } finally {
+      replayingTogglesRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    const replay = () => void replayPendingTogglesRef.current();
+
+    if (isConnected) replay();
+    window.addEventListener("online", replay);
+
+    return () => window.removeEventListener("online", replay);
+  }, [isConnected]);
 
   const createGrocery = (raw: string, storeId?: string | null) => {
     const parsed = parseIngredientWithDefaults(raw, units)[0];
@@ -147,7 +194,20 @@ export function useGroceriesMutations(): GroceriesMutationsResult {
       return { ...prev, groceries: updated };
     });
 
-    toggleMutation.mutate({ groceryIds: ids, isDone }, { onError: () => invalidate() });
+    toggleMutation.mutate(
+      { groceryIds: ids, isDone },
+      {
+        onError: (error) => {
+          if (shouldQueueGroceryToggle(error, isConnected)) {
+            queueGroceryToggle(ids, isDone);
+
+            return;
+          }
+
+          invalidate();
+        },
+      }
+    );
   };
 
   const toggleRecurringGrocery = (
@@ -482,6 +542,31 @@ export function useGroceriesMutations(): GroceriesMutationsResult {
     );
   };
 
+  const moveDoneToPantry = async (ids: string[]) => {
+    const result = await moveDoneToPantryMutation.mutateAsync({ groceryIds: ids });
+    const movedIds = new Set(result.groceryIds);
+
+    setGroceriesData((previous) => {
+      if (!previous) return previous;
+
+      return {
+        ...previous,
+        groceries: previous.groceries.filter((grocery) => !movedIds.has(grocery.id)),
+      };
+    });
+
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: trpc.pantry.list.queryKey() }),
+      queryClient.invalidateQueries({ queryKey: trpc.groceries.projection.queryKey() }),
+    ]);
+
+    return {
+      movedCount: result.groceryIds.length,
+      pantryItemCount: result.pantryItems.length,
+      createdPantryItemCount: result.createdPantryItemCount,
+    };
+  };
+
   return {
     // Actions
     createGrocery,
@@ -498,5 +583,6 @@ export function useGroceriesMutations(): GroceriesMutationsResult {
     reorderGroceriesInStore,
     markAllDoneInStore,
     deleteDoneInStore,
+    moveDoneToPantry,
   };
 }

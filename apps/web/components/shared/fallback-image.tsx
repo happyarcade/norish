@@ -1,8 +1,8 @@
 "use client";
 
+import type { ImgHTMLAttributes } from "react";
 import { useState } from "react";
 import NextImage, { ImageProps as NextImageProps } from "next/image";
-import { Image as HeroImage, ImageProps as HeroImageProps } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
 interface FallbackPlaceholderProps {
@@ -28,10 +28,12 @@ type NextFallbackImageProps = Omit<NextImageProps, "onError"> & {
 };
 
 // Props for HeroUI Image variant
-type HeroFallbackImageProps = Omit<HeroImageProps, "onError"> & {
+type HeroFallbackImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "onError"> & {
   variant: "hero";
   fallbackClassName?: string;
   fallbackMessage?: string;
+  removeWrapper?: boolean;
+  radius?: "none" | "sm" | "md" | "lg" | "full";
 };
 
 export type FallbackImageProps = NextFallbackImageProps | HeroFallbackImageProps;
@@ -50,10 +52,23 @@ export default function FallbackImage(props: FallbackImageProps) {
       variant: _variant,
       fallbackClassName: _fallbackClassName,
       fallbackMessage: _fallbackMessage,
+      removeWrapper: _removeWrapper,
+      radius,
       ...imageProps
     } = props;
 
-    return <HeroImage {...imageProps} onError={() => setHasError(true)} />;
+    const radiusClass = radius === "none" ? "rounded-none" : radius ? `rounded-${radius}` : "";
+
+    // Remote recipe hosts are user data, so a native image avoids maintaining a hostname allowlist.
+    // eslint-disable-next-line @next/next/no-img-element
+    return (
+      <img
+        {...imageProps}
+        alt={imageProps.alt ?? ""}
+        className={`${radiusClass} ${imageProps.className ?? ""}`}
+        onError={() => setHasError(true)}
+      />
+    );
   }
 
   const {

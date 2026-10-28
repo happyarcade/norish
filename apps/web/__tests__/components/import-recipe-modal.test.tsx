@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const modalMock = vi.hoisted(() => vi.fn());
+const backdropMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -21,33 +22,64 @@ vi.mock("@/context/permissions-context", () => ({
   }),
 }));
 
-vi.mock("@heroui/react", () => ({
-  Modal: (props: any) => {
-    modalMock(props);
+vi.mock("@heroui-v3/react", async () => {
+  const React = await import("react");
+  const TextFieldContext = React.createContext<{
+    value: string;
+    onChange: (value: string) => void;
+  } | null>(null);
 
-    return props.isOpen ? <div>{props.children}</div> : null;
-  },
-  ModalContent: ({ children }: any) =>
-    typeof children === "function" ? <div>{children(vi.fn())}</div> : <div>{children}</div>,
-  ModalHeader: ({ children }: any) => <div>{children}</div>,
-  ModalBody: ({ children }: any) => <div>{children}</div>,
-  ModalFooter: ({ children }: any) => <div>{children}</div>,
-  Input: ({ value, onChange, label, placeholder, type }: any) => (
-    <input
-      aria-label={label}
-      placeholder={placeholder}
-      type={type}
-      value={value}
-      onChange={onChange}
-    />
-  ),
-  Button: ({ children, onPress }: any) => (
-    <button type="button" onClick={onPress}>
-      {children}
-    </button>
-  ),
-  addToast: vi.fn(),
-}));
+  const Modal = Object.assign(
+    (props: any) => {
+      modalMock(props);
+
+      return props.state.isOpen ? <div>{props.children}</div> : null;
+    },
+    {
+      Backdrop: (props: any) => {
+        backdropMock(props);
+
+        return <div>{props.children}</div>;
+      },
+      Body: ({ children }: any) => <div>{children}</div>,
+      CloseTrigger: () => null,
+      Container: ({ children }: any) => <div>{children}</div>,
+      Dialog: ({ children }: any) => <div>{children}</div>,
+      Footer: ({ children }: any) => <div>{children}</div>,
+      Header: ({ children }: any) => <div>{children}</div>,
+      Heading: ({ children }: any) => <div>{children}</div>,
+    }
+  );
+  const InputGroup = Object.assign(({ children }: any) => <div>{children}</div>, {
+    Input: ({ placeholder, type }: any) => {
+      const field = React.useContext(TextFieldContext);
+
+      return (
+        <input
+          placeholder={placeholder}
+          type={type}
+          value={field?.value ?? ""}
+          onChange={(event) => field?.onChange(event.target.value)}
+        />
+      );
+    },
+  });
+
+  return {
+    Button: ({ children, isDisabled, onPress }: any) => (
+      <button disabled={isDisabled} type="button" onClick={onPress}>
+        {children}
+      </button>
+    ),
+    InputGroup,
+    Label: ({ children }: any) => <label>{children}</label>,
+    Modal,
+    TextField: ({ children, value, onChange }: any) => (
+      <TextFieldContext.Provider value={{ value, onChange }}>{children}</TextFieldContext.Provider>
+    ),
+    useOverlayState: ({ isOpen, onOpenChange }: any) => ({ isOpen, onOpenChange }),
+  };
+});
 
 describe("ImportRecipeModal", () => {
   beforeEach(() => {
@@ -57,12 +89,9 @@ describe("ImportRecipeModal", () => {
   it("renders above desktop menu and overlay stacks", () => {
     render(<ImportRecipeModal isOpen onOpenChange={vi.fn()} />);
 
-    expect(modalMock).toHaveBeenCalledWith(
+    expect(backdropMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        classNames: {
-          wrapper: "z-[1100]",
-          backdrop: "z-[1099]",
-        },
+        className: "z-[1100]",
       })
     );
   });

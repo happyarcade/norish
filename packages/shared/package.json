@@ -40,6 +40,11 @@
     "superjson": "catalog:",
     "zod": "catalog:"
   },
+  "dependenciesMeta": {
+    "@norish/db": {
+      "injected": false
+    }
+  },
   "devDependencies": {
     "@norish/eslint-config": "workspace:*",
     "@norish/prettier-config": "workspace:*",

@@ -22,7 +22,8 @@
   --default-700: #5e5f5c;
   --default-800: #464744;
   --default-900: #2f312e;
-  --default: #90918e;
+  /* HeroUI v3 uses `--default` as its neutral control surface. */
+  --default: var(--default-100);
   --default-foreground: #191c19;
 
   /* Brand (Material primary; DEFAULT = brand container to honor logo) */
@@ -120,8 +121,14 @@
   --accent-700: #fbc02d;
   --accent-800: #f9a825;
   --accent-900: #f57f17;
-  --accent: #f9a825;
-  --accent-foreground: #ffffff;
+  /* HeroUI v3 semantic accent maps to Norish primary. The numbered
+     accent palette remains available for explicit gold highlights. */
+  --accent: var(--primary);
+  --accent-foreground: var(--primary-foreground);
+  --accent-hover: var(--primary-600);
+  --accent-soft: var(--primary-50);
+  --accent-soft-foreground: var(--primary-700);
+  --accent-soft-hover: var(--primary-100);
 
   /* App canvas and text */
   --background: #fffef7;
@@ -137,9 +144,22 @@
   --content4: #e7e9e3;
   --content4-foreground: #191c19;
 
+  /* HeroUI v3 surface tokens */
+  --surface: var(--content1);
+  --surface-foreground: var(--content1-foreground);
+  --surface-secondary: var(--content2);
+  --surface-secondary-foreground: var(--content2-foreground);
+  --surface-tertiary: var(--content3);
+  --surface-tertiary-foreground: var(--content3-foreground);
+  --overlay: var(--content1);
+  --overlay-foreground: var(--content1-foreground);
+  --muted: var(--default-600);
+  --border: var(--default-200);
+  --separator: var(--default-200);
+  --backdrop: #00000080;
+
   /* Interaction */
   --focus: #366943;
-  --overlay: #000000;
 }
 
 /* ============================================
@@ -159,7 +179,7 @@
   --default-700: #ababa8;
   --default-800: #c7c7c3;
   --default-900: #e3e3df;
-  --default: #2f312e;
+  --default: var(--default-200);
   --default-foreground: #ffffff;
 
   /* Brand in dark (Material dark scheme primary) */
@@ -257,8 +277,12 @@
   --accent-700: #fff59d;
   --accent-800: #fff9c4;
   --accent-900: #fffde7;
-  --accent: #fff176;
-  --accent-foreground: #000000;
+  --accent: var(--primary);
+  --accent-foreground: var(--primary-foreground);
+  --accent-hover: var(--primary-700);
+  --accent-soft: var(--primary-100);
+  --accent-soft-foreground: var(--primary-800);
+  --accent-soft-hover: var(--primary-200);
 
   /* App canvas and text */
   --background: #111411;
@@ -274,9 +298,22 @@
   --content4: #282b27;
   --content4-foreground: #e1e3dd;
 
+  /* HeroUI v3 surface tokens */
+  --surface: var(--content1);
+  --surface-foreground: var(--content1-foreground);
+  --surface-secondary: var(--content2);
+  --surface-secondary-foreground: var(--content2-foreground);
+  --surface-tertiary: var(--content3);
+  --surface-tertiary-foreground: var(--content3-foreground);
+  --overlay: var(--content1);
+  --overlay-foreground: var(--content1-foreground);
+  --muted: var(--default-600);
+  --border: var(--default-200);
+  --separator: var(--default-200);
+  --backdrop: #00000099;
+
   /* Interaction */
   --focus: #366943;
-  --overlay: #ffffff;
 }
 
 /* ============================================
@@ -413,4 +450,11 @@
   /* Interaction */
   --color-focus: var(--focus);
   --color-overlay: var(--overlay);
+}
+
+.button-accent-soft {
+  --button-bg: var(--accent-soft);
+  --button-bg-hover: var(--accent-soft-hover);
+  --button-bg-pressed: var(--accent-soft-hover);
+  --button-fg: var(--accent-soft-foreground);
 }

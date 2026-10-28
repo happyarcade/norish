@@ -1,6 +1,6 @@
 "use client";
 
-import { Chip } from "@heroui/react";
+import { Chip } from "@/components/ui/chip";
 import { useTranslations } from "next-intl";
 
 interface EnvManagedBadgeProps {
@@ -13,8 +13,8 @@ export function EnvManagedBadge({ isOverridden }: EnvManagedBadgeProps) {
   if (isOverridden === undefined) return null;
 
   return (
-    <Chip color={isOverridden ? "success" : "warning"} size="sm" variant="flat">
-      {isOverridden ? t("db") : t("env")}
+    <Chip color={isOverridden ? "success" : "warning"} size="sm" variant="soft">
+      <Chip.Label>{isOverridden ? t("db") : t("env")}</Chip.Label>
     </Chip>
   );
 }

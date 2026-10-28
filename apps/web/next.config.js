@@ -31,7 +31,7 @@ export default withNextIntl({
     root: resolve(configDirectory, "../.."),
   },
   productionBrowserSourceMaps: false,
-  allowedDevOrigins: ["localhost", "192.168.2.13"],
+  allowedDevOrigins: ["localhost", "192.168.2.13", "10.130.1.147"],
   devIndicators: false,
   env: {
     NEXT_PUBLIC_APP_VERSION: packageJson.version,

@@ -1,22 +1,31 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
-import { Navbar as HeroUINavbar, NavbarBrand, NavbarContent, NavbarItem } from "@heroui/navbar";
+import { BrandLogo } from "@/components/brand/brand-logo";
+import { useAutoHide } from "@/hooks/auto-hide";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
+
 import { siteConfig } from "@norish/web/config/site";
 
-import { BrandLogo } from "@/components/brand/brand-logo";
-import MobileNav from "@/components/navbar/mobile-nav";
-import NavbarUserMenu from "@/components/navbar/navbar-user-menu";
-import { useAutoHide } from "@/hooks/auto-hide";
+const NavbarUserMenu = dynamic(() => import("@/components/navbar/navbar-user-menu"), {
+  ssr: false,
+  loading: () => <div aria-hidden="true" className="h-13 w-13" />,
+});
+
+const MobileNav = dynamic(() => import("@/components/navbar/mobile-nav"), {
+  ssr: false,
+});
 
 // Map hrefs to translation keys
-const navLabelKeys: Record<string, "home" | "calendar" | "groceries"> = {
+const navLabelKeys: Record<string, "dashboard" | "home" | "calendar" | "prep" | "groceries"> = {
+  "/dashboard": "dashboard",
   "/": "home",
   "/groceries": "groceries",
   "/calendar": "calendar",
+  "/prep-table": "prep",
 };
 
 export const Navbar = () => {
@@ -43,15 +52,13 @@ export const Navbar = () => {
         onMouseEnter={onHoverStart}
         onMouseLeave={onHoverEnd}
       >
-        <HeroUINavbar
-          className="bg-content1 rounded-[40px] shadow-[0_8px_28px_-10px_rgba(0,0,0,0.3)] transition-all"
-          isBordered={false}
-          maxWidth="xl"
-          position="static"
+        <nav
+          aria-label="Primary navigation"
+          className="bg-content1 grid h-16 grid-cols-[1fr_auto_1fr] items-center rounded-[40px] px-6 shadow-[0_8px_28px_-10px_rgba(0,0,0,0.3)] transition-all"
         >
           {/* Left */}
-          <NavbarContent justify="start">
-            <NavbarBrand className="max-w-fit gap-3">
+          <div className="flex min-w-0 items-center justify-start">
+            <div className="max-w-fit">
               <NextLink
                 aria-label="Go to home"
                 className="flex items-center"
@@ -63,21 +70,21 @@ export const Navbar = () => {
                   }
                 }}
               >
-                <BrandLogo priority height={30} width={120} />
+                <BrandLogo priority width={120} />
               </NextLink>
-            </NavbarBrand>
-          </NavbarContent>
+            </div>
+          </div>
 
           {/* Center */}
-          <NavbarContent justify="center">
-            <ul className="ml-2 flex justify-start gap-3">
+          <div className="flex items-center justify-center">
+            <ul className="flex items-center justify-center gap-3">
               {siteConfig.navItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
                   (item.href !== "/" && pathname?.startsWith(item.href + "/"));
 
                 return (
-                  <NavbarItem key={item.href}>
+                  <li key={item.href}>
                     <NextLink
                       className={`hover:text-primary rounded-md px-3 py-1.5 font-medium transition-colors ${
                         isActive ? "text-primary font-semibold" : "text-foreground/80"
@@ -86,19 +93,19 @@ export const Navbar = () => {
                     >
                       {t(navLabelKeys[item.href] ?? "home")}
                     </NextLink>
-                  </NavbarItem>
+                  </li>
                 );
               })}
             </ul>
-          </NavbarContent>
+          </div>
 
           {/* Right */}
-          <NavbarContent className="items-center" justify="end">
-            <NavbarItem className="flex items-center">
+          <div className="flex items-center justify-end">
+            <div className="flex items-center">
               <NavbarUserMenu />
-            </NavbarItem>
-          </NavbarContent>
-        </HeroUINavbar>
+            </div>
+          </div>
+        </nav>
       </motion.div>
 
       {/* Mobile navbar */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Skeleton } from "@heroui/react";
+import { Skeleton } from "@heroui-v3/react";
 
 interface VideoPlayerSkeletonProps {
   className?: string;
@@ -8,11 +8,6 @@ interface VideoPlayerSkeletonProps {
 
 export default function VideoPlayerSkeleton({ className = "" }: VideoPlayerSkeletonProps) {
   return (
-    <Skeleton
-      className={`aspect-[9/16] w-full sm:aspect-video ${className}`}
-      classNames={{
-        base: "bg-default-200",
-      }}
-    />
+    <Skeleton className={`bg-default-200 aspect-[9/16] w-full sm:aspect-video ${className}`} />
   );
 }

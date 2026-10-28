@@ -2,8 +2,8 @@
 
 import { useCallback, useState } from "react";
 import NextImage from "next/image";
+import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/16/solid";
-import { Button } from "@heroui/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
 

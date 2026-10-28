@@ -1,7 +1,8 @@
 "use client";
 
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
+
 import { signIn } from "@norish/shared/lib/auth/client";
 
 import { ProviderIcon } from "./provider-icon";
@@ -41,12 +42,8 @@ export function ProviderButton({
   };
 
   return (
-    <Button
-      className="border-default-200 bg-default-100 hover:bg-default-100 active:bg-default-200 flex h-11 w-full items-center justify-center gap-3 rounded-xl border shadow-sm transition-colors"
-      startContent={<ProviderIcon icon={icon} providerName={providerName} width={20} />}
-      variant="flat"
-      onPress={handleSignIn}
-    >
+    <Button fullWidth className="h-11 gap-3" variant="secondary" onPress={handleSignIn}>
+      <ProviderIcon icon={icon} providerName={providerName} width={20} />
       {t("signInWith", { provider: providerName })}
     </Button>
   );

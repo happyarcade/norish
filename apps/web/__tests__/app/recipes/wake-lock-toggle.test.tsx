@@ -14,7 +14,7 @@ vi.mock("@heroicons/react/20/solid", () => ({
   DevicePhoneMobileIcon: (props: Record<string, unknown>) => <svg {...props} />,
 }));
 
-vi.mock("@heroui/react", () => ({
+vi.mock("@heroui-v3/react", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Switch: ({ onValueChange }: { onValueChange: () => void }) => (
     <button type="button" onClick={onValueChange}>

@@ -1,16 +1,17 @@
 "use client";
 
-import type { HouseholdAdminSettingsDto } from "@norish/shared/contracts/dto/household";
-
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   ArrowPathIcon,
   ClipboardDocumentIcon as ClipboardDocumentIconSolid,
 } from "@heroicons/react/16/solid";
 import { ClipboardDocumentIcon as ClipboardDocumentIconOutline } from "@heroicons/react/24/outline";
-import { Button, Card, CardBody, CardHeader, Input } from "@heroui/react";
+import { InputGroup, TextField } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
+import type { HouseholdAdminSettingsDto } from "@norish/shared/contracts/dto/household";
 
 import { useHouseholdSettingsContext } from "../context";
 
@@ -92,23 +93,23 @@ export default function JoinCodeCard() {
 
   return (
     <Card>
-      <CardHeader>
+      <Card.Header>
         <h2 className="flex items-center gap-2 text-lg font-semibold">
           <ClipboardDocumentIconOutline className="h-5 w-5" />
           {t("title")}
         </h2>
-      </CardHeader>
-      <CardBody className="gap-4">
+      </Card.Header>
+      <Card.Content className="gap-4">
         {adminHousehold.joinCode && !joinCodeExpired ? (
           <>
             <p className="text-default-600 text-base">{t("shareDescription")}</p>
             <div className="flex gap-2">
-              <Input
-                isReadOnly
-                classNames={{ input: "font-mono text-lg tracking-wider" }}
-                value={adminHousehold.joinCode || ""}
-              />
-              <Button isIconOnly onPress={handleCopyJoinCode}>
+              <TextField fullWidth isReadOnly value={adminHousehold.joinCode || ""}>
+                <InputGroup fullWidth variant="secondary">
+                  <InputGroup.Input className="font-mono text-lg tracking-wider" />
+                </InputGroup>
+              </TextField>
+              <Button isIconOnly aria-label={t("title")} onPress={handleCopyJoinCode}>
                 <ClipboardDocumentIconSolid className="h-4 w-4" />
               </Button>
             </div>
@@ -116,13 +117,8 @@ export default function JoinCodeCard() {
               <span className="text-default-600 text-base">
                 {t("expiresIn")} <span className="text-warning font-medium">{timeRemaining}</span>
               </span>
-              <Button
-                color="primary"
-                size="sm"
-                startContent={<ArrowPathIcon className="h-4 w-4" />}
-                variant="flat"
-                onPress={handleRegenerateCode}
-              >
+              <Button size="sm" variant="secondary" onPress={handleRegenerateCode}>
+                <ArrowPathIcon className="h-4 w-4" />
                 {t("regenerateButton")}
               </Button>
             </div>
@@ -131,17 +127,14 @@ export default function JoinCodeCard() {
           <>
             <p className="text-default-600 text-base">{t("noCodeDescription")}</p>
             <div className="flex justify-end">
-              <Button
-                color="primary"
-                startContent={<ArrowPathIcon className="h-4 w-4" />}
-                onPress={handleRegenerateCode}
-              >
+              <Button variant="primary" onPress={handleRegenerateCode}>
+                <ArrowPathIcon className="h-4 w-4" />
                 {t("generateButton")}
               </Button>
             </div>
           </>
         )}
-      </CardBody>
+      </Card.Content>
     </Card>
   );
 }

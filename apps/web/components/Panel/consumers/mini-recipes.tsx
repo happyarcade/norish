@@ -1,19 +1,20 @@
 "use client";
 
-import { ChangeEvent, memo, useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { memo, useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCalendarContext } from "@/app/(app)/calendar/context";
+import Panel from "@/components/Panel/Panel";
+import { SlotDropdown } from "@/components/shared/slot-dropdown";
+import MiniRecipeSkeleton from "@/components/skeleton/mini-recipe-skeleton";
+import { Button } from "@/components/ui/button";
+import { useRandomRecipe, useRecipesQuery } from "@/hooks/recipes";
 import { ArrowPathIcon, PlusIcon } from "@heroicons/react/16/solid";
-import { Button, Image, Input } from "@heroui/react";
+import { InputGroup, TextField } from "@heroui-v3/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
+
 import { RecipeCategory, RecipeDashboardDTO, Slot } from "@norish/shared/contracts";
 import { dateKey } from "@norish/shared/lib/helpers";
-
-import { useRandomRecipe, useRecipesQuery } from "@/hooks/recipes";
-import MiniRecipeSkeleton from "@/components/skeleton/mini-recipe-skeleton";
-import { SlotDropdown } from "@/components/shared/slot-dropdown";
-import Panel from "@/components/Panel/Panel";
-import { useCalendarContext } from "@/app/(app)/calendar/context";
 
 const ESTIMATED_ITEM_HEIGHT = 88; // ~80px image + 8px padding
 
@@ -47,12 +48,9 @@ const MiniRecipeItem = memo(function MiniRecipeItem({
     <div className="hover:bg-default-100 flex cursor-pointer items-start gap-3 rounded-md px-2 py-2">
       <div className="bg-default-200 relative h-20 w-20 shrink-0 overflow-hidden rounded-md">
         {recipe.image && (
-          <Image
-            removeWrapper
-            alt={recipe.name}
-            className="h-full w-full object-cover"
-            src={recipe.image}
-          />
+          // Imported recipes can use arbitrary remote image hosts.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt={recipe.name} className="h-full w-full object-cover" src={recipe.image} />
         )}
       </div>
       <div className="flex min-w-0 flex-col">
@@ -217,9 +215,7 @@ function MiniRecipesContent({
 
   const dateString = dateKey(date);
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-
+  const handleInputChange = (value: string) => {
     setRawInput(value);
 
     startTransition(() => {
@@ -274,12 +270,11 @@ function MiniRecipesContent({
   if (error) {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-3">
-        <Input
-          placeholder={t("searchPlaceholder")}
-          style={{ fontSize: "16px" }}
-          value={rawInput}
-          onChange={handleInputChange}
-        />
+        <TextField fullWidth value={rawInput} onChange={handleInputChange}>
+          <InputGroup fullWidth variant="secondary">
+            <InputGroup.Input placeholder={t("searchPlaceholder")} />
+          </InputGroup>
+        </TextField>
         <div className="flex flex-1 items-center justify-center text-base text-red-500">
           {t("failedToLoadRecipes")}
         </div>
@@ -292,12 +287,11 @@ function MiniRecipesContent({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <Input
-        placeholder={t("searchPlaceholder")}
-        style={{ fontSize: "16px" }}
-        value={rawInput}
-        onChange={handleInputChange}
-      />
+      <TextField fullWidth value={rawInput} onChange={handleInputChange}>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Input placeholder={t("searchPlaceholder")} />
+        </InputGroup>
+      </TextField>
 
       <AnimatePresence mode="wait">
         {showAddNote && (
@@ -310,24 +304,19 @@ function MiniRecipesContent({
           >
             {slot ? (
               <Button
-                className="w-full justify-center"
-                color="primary"
+                fullWidth
+                className="justify-center"
                 size="sm"
-                startContent={<PlusIcon className="h-4 w-4 shrink-0" />}
-                variant="solid"
+                variant="primary"
                 onPress={handleDirectNote}
               >
+                <PlusIcon className="h-4 w-4 shrink-0" />
                 <span className="truncate">{t("addNote", { input: rawInput })}</span>
               </Button>
             ) : (
               <SlotDropdown ariaLabel="Choose slot for note" onSelectSlot={handlePlanNote}>
-                <Button
-                  className="w-full justify-center"
-                  color="primary"
-                  size="sm"
-                  startContent={<PlusIcon className="h-4 w-4 shrink-0" />}
-                  variant="solid"
-                >
+                <Button fullWidth className="justify-center" size="sm" variant="primary">
+                  <PlusIcon className="h-4 w-4 shrink-0" />
                   <span className="truncate">{t("addNote", { input: rawInput })}</span>
                 </Button>
               </SlotDropdown>
@@ -343,14 +332,14 @@ function MiniRecipesContent({
             transition={{ duration: 0.15, ease: "easeInOut" }}
           >
             <Button
-              className="w-full justify-center"
-              color="primary"
-              isLoading={isRandomLoading}
+              fullWidth
+              className="justify-center"
+              isPending={isRandomLoading}
               size="sm"
-              startContent={!isRandomLoading && <ArrowPathIcon className="h-4 w-4 shrink-0" />}
-              variant="solid"
+              variant="primary"
               onPress={handleRandomSelect}
             >
+              {!isRandomLoading ? <ArrowPathIcon className="h-4 w-4 shrink-0" /> : null}
               {t("randomRecipe")}
             </Button>
           </motion.div>

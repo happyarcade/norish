@@ -1,11 +1,12 @@
 "use client";
 
 import { Suspense } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ExclamationTriangleIcon, ShieldExclamationIcon } from "@heroicons/react/16/solid";
-import { Button, Card, CardBody } from "@heroui/react";
 import { useTranslations } from "next-intl";
+
 import { createClientLogger } from "@norish/shared/lib/logger";
 
 const log = createClientLogger("AuthError");
@@ -34,6 +35,7 @@ function isKnownErrorCode(code: string): code is ErrorCode {
 
 function AuthErrorContent() {
   const t = useTranslations("auth.errors");
+  const router = useRouter();
   const searchParams = useSearchParams();
   const error = searchParams.get("error")?.toLowerCase();
 
@@ -49,11 +51,8 @@ function AuthErrorContent() {
 
   return (
     <div className="bg-background flex min-h-full items-center justify-center p-6">
-      <Card
-        className="border-default-200 bg-content1/70 w-full max-w-md rounded-3xl border p-8 text-center backdrop-blur-md"
-        shadow="sm"
-      >
-        <CardBody className="flex flex-col items-center space-y-6">
+      <Card className="border-default-200 bg-content1/70 w-full max-w-md rounded-3xl border p-8 text-center backdrop-blur-md">
+        <Card.Content className="flex flex-col items-center space-y-6">
           <div
             className={`rounded-full p-4 ${isServerError ? "bg-warning/10 text-warning" : "bg-danger/10 text-danger"}`}
           >
@@ -72,12 +71,14 @@ function AuthErrorContent() {
             )}
           </div>
 
-          <Link href="/login?logout=true">
-            <Button className="mt-2 px-6" color="primary" radius="lg" variant="solid">
-              {t("backToLogin")}
-            </Button>
-          </Link>
-        </CardBody>
+          <Button
+            className="mt-2 px-6"
+            variant="primary"
+            onPress={() => router.push("/login?logout=true")}
+          >
+            {t("backToLogin")}
+          </Button>
+        </Card.Content>
       </Card>
     </div>
   );

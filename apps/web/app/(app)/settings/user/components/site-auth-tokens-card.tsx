@@ -1,35 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { useTRPC } from "@/app/providers/trpc-provider";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
 import { PlusIcon, ShieldCheckIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Chip,
-  Input,
+  InputGroup,
+  Label,
+  ListBox,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
   Select,
-  SelectItem,
   Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@heroui/react";
+  TextField,
+  useOverlayState,
+} from "@heroui-v3/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
 import NewFeatureChip from "../../components/new-feature-chip";
-
-import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
-import { useTRPC } from "@/app/providers/trpc-provider";
 
 export default function SiteAuthTokensCard() {
   const t = useTranslations("settings.user.siteAuthTokens");
@@ -56,6 +47,10 @@ export default function SiteAuthTokensCard() {
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [tokenToDelete, setTokenToDelete] = useState<string | null>(null);
+  const deleteModalState = useOverlayState({
+    isOpen: showDeleteModal,
+    onOpenChange: setShowDeleteModal,
+  });
 
   const handleCreate = async () => {
     if (!domain.trim() || !name.trim() || !value.trim()) return;
@@ -111,67 +106,72 @@ export default function SiteAuthTokensCard() {
   return (
     <>
       <Card>
-        <CardHeader>
+        <Card.Header>
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <ShieldCheckIcon className="h-5 w-5" />
             {t("title")}
             <NewFeatureChip />
           </h2>
-        </CardHeader>
-        <CardBody className="gap-4">
+        </Card.Header>
+        <Card.Content className="gap-4">
           <p className="text-default-600 text-base">{t("description")}</p>
 
           {/* Create form */}
           <div className="flex flex-col gap-3">
-            <div className="flex items-end gap-2">
-              <Input
-                className="flex-1"
-                label={t("domain")}
-                placeholder={t("domainPlaceholder")}
-                size="sm"
-                value={domain}
-                onValueChange={setDomain}
-              />
-              <Input
-                className="flex-1"
-                label={t("name")}
-                placeholder={t("namePlaceholder")}
-                size="sm"
-                value={name}
-                onValueChange={setName}
-              />
-              <Input
-                className="flex-1"
-                label={t("value")}
-                placeholder={t("valuePlaceholder")}
-                size="sm"
-                type="password"
-                value={value}
-                onValueChange={setValue}
-              />
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <TextField fullWidth value={domain} onChange={setDomain}>
+                <Label>{t("domain")}</Label>
+                <InputGroup fullWidth variant="secondary">
+                  <InputGroup.Input placeholder={t("domainPlaceholder")} />
+                </InputGroup>
+              </TextField>
+              <TextField fullWidth value={name} onChange={setName}>
+                <Label>{t("name")}</Label>
+                <InputGroup fullWidth variant="secondary">
+                  <InputGroup.Input placeholder={t("namePlaceholder")} />
+                </InputGroup>
+              </TextField>
+              <TextField fullWidth value={value} onChange={setValue}>
+                <Label>{t("value")}</Label>
+                <InputGroup fullWidth variant="secondary">
+                  <InputGroup.Input placeholder={t("valuePlaceholder")} type="password" />
+                </InputGroup>
+              </TextField>
               <Select
-                className="w-36 shrink-0"
-                label={t("type")}
-                selectedKeys={[type]}
-                size="sm"
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys)[0] as "header" | "cookie";
-
-                  if (selected) setType(selected);
+                fullWidth
+                selectedKey={type}
+                variant="secondary"
+                onSelectionChange={(selected) => {
+                  if (selected === "header" || selected === "cookie") setType(selected);
                 }}
               >
-                <SelectItem key="header">{t("typeHeader")}</SelectItem>
-                <SelectItem key="cookie">{t("typeCookie")}</SelectItem>
+                <Label>{t("type")}</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox aria-label={t("type")}>
+                    <ListBox.Item id="header" textValue={t("typeHeader")}>
+                      {t("typeHeader")}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    <ListBox.Item id="cookie" textValue={t("typeCookie")}>
+                      {t("typeCookie")}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
               </Select>
             </div>
             <div className="flex justify-end">
               <Button
-                color="primary"
                 isDisabled={!isFormValid}
-                isLoading={isCreating}
-                startContent={<PlusIcon className="h-4 w-4" />}
+                isPending={isCreating}
+                variant="primary"
                 onPress={handleCreate}
               >
+                <PlusIcon className="h-4 w-4" />
                 {t("addButton")}
               </Button>
             </div>
@@ -180,51 +180,57 @@ export default function SiteAuthTokensCard() {
           {/* Token list */}
           {tokens.length > 0 && (
             <div className="mt-4">
-              <Table aria-label={t("title")}>
-                <TableHeader>
-                  <TableColumn>{t("tableHeaders.domain")}</TableColumn>
-                  <TableColumn>{t("tableHeaders.name")}</TableColumn>
-                  <TableColumn>{t("tableHeaders.type")}</TableColumn>
-                  <TableColumn>{t("tableHeaders.created")}</TableColumn>
-                  <TableColumn>{t("tableHeaders.actions")}</TableColumn>
-                </TableHeader>
-                <TableBody>
-                  {tokens.map((token) => (
-                    <TableRow key={token.id}>
-                      <TableCell>
-                        <code className="bg-default-100 rounded px-2 py-1 text-xs">
-                          {token.domain}
-                        </code>
-                      </TableCell>
-                      <TableCell>{token.name}</TableCell>
-                      <TableCell>
-                        <Chip
-                          color={token.type === "header" ? "primary" : "warning"}
-                          size="sm"
-                          variant="flat"
-                        >
-                          {token.type === "header" ? t("typeHeader") : t("typeCookie")}
-                        </Chip>
-                      </TableCell>
-                      <TableCell>{new Date(token.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Button
-                          isIconOnly
-                          color="danger"
-                          size="sm"
-                          title={t("deleteModal.confirmButton")}
-                          variant="light"
-                          onPress={() => {
-                            setTokenToDelete(token.id);
-                            setShowDeleteModal(true);
-                          }}
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+              <Table>
+                <Table.ScrollContainer>
+                  <Table.Content aria-label={t("title")}>
+                    <Table.Header>
+                      <Table.Column isRowHeader>{t("tableHeaders.domain")}</Table.Column>
+                      <Table.Column>{t("tableHeaders.name")}</Table.Column>
+                      <Table.Column>{t("tableHeaders.type")}</Table.Column>
+                      <Table.Column>{t("tableHeaders.created")}</Table.Column>
+                      <Table.Column>{t("tableHeaders.actions")}</Table.Column>
+                    </Table.Header>
+                    <Table.Body>
+                      {tokens.map((token) => (
+                        <Table.Row key={token.id} id={token.id}>
+                          <Table.Cell>
+                            <code className="bg-default-100 rounded px-2 py-1 text-xs">
+                              {token.domain}
+                            </code>
+                          </Table.Cell>
+                          <Table.Cell>{token.name}</Table.Cell>
+                          <Table.Cell>
+                            <Chip
+                              color={token.type === "header" ? "accent" : "warning"}
+                              size="sm"
+                              variant="soft"
+                            >
+                              <Chip.Label>
+                                {token.type === "header" ? t("typeHeader") : t("typeCookie")}
+                              </Chip.Label>
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell>{new Date(token.createdAt).toLocaleDateString()}</Table.Cell>
+                          <Table.Cell>
+                            <Button
+                              isIconOnly
+                              aria-label={t("deleteModal.confirmButton")}
+                              size="sm"
+                              title={t("deleteModal.confirmButton")}
+                              variant="danger-soft"
+                              onPress={() => {
+                                setTokenToDelete(token.id);
+                                setShowDeleteModal(true);
+                              }}
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </Button>
+                          </Table.Cell>
+                        </Table.Row>
+                      ))}
+                    </Table.Body>
+                  </Table.Content>
+                </Table.ScrollContainer>
               </Table>
             </div>
           )}
@@ -232,37 +238,36 @@ export default function SiteAuthTokensCard() {
           {tokens.length === 0 && (
             <p className="text-default-500 py-4 text-base">{t("noTokens")}</p>
           )}
-        </CardBody>
+        </Card.Content>
       </Card>
 
       {/* Delete Confirmation Modal */}
-      <Modal
-        classNames={{ wrapper: "z-[1100]", backdrop: "z-[1099]" }}
-        isOpen={showDeleteModal}
-        onOpenChange={setShowDeleteModal}
-      >
-        <ModalContent>
-          {(onClose: () => void) => (
-            <>
-              <ModalHeader>{t("deleteModal.title")}</ModalHeader>
-              <ModalBody>
+      <Modal state={deleteModalState}>
+        <Modal.Backdrop className="z-[1099]" variant="blur">
+          <Modal.Container className="z-[1100]" placement="center">
+            <Modal.Dialog>
+              <Modal.CloseTrigger aria-label={tActions("cancel")} />
+              <Modal.Header>
+                <Modal.Heading>{t("deleteModal.title")}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
                 <p>{t("deleteModal.message")}</p>
-              </ModalBody>
-              <ModalFooter>
-                <Button variant="flat" onPress={onClose}>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="tertiary" onPress={deleteModalState.close}>
                   {tActions("cancel")}
                 </Button>
                 <Button
-                  color="danger"
-                  isLoading={removeMutation.isPending}
+                  isPending={removeMutation.isPending}
+                  variant="danger"
                   onPress={() => tokenToDelete && handleDelete(tokenToDelete)}
                 >
                   {t("deleteModal.confirmButton")}
                 </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </>
   );

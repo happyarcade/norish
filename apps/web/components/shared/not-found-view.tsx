@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { HomeIcon } from "@heroicons/react/16/solid";
-import { Button, Card, CardBody } from "@heroui/react";
-import { useTranslations } from "next-intl";
-
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import notjoundjpg from "@/public/404.jpg";
+import { HomeIcon } from "@heroicons/react/16/solid";
+import { useTranslations } from "next-intl";
 
 type Props = {
   title?: string;
@@ -37,7 +37,7 @@ export function NotFoundView({ title, message }: Props) {
           <div className="from-content1/90 absolute inset-0 bg-gradient-to-t via-transparent to-transparent" />
         </div>
 
-        <CardBody className="relative z-10 -mt-12 flex flex-col items-center space-y-4 p-8">
+        <Card.Content className="relative z-10 -mt-12 flex flex-col items-center space-y-4 p-8">
           <div className="flex flex-col items-center space-y-2">
             <h1 className="text-foreground text-4xl font-bold">{t("code")}</h1>
             <h2 className="text-foreground text-xl font-semibold">{displayTitle}</h2>
@@ -57,7 +57,7 @@ export function NotFoundView({ title, message }: Props) {
           >
             {tActions("goHome")}
           </Button>
-        </CardBody>
+        </Card.Content>
       </Card>
     </div>
   );

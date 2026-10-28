@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { EyeIcon, EyeSlashIcon, PencilIcon, XMarkIcon } from "@heroicons/react/16/solid";
-import { Button, Chip, Input } from "@heroui/react";
+import { Description, InputGroup, Label, TextField } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
 interface SecretInputProps {
@@ -101,13 +103,13 @@ export default function SecretInput({
     <span className="flex items-center gap-2">
       {label}
       {isConfigured && !isEditing && (
-        <Chip className="h-5" color="success" size="sm" variant="flat">
-          configured
+        <Chip className="h-5" color="success" size="sm" variant="soft">
+          <Chip.Label>configured</Chip.Label>
         </Chip>
       )}
       {isEditing && (
-        <Chip className="h-5" color="warning" size="sm" variant="flat">
-          editing
+        <Chip className="h-5" color="warning" size="sm" variant="soft">
+          <Chip.Label>editing</Chip.Label>
         </Chip>
       )}
     </span>
@@ -115,20 +117,13 @@ export default function SecretInput({
 
   return (
     <div className={`flex gap-2 ${className ?? ""}`}>
-      <Input
+      <TextField
         className="flex-1"
-        classNames={{
-          input: showPlaceholderBullets ? "text-default-400" : undefined,
-        }}
-        description={description}
-        isDisabled={isDisabled || isInputReadOnly}
+        isDisabled={isDisabled}
         isReadOnly={isInputReadOnly}
         isRequired={isRequired && !isConfigured}
-        label={enhancedLabel}
-        placeholder={isConfigured && !isEditing ? "" : placeholder}
-        type={showRealValue ? "text" : "password"}
         value={showPlaceholderBullets ? PLACEHOLDER_BULLETS : value}
-        onValueChange={(v) => {
+        onChange={(v) => {
           // If user starts typing while showing placeholder, switch to editing mode
           if (showPlaceholderBullets && v !== PLACEHOLDER_BULLETS) {
             setIsEditing(true);
@@ -137,19 +132,30 @@ export default function SecretInput({
             onValueChange(v);
           }
         }}
-      />
+      >
+        <Label>{enhancedLabel}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Input
+            className={showPlaceholderBullets ? "text-default-400" : undefined}
+            placeholder={isConfigured && !isEditing ? "" : placeholder}
+            type={showRealValue ? "text" : "password"}
+          />
+        </InputGroup>
+        {description ? <Description>{description}</Description> : null}
+      </TextField>
 
       <div className="flex gap-1 pb-0.5">
         {/* Reveal button - show when configured but not revealed/editing */}
         {isConfigured && !isRevealed && !isEditing && (
           <Button
             isIconOnly
+            aria-label={tActions("revealSecret")}
             className="h-15"
             isDisabled={isDisabled}
-            isLoading={isLoading}
+            isPending={isLoading}
             size="md"
             title={tActions("revealSecret")}
-            variant="flat"
+            variant="tertiary"
             onPress={handleReveal}
           >
             <EyeIcon className="h-4 w-4" />
@@ -160,11 +166,12 @@ export default function SecretInput({
         {isRevealed && (
           <Button
             isIconOnly
+            aria-label={tActions("hideSecret")}
             className="h-15"
             isDisabled={isDisabled}
             size="md"
             title={tActions("hideSecret")}
-            variant="flat"
+            variant="tertiary"
             onPress={handleHide}
           >
             <EyeSlashIcon className="h-4 w-4" />
@@ -175,11 +182,12 @@ export default function SecretInput({
         {isConfigured && !isEditing && (
           <Button
             isIconOnly
+            aria-label={tActions("enterNewValue")}
             className="h-15"
             isDisabled={isDisabled}
             size="md"
             title={tActions("enterNewValue")}
-            variant="flat"
+            variant="tertiary"
             onPress={handleStartEditing}
           >
             <PencilIcon className="h-4 w-4" />
@@ -190,12 +198,12 @@ export default function SecretInput({
         {isEditing && (
           <Button
             isIconOnly
+            aria-label={tActions("cancelEditing")}
             className="h-15"
-            color="danger"
             isDisabled={isDisabled}
             size="md"
             title={tActions("cancelEditing")}
-            variant="flat"
+            variant="danger-soft"
             onPress={handleCancelEditing}
           >
             <XMarkIcon className="h-4 w-4" />

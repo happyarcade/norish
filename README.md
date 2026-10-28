@@ -92,6 +92,11 @@ _Note: AI feature speed can vary by provider, model, and region._
 
 ## Deploying
 
+For a hardened single-host Linux deployment of this checkout, including private service networks,
+persistent volumes, backups, restore, upgrades, reverse proxying, and LAN access, follow the
+[production deployment guide](docker/README.md). The minimal example below remains useful for a
+quick evaluation.
+
 ### Minimal Docker Compose
 
 For a full template, see [docker-compose.example.yml](docker/docker-compose.example.yml).

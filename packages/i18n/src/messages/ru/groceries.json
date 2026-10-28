@@ -8,7 +8,10 @@
     "viewMode": "Режим отображения",
     "manageStores": "Управление магазинами",
     "storeViewOptions": "Настройки отображения магазинов",
-    "groupIngredients": "Группировать ингредиенты"
+    "groupIngredients": "Группировать ингредиенты",
+    "pantry": "Pantry",
+    "sectionLabel": "Groceries sections",
+    "shopping": "Shopping"
   },
   "empty": {
     "title": "Ваш список покупок ждёт",
@@ -26,6 +29,7 @@
     "storeActions": "Действия с магазином",
     "markAllDone": "Отметить всё как выполненное",
     "deleteDone": "Удалить выполненные",
+    "moveDoneToPantry": "Перенести купленное в кладовую",
     "done": "{count, plural, one {# выполнено} few {# выполнено} many {# выполнено} other {# выполнено}}"
   },
   "storeManager": {
@@ -73,6 +77,68 @@
     "addSelectedToGroceries": "Добавить в список покупок",
     "ingredientsAdded": "Ингредиенты добавлены в список покупок.",
     "ingredientsFailed": "Не удалось добавить ингредиенты в список покупок.",
-    "addToGroceries": "Добавить в список покупок"
+    "addToGroceries": "Добавить в список покупок",
+    "inYourPantry": "In your pantry"
+  },
+  "pantry": {
+    "title": "Pantry",
+    "add": "Add pantry item",
+    "remove": "Remove {name} from pantry",
+    "namePlaceholder": "e.g., olive oil",
+    "empty": "No pantry items yet",
+    "loading": "Loading pantry...",
+    "duplicate": "Already in your pantry",
+    "failed": "Could not save this item",
+    "plannedTitle": "In your pantry",
+    "plannedSubtitle": "Already at home",
+    "atHome": "{count, plural, one {# item at home} other {# items at home}}",
+    "addAnyway": "Add anyway",
+    "added": "Added",
+    "addAnywayFailed": "Could not add this grocery",
+    "onHand": "On hand",
+    "low": "Running low",
+    "staple": "Staple",
+    "onHandCount": "{count, plural, one {# on hand} other {# on hand}}",
+    "lowCount": "{count, plural, one {# running low} other {# running low}}",
+    "checkCount": "{count, plural, one {# needs checking} other {# need checking}}",
+    "checkStock": "Check stock - last confirmed over 45 days ago",
+    "markLow": "Mark {name} as running low",
+    "markLowShort": "Mark as running low",
+    "markOnHand": "Mark {name} as on hand",
+    "markOnHandShort": "Mark as on hand",
+    "makeStaple": "Always keep {name} stocked",
+    "makeStapleShort": "Always keep stocked",
+    "removeStaple": "Stop treating {name} as a staple",
+    "removeStapleShort": "Remove staple status",
+    "removeShort": "Remove from pantry",
+    "search": "Search pantry",
+    "searchPlaceholder": "Search household ingredients...",
+    "noMatches": "No pantry items match your search",
+    "checkStockGroup": "Check stock",
+    "staples": "Staples"
+  },
+  "pantryTransfer": {
+    "title": "Разложить покупки",
+    "description": "Проверьте покупки. Снимите выбор с хозяйственных товаров и всего, что не нужно учитывать в кладовой.",
+    "loading": "Загрузка кладовой...",
+    "empty": "Нет завершённых покупок для переноса.",
+    "selectAll": "Выбрать всё",
+    "completedEntries": "{count, plural, one {# завершённая позиция} few {# завершённые позиции} many {# завершённых позиций} other {# завершённой позиции}}",
+    "alreadyInPantry": "Уже учтено",
+    "confirm": "Перенести {count, plural, one {# товар} few {# товара} many {# товаров} other {# товара}} в кладовую",
+    "success": "Перенесено {count, plural, one {# товар} few {# товара} many {# товаров} other {# товара}} в кладовую",
+    "failed": "Не удалось перенести покупки. Ничего не было удалено."
+  },
+  "pantryUsage": {
+    "title": "Обновить кладовую",
+    "description": "Выберите состояние каждого совпавшего ингредиента после готовки.",
+    "loading": "Проверка кладовой...",
+    "nothingAutomatic": "До подтверждения ничего не изменится.",
+    "keepUnchanged": "Оставить кладовую без изменений",
+    "onHand": "В наличии",
+    "runningLow": "Заканчивается",
+    "usedUp": "Закончилось",
+    "statusFor": "Состояние {name} в кладовой",
+    "failed": "Блюдо отмечено как приготовленное, но обновить кладовую не удалось. Попробуйте ещё раз."
   }
 }

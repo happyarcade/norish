@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { Accordion, AccordionItem } from "@/components/ui/accordion";
+import { Card } from "@/components/ui/card";
 import { SparklesIcon } from "@heroicons/react/24/outline";
-import { Accordion, AccordionItem, Card, CardBody, CardHeader } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
 import AIConfigForm from "./ai-config-form";
@@ -26,17 +27,17 @@ export default function AIProcessingCard() {
 
   return (
     <Card>
-      <CardHeader>
+      <Card.Header>
         <div className="flex items-center gap-2">
           <SparklesIcon className="h-5 w-5" />
           <h2 className="text-lg font-semibold">{t("title")}</h2>
         </div>
-      </CardHeader>
-      <CardBody>
+      </Card.Header>
+      <Card.Content>
         <p className="text-default-500 mb-4 text-base">{t("description")}</p>
         <Accordion selectionMode="multiple" variant="bordered">
           <AccordionItem
-            key="ai"
+            id="ai"
             subtitle={t("aiConfig.subtitle")}
             title={
               <div className="flex items-center gap-2">
@@ -49,7 +50,7 @@ export default function AIProcessingCard() {
           </AccordionItem>
 
           <AccordionItem
-            key="video"
+            id="video"
             subtitle={t("video.subtitle")}
             title={
               <div className="flex items-center gap-2">
@@ -62,7 +63,7 @@ export default function AIProcessingCard() {
           </AccordionItem>
 
           <AccordionItem
-            key="prompts"
+            id="prompts"
             subtitle={t("prompts.subtitle")}
             title={
               <div className="flex items-center gap-2">
@@ -75,14 +76,14 @@ export default function AIProcessingCard() {
           </AccordionItem>
 
           <AccordionItem
-            key="bulkCategorization"
+            id="bulkCategorization"
             subtitle={t("bulkCategorization.subtitle")}
             title={<div className="flex items-center gap-2">{t("bulkCategorization.title")}</div>}
           >
             <BulkCategorizationForm />
           </AccordionItem>
         </Accordion>
-      </CardBody>
+      </Card.Content>
     </Card>
   );
 }

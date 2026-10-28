@@ -1,24 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
 import { ArrowPathIcon, ClockIcon, InformationCircleIcon } from "@heroicons/react/16/solid";
-import {
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Chip,
-  Pagination,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@heroui/react";
+import { Pagination, Popover, Table } from "@heroui-v3/react";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslations } from "next-intl";
 
@@ -89,7 +76,7 @@ export default function CalDavSyncStatusCard() {
 
   return (
     <Card>
-      <CardHeader>
+      <Card.Header>
         <div className="flex w-full flex-col gap-4">
           {/* Title and Sync Button */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -97,13 +84,8 @@ export default function CalDavSyncStatusCard() {
               <ClockIcon className="text-primary h-6 w-6" />
               <h2 className="text-lg font-semibold">{t("title")}</h2>
             </div>
-            <Button
-              color="primary"
-              isLoading={syncing}
-              size="sm"
-              startContent={<ArrowPathIcon className="h-4 w-4" />}
-              onPress={handleManualSync}
-            >
+            <Button isPending={syncing} size="sm" variant="primary" onPress={handleManualSync}>
+              <ArrowPathIcon className="h-4 w-4" />
               {t("syncNow")}
             </Button>
           </div>
@@ -111,42 +93,70 @@ export default function CalDavSyncStatusCard() {
           {/* Summary Badges - Clickable Filters */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap gap-2">
-              <Chip
-                className="cursor-pointer transition-all"
-                color="success"
-                size="sm"
-                variant={syncStatusFilter === "synced" ? "solid" : "flat"}
+              <button
+                aria-pressed={syncStatusFilter === "synced"}
+                className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
+                type="button"
                 onClick={() => handleFilterClick("synced")}
               >
-                {t("statuses.synced")}: {syncStatusSummary.synced}
-              </Chip>
-              <Chip
-                className="cursor-pointer transition-all"
-                color="warning"
-                size="sm"
-                variant={syncStatusFilter === "pending" ? "solid" : "flat"}
+                <Chip
+                  color="success"
+                  size="sm"
+                  variant={syncStatusFilter === "synced" ? "primary" : "soft"}
+                >
+                  <Chip.Label>
+                    {t("statuses.synced")}: {syncStatusSummary.synced}
+                  </Chip.Label>
+                </Chip>
+              </button>
+              <button
+                aria-pressed={syncStatusFilter === "pending"}
+                className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
+                type="button"
                 onClick={() => handleFilterClick("pending")}
               >
-                {t("statuses.pending")}: {syncStatusSummary.pending}
-              </Chip>
-              <Chip
-                className="cursor-pointer transition-all"
-                color="danger"
-                size="sm"
-                variant={syncStatusFilter === "failed" ? "solid" : "flat"}
+                <Chip
+                  color="warning"
+                  size="sm"
+                  variant={syncStatusFilter === "pending" ? "primary" : "soft"}
+                >
+                  <Chip.Label>
+                    {t("statuses.pending")}: {syncStatusSummary.pending}
+                  </Chip.Label>
+                </Chip>
+              </button>
+              <button
+                aria-pressed={syncStatusFilter === "failed"}
+                className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
+                type="button"
                 onClick={() => handleFilterClick("failed")}
               >
-                {t("statuses.failed")}: {syncStatusSummary.failed}
-              </Chip>
-              <Chip
-                className="cursor-pointer transition-all"
-                color="default"
-                size="sm"
-                variant={syncStatusFilter === "removed" ? "solid" : "flat"}
+                <Chip
+                  color="danger"
+                  size="sm"
+                  variant={syncStatusFilter === "failed" ? "primary" : "soft"}
+                >
+                  <Chip.Label>
+                    {t("statuses.failed")}: {syncStatusSummary.failed}
+                  </Chip.Label>
+                </Chip>
+              </button>
+              <button
+                aria-pressed={syncStatusFilter === "removed"}
+                className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
+                type="button"
                 onClick={() => handleFilterClick("removed")}
               >
-                {t("statuses.removed")}: {syncStatusSummary.removed}
-              </Chip>
+                <Chip
+                  color="default"
+                  size="sm"
+                  variant={syncStatusFilter === "removed" ? "primary" : "soft"}
+                >
+                  <Chip.Label>
+                    {t("statuses.removed")}: {syncStatusSummary.removed}
+                  </Chip.Label>
+                </Chip>
+              </button>
             </div>
 
             {/* Filter Status and Count */}
@@ -155,7 +165,7 @@ export default function CalDavSyncStatusCard() {
                 <Button
                   className="h-8"
                   size="sm"
-                  variant="light"
+                  variant="tertiary"
                   onPress={() => {
                     setSyncStatusFilter(undefined);
                     setSyncStatusPage(1);
@@ -174,97 +184,118 @@ export default function CalDavSyncStatusCard() {
             </div>
           </div>
         </div>
-      </CardHeader>
+      </Card.Header>
 
-      <CardBody>
-        <Table
-          aria-label="CalDAV sync status"
-          classNames={{
-            wrapper: "p-0",
-          }}
-        >
-          <TableHeader>
-            <TableColumn>{t("tableHeaders.item")}</TableColumn>
-            <TableColumn>{t("tableHeaders.type")}</TableColumn>
-            <TableColumn>{t("tableHeaders.date")}</TableColumn>
-            <TableColumn>{t("tableHeaders.meal")}</TableColumn>
-            <TableColumn>{t("tableHeaders.status")}</TableColumn>
-            <TableColumn>{t("tableHeaders.lastSync")}</TableColumn>
-            <TableColumn>{t("tableHeaders.error")}</TableColumn>
-          </TableHeader>
-          <TableBody
-            emptyContent={
-              syncStatusFilter
-                ? t("emptyFiltered", { status: syncStatusFilter })
-                : t("emptyDefault")
-            }
-          >
-            {syncStatuses.map((status) => (
-              <TableRow key={status.id}>
-                <TableCell className="min-w-[150px] font-medium">
-                  {status.recipeName || status.noteName || status.eventTitle || "—"}
-                </TableCell>
-                <TableCell>
-                  <Chip className="capitalize" size="sm" variant="flat">
-                    {status.itemType}
-                  </Chip>
-                </TableCell>
-                <TableCell className="text-sm">{status.date || "—"}</TableCell>
-                <TableCell className="text-sm capitalize">{status.slot || "—"}</TableCell>
-                <TableCell>
-                  <Chip
-                    className="capitalize"
-                    color={getStatusColor(status.syncStatus)}
-                    size="sm"
-                    variant="flat"
-                  >
-                    {status.syncStatus}
-                  </Chip>
-                </TableCell>
-                <TableCell className="text-default-500 text-xs">
-                  {formatDate(status.lastSyncAt)}
-                </TableCell>
-                <TableCell>
-                  {status.errorMessage ? (
-                    <Popover placement="left">
-                      <PopoverTrigger>
-                        <Button
-                          isIconOnly
-                          className="min-w-unit-8 w-unit-8 h-unit-8"
+      <Card.Content>
+        {syncStatuses.length > 0 ? (
+          <Table>
+            <Table.ScrollContainer>
+              <Table.Content aria-label="CalDAV sync status">
+                <Table.Header>
+                  <Table.Column isRowHeader>{t("tableHeaders.item")}</Table.Column>
+                  <Table.Column>{t("tableHeaders.type")}</Table.Column>
+                  <Table.Column>{t("tableHeaders.date")}</Table.Column>
+                  <Table.Column>{t("tableHeaders.meal")}</Table.Column>
+                  <Table.Column>{t("tableHeaders.status")}</Table.Column>
+                  <Table.Column>{t("tableHeaders.lastSync")}</Table.Column>
+                  <Table.Column>{t("tableHeaders.error")}</Table.Column>
+                </Table.Header>
+                <Table.Body>
+                  {syncStatuses.map((status) => (
+                    <Table.Row key={status.id} id={status.id}>
+                      <Table.Cell className="min-w-[150px] font-medium">
+                        {status.recipeName || status.noteName || status.eventTitle || "—"}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Chip className="capitalize" size="sm" variant="soft">
+                          <Chip.Label>{status.itemType}</Chip.Label>
+                        </Chip>
+                      </Table.Cell>
+                      <Table.Cell className="text-sm">{status.date || "—"}</Table.Cell>
+                      <Table.Cell className="text-sm capitalize">{status.slot || "—"}</Table.Cell>
+                      <Table.Cell>
+                        <Chip
+                          className="capitalize"
+                          color={getStatusColor(status.syncStatus)}
                           size="sm"
-                          variant="light"
+                          variant="soft"
                         >
-                          <InformationCircleIcon className="text-danger h-4 w-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="max-w-xs">
-                        <div className="px-1 py-2">
-                          <div className="text-small mb-1 font-bold">{t("errorDetails")}</div>
-                          <div className="text-tiny text-danger">{status.errorMessage}</div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  ) : (
-                    <span className="text-default-400 text-xs">—</span>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                          <Chip.Label>{status.syncStatus}</Chip.Label>
+                        </Chip>
+                      </Table.Cell>
+                      <Table.Cell className="text-default-500 text-xs">
+                        {formatDate(status.lastSyncAt)}
+                      </Table.Cell>
+                      <Table.Cell>
+                        {status.errorMessage ? (
+                          <Popover>
+                            <Popover.Trigger>
+                              <Button
+                                isIconOnly
+                                aria-label={t("errorDetails")}
+                                size="sm"
+                                variant="danger-soft"
+                              >
+                                <InformationCircleIcon className="h-4 w-4" />
+                              </Button>
+                            </Popover.Trigger>
+                            <Popover.Content placement="left">
+                              <Popover.Dialog className="max-w-xs">
+                                <Popover.Heading>{t("errorDetails")}</Popover.Heading>
+                                <p className="text-danger text-xs">{status.errorMessage}</p>
+                              </Popover.Dialog>
+                            </Popover.Content>
+                          </Popover>
+                        ) : (
+                          <span className="text-default-400 text-xs">—</span>
+                        )}
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Content>
+            </Table.ScrollContainer>
+          </Table>
+        ) : (
+          <p className="text-default-500 py-8 text-center text-sm">
+            {syncStatusFilter
+              ? t("emptyFiltered", { status: syncStatusFilter })
+              : t("emptyDefault")}
+          </p>
+        )}
 
         {totalPages > 1 && (
           <div className="mt-4 flex justify-center">
-            <Pagination
-              showControls
-              page={syncStatusPage}
-              size="sm"
-              total={totalPages}
-              onChange={setSyncStatusPage}
-            />
+            <Pagination aria-label="CalDAV sync status pages" size="sm">
+              <Pagination.Content>
+                <Pagination.Item>
+                  <Pagination.Previous
+                    aria-label="Previous page"
+                    isDisabled={syncStatusPage <= 1}
+                    onPress={() => setSyncStatusPage(syncStatusPage - 1)}
+                  >
+                    <Pagination.PreviousIcon />
+                  </Pagination.Previous>
+                </Pagination.Item>
+                <Pagination.Item>
+                  <Pagination.Summary>
+                    {syncStatusPage} / {totalPages}
+                  </Pagination.Summary>
+                </Pagination.Item>
+                <Pagination.Item>
+                  <Pagination.Next
+                    aria-label="Next page"
+                    isDisabled={syncStatusPage >= totalPages}
+                    onPress={() => setSyncStatusPage(syncStatusPage + 1)}
+                  >
+                    <Pagination.NextIcon />
+                  </Pagination.Next>
+                </Pagination.Item>
+              </Pagination.Content>
+            </Pagination>
           </div>
         )}
-      </CardBody>
+      </Card.Content>
     </Card>
   );
 }

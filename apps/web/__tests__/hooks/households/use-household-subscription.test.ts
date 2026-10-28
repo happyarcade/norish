@@ -109,7 +109,7 @@ vi.mock("@trpc/tanstack-react-query", () => ({
 }));
 
 // Mock HeroUI toast
-vi.mock("@heroui/react", () => ({
+vi.mock("@/lib/ui/toast", () => ({
   addToast: vi.fn(),
 }));
 
@@ -264,7 +264,7 @@ describe("useHouseholdSubscription", () => {
 
       const { useHouseholdSubscription } =
         await import("@/hooks/households/use-household-subscription");
-      const { addToast } = await import("@heroui/react");
+      const { addToast } = await import("@/lib/ui/toast");
 
       renderHook(() => useHouseholdSubscription(), {
         wrapper: createTestWrapper(queryClient),

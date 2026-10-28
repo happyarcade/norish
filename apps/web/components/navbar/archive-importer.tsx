@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Progress } from "@heroui/react";
-import { useTranslations } from "next-intl";
-
 import { useArchiveImportContext } from "@/context/archive-import-context";
 import { useArchiveImportMutation } from "@/hooks/archive";
+import { ProgressBar } from "@heroui-v3/react";
+import { useTranslations } from "next-intl";
 
 export default function ArchiveImporter() {
   const t = useTranslations("navbar.archiveImporter");
@@ -169,13 +168,17 @@ export default function ArchiveImporter() {
       <div className="mt-3 space-y-2">
         {/* Progress bar when importing or just completed */}
         {(isImporting || isComplete) && total > 0 && (
-          <Progress
+          <ProgressBar
             aria-label="Import progress"
             className="w-full"
-            color={isComplete ? (progressErrors.length > 0 ? "warning" : "success") : "primary"}
+            color={isComplete ? (progressErrors.length > 0 ? "warning" : "success") : "accent"}
             size="sm"
             value={(current / total) * 100}
-          />
+          >
+            <ProgressBar.Track>
+              <ProgressBar.Fill />
+            </ProgressBar.Track>
+          </ProgressBar>
         )}
 
         {status && <div className="text-default-600 text-base">{status}</div>}

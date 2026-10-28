@@ -1,6 +1,7 @@
 export type SortOrder = "titleAsc" | "titleDesc" | "dateAsc" | "dateDesc" | "none";
 export type FilterMode = "AND" | "OR";
 export type SearchField = "title" | "description" | "ingredients" | "steps" | "tags";
+export type NutritionDetailFilter = "core" | "complete" | "missingCore";
 
 export const SEARCH_FIELDS: readonly SearchField[] = [
   "title",

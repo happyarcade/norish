@@ -2,17 +2,13 @@ import Image from "next/image";
 
 type BrandLogoProps = {
   width?: number;
-  height?: number;
   className?: string;
   priority?: boolean;
 };
 
-export function BrandLogo({
-  width = 120,
-  height = 30,
-  className,
-  priority = false,
-}: BrandLogoProps) {
+const LOGO_ASPECT_RATIO = 2370 / 639;
+
+export function BrandLogo({ width = 120, className, priority = false }: BrandLogoProps) {
   // const classes = ["object-contain", "dark:brightness-0", "dark:invert", className]
   //   .filter(Boolean)
   //   .join(" ");
@@ -21,7 +17,7 @@ export function BrandLogo({
     <Image
       alt="Norish logo"
       className={className}
-      height={height}
+      height={Math.round(width / LOGO_ASPECT_RATIO)}
       priority={priority}
       src="/logo.svg"
       width={width}

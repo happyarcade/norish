@@ -1,32 +1,26 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ExclamationTriangleIcon, PlusIcon } from "@heroicons/react/16/solid";
-import {
-  Button,
-  Divider,
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownTrigger,
-} from "@heroui/react";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { useLocale, useTranslations } from "next-intl";
-import { Slot } from "@norish/shared/contracts";
-import {
-  addMonths,
-  dateKey,
-  eachDayOfInterval,
-  endOfMonth,
-  startOfMonth,
-} from "@norish/shared/lib/helpers";
-
-import { useRecipeQuery } from "@/hooks/recipes";
-import { useCalendarMutations, useCalendarQuery, useCalendarSubscription } from "@/hooks/calendar";
-import Panel from "@/components/Panel/Panel";
+import type { PlannerDayResult, PlannerDaySlotResult } from "@/hooks/planner";
+import { memo, useCallback, useMemo } from "react";
 import { PlannedItemThumbnail } from "@/components/calendar/planned-item-thumbnail";
+import Panel from "@/components/Panel/Panel";
+import { useIsDesktop } from "@/components/planner/use-is-desktop";
+import { Button } from "@/components/ui/button";
+import { useHouseholdQuery } from "@/hooks/households/use-household-query";
+import { usePlannerMutations, usePlannerRangeQuery } from "@/hooks/planner";
+import { PlusIcon } from "@heroicons/react/16/solid";
+import {
+  Dropdown,
+  Header,
+  Label,
+  Modal,
+  Separator,
+  Spinner,
+  useOverlayState,
+} from "@heroui-v3/react";
+import { useLocale } from "next-intl";
 
-const ESTIMATED_DAY_HEIGHT = 180;
+import { dateKey, eachDayOfInterval } from "@norish/shared/lib/helpers";
 
 type MiniCalendarProps = {
   open: boolean;
@@ -34,103 +28,195 @@ type MiniCalendarProps = {
   recipeId: string;
 };
 
-type PlannedItemDisplay = {
-  slot: Slot;
-  itemType: string;
-  recipeName?: string | null;
-  recipeImage?: string | null;
-  title?: string | null;
-  allergyWarnings?: string[] | null;
+type AddMenu = {
+  explicitMeals: PlannerDaySlotResult[];
+  flexSlots: PlannerDaySlotResult[];
+  workoutSlots: PlannerDaySlotResult[];
+  snackSlot: PlannerDaySlotResult | null;
 };
 
-const DayRow = memo(function DayRow({
-  date,
-  dateKeyStr,
-  isToday,
-  items,
-  weekdayLong,
-  monthLong,
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+
+  next.setDate(next.getDate() + days);
+
+  return next;
+}
+
+function formatDateLabel(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
+
+function buildAddMenu(day: PlannerDayResult): AddMenu {
+  const availableSlots = day.slots.filter((slot) => slot.definition.isEnabled);
+  const slotByKey = new Map(availableSlots.map((slot) => [slot.definition.key, slot] as const));
+  const pick = (key: string) => slotByKey.get(key) ?? null;
+
+  const explicitMeals = ["breakfast", "lunch", "dinner"]
+    .map(pick)
+    .filter((slot): slot is PlannerDaySlotResult => Boolean(slot));
+  const flexSlots = ["mid-am", "afternoon", "evening"]
+    .map(pick)
+    .filter((slot): slot is PlannerDaySlotResult => Boolean(slot));
+  const workoutSlots = ["pre-workout", "post-workout"]
+    .map(pick)
+    .filter((slot): slot is PlannerDaySlotResult => Boolean(slot));
+  const snackSlot =
+    availableSlots.find((slot) => slot.definition.key === "snack") ??
+    availableSlots.find((slot) => slot.definition.slotGroup === "snack") ??
+    null;
+
+  return {
+    explicitMeals,
+    flexSlots,
+    workoutSlots,
+    snackSlot,
+  };
+}
+
+const MiniCalendarDay = memo(function MiniCalendarDay({
+  day,
+  locale,
   onPlan,
-  slotLabels,
-  noItemsLabel,
-  addItemLabel,
 }: {
-  date: Date;
-  dateKeyStr: string;
-  isToday: boolean;
-  items: PlannedItemDisplay[];
-  weekdayLong: Intl.DateTimeFormat;
-  monthLong: Intl.DateTimeFormat;
-  onPlan: (dayKey: string, slot: Slot) => void;
-  slotLabels: Record<Slot, string>;
-  noItemsLabel: string;
-  addItemLabel: string;
+  day: PlannerDayResult;
+  locale: string;
+  onPlan: (date: string, slot: PlannerDaySlotResult) => void;
 }) {
+  const parsedDate = useMemo(() => new Date(`${day.date}T12:00:00`), [day.date]);
+  const isToday = day.date === dateKey(new Date());
+  const menu = buildAddMenu(day);
+  const plannedItems = day.slots.flatMap((slot) =>
+    slot.items.map((item) => ({
+      item,
+      slot,
+    }))
+  );
+
   return (
     <div className="border-default-100 border-b last:border-none">
       <div className="bg-background hover:bg-default-50/50 flex flex-col gap-3 px-4 py-4 transition-colors">
         <div className="flex items-center justify-between gap-3">
           <div className={`text-sm font-semibold ${isToday ? "text-primary" : "text-foreground"}`}>
-            {weekdayLong.format(date)}, {monthLong.format(date)} {date.getDate()}
+            {formatDateLabel(parsedDate, locale)}
           </div>
 
           <Dropdown>
-            <DropdownTrigger>
-              <Button
-                isIconOnly
-                aria-label={addItemLabel}
-                className="bg-default-100 text-default-500 hover:text-primary h-8 min-w-8 rounded-full shadow-sm transition-transform active:scale-95"
-                size="sm"
-                variant="flat"
-              >
-                <PlusIcon className="h-4 w-4" />
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              aria-label="Choose slot"
-              onAction={(slot) => onPlan(dateKeyStr, slot as Slot)}
+            <Button
+              isIconOnly
+              aria-label="Add to meal planner"
+              className="text-default-500 hover:text-primary h-8 min-w-8 rounded-full shadow-sm transition-transform active:scale-95"
+              size="sm"
+              variant="tertiary"
             >
-              <DropdownItem key="Breakfast">{slotLabels.Breakfast}</DropdownItem>
-              <DropdownItem key="Lunch">{slotLabels.Lunch}</DropdownItem>
-              <DropdownItem key="Dinner">{slotLabels.Dinner}</DropdownItem>
-              <DropdownItem key="Snack">{slotLabels.Snack}</DropdownItem>
-            </DropdownMenu>
+              <PlusIcon className="h-4 w-4" />
+            </Button>
+            <Dropdown.Popover placement="bottom end">
+              <Dropdown.Menu aria-label="Choose planner slot">
+                {menu.explicitMeals.length > 0 ? (
+                  <Dropdown.Section>
+                    <Header>Main meals</Header>
+                    {menu.explicitMeals.map((slot) => (
+                      <Dropdown.Item
+                        key={slot.definition.id}
+                        id={`main-${slot.definition.id}`}
+                        textValue={slot.definition.label}
+                        onAction={() => onPlan(day.date, slot)}
+                      >
+                        <Label>{slot.definition.label}</Label>
+                      </Dropdown.Item>
+                    ))}
+                  </Dropdown.Section>
+                ) : null}
+
+                {menu.explicitMeals.length > 0 && menu.flexSlots.length > 0 ? <Separator /> : null}
+                {menu.flexSlots.length > 0 ? (
+                  <Dropdown.Section>
+                    <Header>Flex</Header>
+                    {menu.flexSlots.map((slot) => (
+                      <Dropdown.Item
+                        key={slot.definition.id}
+                        id={`flex-${slot.definition.id}`}
+                        textValue={slot.definition.label}
+                        onAction={() => onPlan(day.date, slot)}
+                      >
+                        <Label>{slot.definition.label}</Label>
+                      </Dropdown.Item>
+                    ))}
+                  </Dropdown.Section>
+                ) : null}
+
+                {(menu.explicitMeals.length > 0 || menu.flexSlots.length > 0) && menu.snackSlot ? (
+                  <Separator />
+                ) : null}
+                {menu.snackSlot ? (
+                  <Dropdown.Section>
+                    <Header>Snacks</Header>
+                    <Dropdown.Item
+                      key={menu.snackSlot.definition.id}
+                      id={`snack-${menu.snackSlot.definition.id}`}
+                      textValue="Snack"
+                      onAction={() => onPlan(day.date, menu.snackSlot!)}
+                    >
+                      <Label>Snack</Label>
+                    </Dropdown.Item>
+                  </Dropdown.Section>
+                ) : null}
+
+                {(menu.explicitMeals.length > 0 || menu.flexSlots.length > 0 || menu.snackSlot) &&
+                menu.workoutSlots.length > 0 ? (
+                  <Separator />
+                ) : null}
+                {menu.workoutSlots.length > 0 ? (
+                  <Dropdown.Section>
+                    <Header>Workout</Header>
+                    {menu.workoutSlots.map((slot) => (
+                      <Dropdown.Item
+                        key={slot.definition.id}
+                        id={`workout-${slot.definition.id}`}
+                        textValue={slot.definition.label}
+                        onAction={() => onPlan(day.date, slot)}
+                      >
+                        <Label>{slot.definition.label}</Label>
+                      </Dropdown.Item>
+                    ))}
+                  </Dropdown.Section>
+                ) : null}
+              </Dropdown.Menu>
+            </Dropdown.Popover>
           </Dropdown>
         </div>
 
-        <Divider className="my-2" />
+        <Separator className="my-1" />
 
         <div className="flex w-full flex-col gap-2">
-          {items.length === 0 ? (
-            <span className="text-default-400 text-xs italic">{noItemsLabel}</span>
+          {plannedItems.length === 0 ? (
+            <span className="text-default-400 text-xs italic">No items planned</span>
           ) : (
-            items.map((it) => (
-              <div
-                key={`${dateKeyStr}-${it.slot}-${it.itemType}-${it.recipeName ?? it.title ?? ""}`}
-                className="flex w-full items-start gap-3 py-1"
-              >
-                <PlannedItemThumbnail
-                  alt={it.itemType === "recipe" ? (it.recipeName ?? "") : (it.title ?? "")}
-                  image={it.recipeImage}
-                  itemType={it.itemType as "recipe" | "note"}
-                  size="md"
-                />
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`flex-1 truncate text-sm font-medium ${it.itemType === "note" ? "text-default-500 italic" : "text-foreground"}`}
-                      title={it.itemType === "recipe" ? (it.recipeName ?? "") : (it.title ?? "")}
-                    >
-                      {it.itemType === "recipe" ? it.recipeName : it.title}
+            plannedItems.map(({ item, slot }) => {
+              const title = item.recipe?.name ?? item.title ?? "Untitled item";
+
+              return (
+                <div key={item.id} className="flex w-full items-start gap-3 py-1">
+                  <PlannedItemThumbnail
+                    alt={title}
+                    image={item.recipe?.image ?? null}
+                    itemType={item.itemKind === "recipe" ? "recipe" : "note"}
+                    size="md"
+                  />
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-foreground truncate text-sm font-medium" title={title}>
+                      {title}
                     </span>
-                    {it.allergyWarnings && it.allergyWarnings.length > 0 && (
-                      <ExclamationTriangleIcon className="text-warning h-4 w-4 shrink-0" />
-                    )}
+                    <span className="text-default-400 text-xs">{slot.definition.label}</span>
                   </div>
-                  <span className="text-default-400 text-xs">{slotLabels[it.slot]}</span>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -139,181 +225,122 @@ const DayRow = memo(function DayRow({
 });
 
 function MiniCalendarContent({
+  open,
   recipeId,
   onOpenChange,
 }: {
+  open: boolean;
   recipeId: string;
   onOpenChange: (open: boolean) => void;
 }) {
-  const t = useTranslations("calendar.panel");
-  const tSlots = useTranslations("common.slots");
-  const tTimeline = useTranslations("calendar.timeline");
   const locale = useLocale();
+  const householdQuery = useHouseholdQuery();
   const today = useMemo(() => new Date(), []);
-  const rangeStart = useMemo(() => startOfMonth(addMonths(today, -1)), [today]);
-  const rangeEnd = useMemo(() => endOfMonth(addMonths(today, 1)), [today]);
-
-  const startISO = dateKey(rangeStart);
-  const endISO = dateKey(rangeEnd);
-
-  const { recipe } = useRecipeQuery(recipeId);
-  const { calendarData, isLoading } = useCalendarQuery(startISO, endISO);
-  const { createItem } = useCalendarMutations(startISO, endISO);
-
-  useCalendarSubscription(startISO, endISO);
-
-  const allDays = useMemo(() => eachDayOfInterval(rangeStart, rangeEnd), [rangeStart, rangeEnd]);
-
-  const weekdayLong = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: "long" }), [locale]);
-  const monthLong = useMemo(() => new Intl.DateTimeFormat(locale, { month: "long" }), [locale]);
-  const todayKey = useMemo(() => dateKey(today), [today]);
-  const todayIndex = useMemo(
-    () => allDays.findIndex((d) => dateKey(d) === todayKey),
-    [allDays, todayKey]
-  );
-
-  const parentRef = useRef<HTMLDivElement>(null);
-  const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
-
-  // Calculate initial offset to start at today
-  const initialOffset = todayIndex >= 0 ? todayIndex * ESTIMATED_DAY_HEIGHT : 0;
-
-  const virtualizer = useVirtualizer({
-    count: allDays.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => ESTIMATED_DAY_HEIGHT,
-    overscan: 3,
-    getItemKey: (index) => {
-      const day = allDays[index];
-
-      return day ? dateKey(day) : `missing-${index}`;
-    },
-    initialOffset,
-  });
-
-  // Scroll to today after first render
-  useEffect(() => {
-    if (hasScrolledToToday || todayIndex < 0 || !parentRef.current) return;
-
-    const timeoutId = setTimeout(() => {
-      virtualizer.scrollToIndex(todayIndex, { align: "start" });
-      setHasScrolledToToday(true);
-    }, 50);
-
-    return () => clearTimeout(timeoutId);
-  }, [todayIndex, hasScrolledToToday, virtualizer]);
-
-  const virtualItems = virtualizer.getVirtualItems();
-
-  const slotOrder: Record<Slot, number> = { Breakfast: 0, Lunch: 1, Dinner: 2, Snack: 3 };
-
-  const slotLabels: Record<Slot, string> = useMemo(
+  const rangeStart = useMemo(() => dateKey(today), [today]);
+  const rangeEnd = useMemo(() => dateKey(addDays(today, 27)), [today]);
+  const range = useMemo(
     () => ({
-      Breakfast: tSlots("breakfast"),
-      Lunch: tSlots("lunch"),
-      Dinner: tSlots("dinner"),
-      Snack: tSlots("snack"),
+      startDate: rangeStart,
+      endDate: rangeEnd,
+      enabledOnly: false,
     }),
-    [tSlots]
+    [rangeEnd, rangeStart]
+  );
+  const plannerQuery = usePlannerRangeQuery(range, {
+    enabled: open && Boolean(householdQuery.household),
+  });
+  const plannerMutations = usePlannerMutations({ queryKey: plannerQuery.queryKey });
+  const fallbackDays = useMemo(
+    () =>
+      eachDayOfInterval(new Date(`${rangeStart}T12:00:00`), new Date(`${rangeEnd}T12:00:00`)).map(
+        (date) => dateKey(date)
+      ),
+    [rangeEnd, rangeStart]
   );
 
-  const noItemsLabel = tTimeline("noItems");
-  const addItemLabel = tTimeline("addItem");
+  const days = plannerQuery.data?.days ?? [];
 
   const handlePlan = useCallback(
-    (dayKey: string, slot: Slot) => {
-      if (!recipe) return;
-
-      createItem(dayKey, slot, "recipe", recipe.id, undefined);
+    async (day: string, slot: PlannerDaySlotResult) => {
+      await plannerMutations.addRecipeToSlot(day, slot.definition.id, recipeId, {
+        append: slot.definition.allowMultiple || slot.definition.slotGroup === "snack",
+        role: "main",
+      });
       onOpenChange(false);
     },
-    [recipe, onOpenChange, createItem]
+    [onOpenChange, plannerMutations, recipeId]
   );
 
-  if (isLoading) {
-    return <>Loading...</>;
+  if (householdQuery.isLoading || plannerQuery.isLoading) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-8">
+        <Spinner />
+      </div>
+    );
   }
 
-  if (allDays.length === 0) {
+  if (!householdQuery.household) {
     return (
-      <div className="text-default-500 flex items-center justify-center p-4 text-sm">
-        {t("noDaysAvailable")}
+      <div className="text-default-500 flex flex-1 items-center justify-center p-8 text-center text-sm">
+        Create a household before adding recipes to the meal planner.
+      </div>
+    );
+  }
+
+  if (plannerQuery.error) {
+    return (
+      <div className="text-danger flex flex-1 items-center justify-center p-8 text-center text-sm">
+        Meal planner failed to load.
+      </div>
+    );
+  }
+
+  if (days.length === 0) {
+    return (
+      <div className="text-default-500 flex flex-1 items-center justify-center p-8 text-center text-sm">
+        No planner days available for {fallbackDays[0]} to {fallbackDays[fallbackDays.length - 1]}.
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-0 flex-1">
-      <div ref={parentRef} className="absolute inset-0 overflow-auto">
-        <div
-          style={{
-            height: `${virtualizer.getTotalSize()}px`,
-            width: "100%",
-            position: "relative",
-          }}
-        >
-          {virtualItems.map((virtualItem) => {
-            const d = allDays[virtualItem.index];
-
-            if (!d) {
-              return null;
-            }
-
-            const key = dateKey(d);
-            const items = (calendarData[key] ?? [])
-              .sort((a, b) => (slotOrder[a.slot] ?? 0) - (slotOrder[b.slot] ?? 0))
-              .map((it) => ({
-                slot: it.slot,
-                itemType: it.itemType,
-                recipeName: (it as { recipeName?: string | null }).recipeName,
-                recipeImage: (it as { recipeImage?: string | null }).recipeImage,
-                title: it.title,
-                allergyWarnings: (it as { allergyWarnings?: string[] | null }).allergyWarnings,
-              }));
-            const isToday = key === todayKey;
-
-            return (
-              <div
-                key={virtualItem.key}
-                ref={virtualizer.measureElement}
-                data-index={virtualItem.index}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  transform: `translateY(${virtualItem.start}px)`,
-                }}
-              >
-                <DayRow
-                  addItemLabel={addItemLabel}
-                  date={d}
-                  dateKeyStr={key}
-                  isToday={isToday}
-                  items={items}
-                  monthLong={monthLong}
-                  noItemsLabel={noItemsLabel}
-                  slotLabels={slotLabels}
-                  weekdayLong={weekdayLong}
-                  onPlan={handlePlan}
-                />
-              </div>
-            );
-          })}
-        </div>
-      </div>
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      {days.map((day) => (
+        <MiniCalendarDay key={day.date} day={day} locale={locale} onPlan={handlePlan} />
+      ))}
     </div>
   );
 }
 
 export default function MiniCalendar({ open, onOpenChange, recipeId }: MiniCalendarProps) {
-  const t = useTranslations("calendar.panel");
+  const isDesktop = useIsDesktop();
+  const title = "Add to Meal Planner";
+  const modalState = useOverlayState({ isOpen: open, onOpenChange });
+  const content = open ? (
+    <MiniCalendarContent open={open} recipeId={recipeId} onOpenChange={onOpenChange} />
+  ) : null;
+
+  if (isDesktop) {
+    return (
+      <Modal state={modalState}>
+        <Modal.Backdrop variant="blur">
+          <Modal.Container placement="center" scroll="inside" size="lg">
+            <Modal.Dialog className="max-w-lg">
+              <Modal.CloseTrigger aria-label="Close meal planner" />
+              <Modal.Header>
+                <Modal.Heading>{title}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="max-h-[72vh] overflow-y-auto p-0">{content}</Modal.Body>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
+    );
+  }
 
   return (
-    <Panel open={open} title={t("addToCalendar")} onOpenChange={onOpenChange}>
-      <div className="flex min-h-0 flex-1 flex-col">
-        {open && <MiniCalendarContent recipeId={recipeId} onOpenChange={onOpenChange} />}
-      </div>
+    <Panel height={82} open={open} title={title} onOpenChange={onOpenChange}>
+      <div className="flex min-h-0 flex-1 flex-col">{content}</div>
     </Panel>
   );
 }

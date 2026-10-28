@@ -1,7 +1,8 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { FunnelIcon } from "@heroicons/react/24/outline";
-import { Button, Card, CardBody } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
 interface NoRecipeResultsProps {
@@ -15,7 +16,7 @@ export default function NoRecipeResults({ onClear }: NoRecipeResultsProps) {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-16">
       <Card className="bg-content1/80 shadow-large w-full max-w-2xl backdrop-blur-xl">
-        <CardBody className="flex flex-col items-center gap-5 p-8 text-center">
+        <Card.Content className="flex flex-col items-center gap-5 p-8 text-center">
           <div className="bg-warning-500/15 text-warning-500 flex h-12 w-12 items-center justify-center rounded-full">
             <FunnelIcon className="h-6 w-6" />
           </div>
@@ -28,7 +29,7 @@ export default function NoRecipeResults({ onClear }: NoRecipeResultsProps) {
           <Button color="primary" radius="full" variant="solid" onPress={onClear}>
             {tCommon("clearFilters")}
           </Button>
-        </CardBody>
+        </Card.Content>
       </Card>
     </div>
   );

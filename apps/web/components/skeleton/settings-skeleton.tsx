@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, CardBody, CardHeader, Skeleton } from "@heroui/react";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@heroui-v3/react";
 
 type Props = {
   /** Number of content rows to show */
@@ -14,10 +15,10 @@ type Props = {
 export function SettingsCardSkeleton({ rows = 2, hasToggle = false, headerWidth = "w-48" }: Props) {
   return (
     <Card>
-      <CardHeader>
+      <Card.Header>
         <Skeleton className={`${headerWidth} h-6 rounded-lg`} />
-      </CardHeader>
-      <CardBody className="gap-4">
+      </Card.Header>
+      <Card.Content className="gap-4">
         {hasToggle ? (
           <div className="flex items-center justify-between">
             <Skeleton className="h-4 w-64 rounded-lg" />
@@ -28,7 +29,7 @@ export function SettingsCardSkeleton({ rows = 2, hasToggle = false, headerWidth 
             <Skeleton key={i} className="h-12 w-full rounded-lg" />
           ))
         )}
-      </CardBody>
+      </Card.Content>
     </Card>
   );
 }

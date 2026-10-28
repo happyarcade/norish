@@ -8,3 +8,4 @@ export { STORE_COLORS, STORE_COLOR_OPTIONS, getStoreColorClasses } from "./store
 export { GroupedGroceryItem } from "./grouped-grocery-item";
 export { GroupedStoreSection } from "./grouped-store-section";
 export * from "./stores";
+export * from "./pantry";

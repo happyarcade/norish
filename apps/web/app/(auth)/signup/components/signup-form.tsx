@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { EnvelopeIcon, LockClosedIcon, UserIcon } from "@heroicons/react/24/outline";
-import { Button, Input, Link } from "@heroui/react";
+import { Description, InputGroup, Label, TextField } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
+
 import { signUp } from "@norish/shared/lib/auth/client";
 
 interface SignupFormProps {
@@ -51,7 +54,7 @@ export function SignupForm({ callbackUrl = "/" }: SignupFormProps) {
     try {
       const result = await signUp.email({
         name,
-        email,
+        email: email.trim().toLowerCase(),
         password,
         callbackURL: callbackUrl,
       });
@@ -70,71 +73,103 @@ export function SignupForm({ callbackUrl = "/" }: SignupFormProps) {
 
   return (
     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-      <Input
+      <TextField
+        fullWidth
         isRequired
-        autoComplete="name"
-        label={t("name")}
-        placeholder={t("namePlaceholder")}
-        startContent={<UserIcon className="text-default-400 h-4 w-4" />}
-        type="text"
         value={name}
-        onValueChange={(value) => {
+        onChange={(value) => {
           setName(value);
           setError(null);
         }}
-      />
+      >
+        <Label>{t("name")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Prefix>
+            <UserIcon className="text-default-400 h-4 w-4" />
+          </InputGroup.Prefix>
+          <InputGroup.Input autoComplete="name" placeholder={t("namePlaceholder")} type="text" />
+        </InputGroup>
+      </TextField>
 
-      <Input
+      <TextField
+        fullWidth
         isRequired
-        autoComplete="email"
-        label={t("email")}
-        placeholder={t("emailPlaceholder")}
-        startContent={<EnvelopeIcon className="text-default-400 h-4 w-4" />}
-        type="email"
         value={email}
-        onValueChange={(value) => {
+        onChange={(value) => {
           setEmail(value);
           setError(null);
         }}
-      />
+      >
+        <Label>{t("email")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Prefix>
+            <EnvelopeIcon className="text-default-400 h-4 w-4" />
+          </InputGroup.Prefix>
+          <InputGroup.Input
+            autoCapitalize="none"
+            autoComplete="email"
+            autoCorrect="off"
+            placeholder={t("emailPlaceholder")}
+            spellCheck={false}
+            type="email"
+          />
+        </InputGroup>
+      </TextField>
 
-      <Input
+      <TextField
+        fullWidth
         isRequired
-        autoComplete="new-password"
-        description={t("passwordDescription")}
-        label={t("password")}
-        placeholder={t("passwordPlaceholder")}
-        startContent={<LockClosedIcon className="text-default-400 h-4 w-4" />}
-        type="password"
         value={password}
-        onValueChange={(value) => {
+        onChange={(value) => {
           setPassword(value);
           setError(null);
         }}
-      />
+      >
+        <Label>{t("password")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Prefix>
+            <LockClosedIcon className="text-default-400 h-4 w-4" />
+          </InputGroup.Prefix>
+          <InputGroup.Input
+            autoComplete="new-password"
+            placeholder={t("passwordPlaceholder")}
+            type="password"
+          />
+        </InputGroup>
+        <Description>{t("passwordDescription")}</Description>
+      </TextField>
 
-      <Input
+      <TextField
+        fullWidth
         isRequired
-        autoComplete="new-password"
-        label={t("confirmPassword")}
-        placeholder={t("confirmPasswordPlaceholder")}
-        startContent={<LockClosedIcon className="text-default-400 h-4 w-4" />}
-        type="password"
         value={confirmPassword}
-        onValueChange={(value) => {
+        onChange={(value) => {
           setConfirmPassword(value);
           setError(null);
         }}
-      />
+      >
+        <Label>{t("confirmPassword")}</Label>
+        <InputGroup fullWidth variant="secondary">
+          <InputGroup.Prefix>
+            <LockClosedIcon className="text-default-400 h-4 w-4" />
+          </InputGroup.Prefix>
+          <InputGroup.Input
+            autoComplete="new-password"
+            placeholder={t("confirmPasswordPlaceholder")}
+            type="password"
+          />
+        </InputGroup>
+      </TextField>
 
       {error && <p className="text-small text-danger text-center">{error}</p>}
 
       <Button
+        fullWidth
         className="mt-2"
-        color="primary"
         isDisabled={!isFormValid}
-        isLoading={isLoading}
+        isPending={isLoading}
         type="submit"
+        variant="primary"
       >
         {t("createAccount")}
       </Button>
@@ -142,7 +177,7 @@ export function SignupForm({ callbackUrl = "/" }: SignupFormProps) {
       <p className="text-small text-default-500 text-center">
         {t("hasAccount")}{" "}
         <Link
-          className="text-small"
+          className="text-primary text-sm font-medium hover:underline"
           href={`/login${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
         >
           {t("signIn")}

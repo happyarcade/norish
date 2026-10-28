@@ -28,6 +28,17 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
+
+# local recipe analysis and import data
+/recipes/
+/recipe-corpus-shortlist-*.csv
+/recipe-corpus-shortlist-*.json
+/recipe-import-preflight*.json
+/recipe-import-report*.json
+/apps/web/recipe-*.csv
+/apps/web/recipe-*.json
+**/.recipe-import-staging/
 
 # local env files
 .env.local
@@ -60,10 +71,12 @@ docker-compose.yml
 
 # archives
 *.tar.gz
+/backups/
 
 .sisyphus
 /.sisyphus
 /.sisyphus/
+/.claude/settings.json
 
 **/.runtime/**
 

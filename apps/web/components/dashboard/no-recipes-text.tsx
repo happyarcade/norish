@@ -1,7 +1,7 @@
 "use client";
 
+import { Card } from "@/components/ui/card";
 import { BookOpenIcon } from "@heroicons/react/24/outline";
-import { Card, CardBody } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
 export default function NoRecipesText() {
@@ -10,7 +10,7 @@ export default function NoRecipesText() {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-20">
       <Card className="bg-content1/90 shadow-large relative w-full max-w-xl backdrop-blur-xl">
-        <CardBody className="flex flex-col items-center gap-6 p-10 text-center">
+        <Card.Content className="flex flex-col items-center gap-6 p-10 text-center">
           <div className="relative">
             <div className="bg-primary-500/20 dark:bg-primary-400/15 absolute inset-0 scale-125 rounded-full blur-3xl" />
             <div className="bg-primary-500/15 text-primary-500 relative mx-auto flex h-16 w-16 items-center justify-center rounded-2xl">
@@ -22,7 +22,7 @@ export default function NoRecipesText() {
             <h2 className="text-lg font-semibold">{t("title")}</h2>
             <p className="text-default-500 text-base">{t("description")}</p>
           </div>
-        </CardBody>
+        </Card.Content>
       </Card>
     </div>
   );

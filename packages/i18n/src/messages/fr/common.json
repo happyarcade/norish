@@ -146,6 +146,9 @@
     },
     "menu": {
       "description": "Importer depuis une URL, scanner une photo ou partir de zero."
+    },
+    "clipboard": {
+      "title": "Import a recipe from the link you copied?"
     }
   },
   "formatting": {

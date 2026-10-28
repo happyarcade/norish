@@ -2,154 +2,222 @@
   "dashboard": {
     "title": "Wszystkie przepisy",
     "searchPlaceholder": "Szukaj lub dodaj przepis...",
-    "searchRecipesPlaceholder": "Szukaj przepisów...",
-    "recipeCount": "{count, plural, one {# przepis} other {# przepisów}}",
+    "searchRecipesPlaceholder": "Szukaj przepisÃ³w...",
+    "recipeCount": "{count, plural, one {# przepis} other {# przepisÃ³w}}",
     "addRecipe": "Dodaj przepis",
     "importFromUrl": "URL",
     "importFromPaste": "Wklej",
     "importFromImage": "Obraz",
     "searchFields": {
-      "title": "Tytuł", "description": "Opis",
-      "ingredients": "Składniki", "steps": "Kroki", "tags": "Tagi"
+      "title": "TytuÅ‚",
+      "description": "Opis",
+      "ingredients": "SkÅ‚adniki",
+      "steps": "Kroki",
+      "tags": "Tagi"
+    },
+    "viewMode": {
+      "label": "Widok przepisow",
+      "grid": "Siatka",
+      "list": "Lista"
     }
   },
   "empty": {
-    "title": "Twoja kolekcja przepisów czeka",
-    "description": "Wklej URL przepisu w pole wyszukiwania powyżej i obserwuj magię.",
-    "noResults": "Nie znaleziono przepisów",
-    "noResultsHint": "Spróbuj zmienić lub wyczyścić filtry."
+    "title": "Twoja kolekcja przepisÃ³w czeka",
+    "description": "Wklej URL przepisu w pole wyszukiwania powyÅ¼ej i obserwuj magiÄ™.",
+    "noResults": "Nie znaleziono przepisÃ³w",
+    "noResultsHint": "SprÃ³buj zmieniÄ‡ lub wyczyÅ›ciÄ‡ filtry."
   },
   "card": {
     "noImage": "Brak obrazu",
     "viewGroceries": "Zobacz zakupy",
     "addToCalendar": "Dodaj do kalendarza",
-    "deleteRecipe": "Usuń przepis"
+    "deleteRecipe": "UsuÅ„ przepis",
+    "recipeOptions": "Opcje przepisu"
   },
   "detail": {
-    "backToRecipes": "Powrót do przepisów",
+    "backToRecipes": "PowrÃ³t do przepisÃ³w",
     "viewOriginal": "Zobacz oryginalny przepis",
-    "ingredients": "Składniki",
+    "ingredients": "SkÅ‚adniki",
     "steps": "Kroki",
     "notes": "Notatki",
-    "addToGroceries": "Dodaj do zakupów",
-    "ratingPrompt": "Co sądzisz o tym przepisie?",
+    "addToGroceries": "Dodaj do zakupÃ³w",
+    "ratingPrompt": "Co sÄ…dzisz o tym przepisie?",
     "notFound": "Nie znaleziono przepisu",
-    "notFoundMessage": "Ten przepis nie istnieje lub nie masz uprawnień do jego wyświetlenia.",
+    "notFoundMessage": "Ten przepis nie istnieje lub nie masz uprawnieÅ„ do jego wyÅ›wietlenia.",
     "prep": "przygot.",
-    "total": "łącznie",
-    "planMeal": "Zaplanuj posiłek",
+    "total": "Å‚Ä…cznie",
+    "planMeal": "Zaplanuj posiÅ‚ek",
     "recipeActions": "Akcje przepisu",
     "instructions": "Instrukcje",
     "cook": "Gotuj",
-    "switchToDecimal": "Pokaż dziesiętne",
-    "switchToFraction": "Pokaż ułamki"
+    "switchToDecimal": "PokaÅ¼ dziesiÄ™tne",
+    "switchToFraction": "PokaÅ¼ uÅ‚amki"
   },
   "actions": {
-    "plan": "Zaplanuj", "groceries": "Zakupy", "edit": "Edytuj", "delete": "Usuń",
-    "share": "Udostępnij", "visitOriginal": "Odwiedź oryginalny przepis",
+    "plan": "Zaplanuj",
+    "groceries": "Zakupy",
+    "edit": "Edytuj",
+    "delete": "UsuÅ„",
+    "share": "UdostÄ™pnij",
+    "visitOriginal": "OdwiedÅº oryginalny przepis",
     "addToCalendar": "Dodaj do kalendarza",
-    "autoTag": "Auto-tagi", "autoTagging": "Generowanie tagów...",
-    "autoCategorize": "Auto kategoryzacja", "detectAllergies": "Wykryj alergeny",
-    "detectingAllergies": "Wykrywanie alergenów...", "estimateNutrition": "Oszacuj wartości odżywcze",
-    "estimatingNutrition": "Szacowanie wartości odżywczych...",
-    "screenOn": "Ekran włączony", "keepScreenOn": "Utrzymaj ekran włączony",
+    "autoTag": "Auto-tagi",
+    "autoTagging": "Generowanie tagÃ³w...",
+    "autoCategorize": "Auto kategoryzacja",
+    "detectAllergies": "Wykryj alergeny",
+    "detectingAllergies": "Wykrywanie alergenÃ³w...",
+    "estimateNutrition": "Oszacuj wartoÅ›ci odÅ¼ywcze",
+    "estimatingNutrition": "Szacowanie wartoÅ›ci odÅ¼ywczych...",
+    "screenOn": "Ekran wÅ‚Ä…czony",
+    "keepScreenOn": "Utrzymaj ekran wÅ‚Ä…czony",
     "actionsLabel": "Akcje"
   },
   "convert": {
     "ariaLabel": "Przelicz system miar",
     "toMetric": "Przelicz na metryczny",
-    "toUS": "Przelicz na amerykański"
+    "toUS": "Przelicz na amerykaÅ„ski"
   },
   "deleteModal": {
-    "title": "Usuń przepis",
-    "confirmMessage": "Czy na pewno chcesz usunąć \"{recipeName}\"?",
-    "warning": "Tej akcji nie można cofnąć."
+    "title": "UsuÅ„ przepis",
+    "confirmMessage": "Czy na pewno chcesz usunÄ…Ä‡ \"{recipeName}\"?",
+    "warning": "Tej akcji nie moÅ¼na cofnÄ…Ä‡."
   },
   "form": {
-    "createTitle": "Utwórz przepis", "editTitle": "Edytuj przepis",
+    "createTitle": "UtwÃ³rz przepis",
+    "editTitle": "Edytuj przepis",
     "createDescription": "Dodaj nowy przepis do swojej kolekcji",
-    "editDescription": "Zaktualizuj szczegóły przepisu",
+    "editDescription": "Zaktualizuj szczegÃ³Å‚y przepisu",
     "initializingForm": "Inicjalizacja formularza...",
-    "photo": "Zdjęcie", "basicInfo": "Podstawowe informacje",
-    "ingredients": "Składniki", "instructions": "Instrukcje", "tags": "Tagi",
-    "nutrition": "Wartości odżywcze", "nutritionPerServing": "(na porcję, opcjonalnie)",
-    "details": "Szczegóły", "additionalInfo": "Dodatkowe informacje",
-    "recipeName": "Nazwa przepisu", "recipeNamePlaceholder": "np. Ciasteczka czekoladowe",
-    "description": "Opis", "descriptionPlaceholder": "Krótki opis przepisu...",
-    "notes": "Notatki", "notesPlaceholder": "Uwagi, wskazówki dotyczące podania...",
-    "ingredientsHelp": "Wpisuj składniki jak \"2 szklanki mąki\" – automatycznie przetworzymy ilości i jednostki.",
-    "instructionsHelp": "Pisz jasne instrukcje krok po kroku. Naciśnij Enter, aby przejść do następnego kroku.",
-    "tagsHelp": "Wpisuj tagi i klikaj sugestie, aby dodać.",
-    "tagsAndCategories": "Tagi i kategorie", "categoriesHelp": "Wybierz kategorie posiłku.",
-    "category": { "breakfast": "Śniadanie", "lunch": "Lunch", "dinner": "Obiad", "snack": "Przekąska" },
-    "calories": "Kalorie", "fat": "Tłuszcze (g)", "carbs": "Węglowodany (g)", "protein": "Białko (g)",
-    "servings": "Porcje", "cookingTimes": "Czasy gotowania", "optional": "(opcjonalnie)",
-    "sourceUrl": "URL źródła", "sourceUrlPlaceholder": "https://przykład.pl/przepis",
-    "measurementSystemNote": "Automatycznie wykrywamy system miar ze składników, możesz go zmienić ręcznie.",
-    "measurementSystemEditNote": "Uwaga: zmiana etykiety systemu nie konwertuje jednostek. Użyj akcji Przelicz po zapisaniu.",
-    "createRecipe": "Utwórz przepis", "saveChanges": "Zapisz zmiany",
-    "uploading": "Przesyłanie...", "clickToUpload": "Kliknij lub przeciągnij i upuść",
-    "pasteToUpload": "aby wkleić", "imageFormats": "PNG, JPG, WEBP do 5MB"
+    "photo": "ZdjÄ™cie",
+    "basicInfo": "Podstawowe informacje",
+    "ingredients": "SkÅ‚adniki",
+    "instructions": "Instrukcje",
+    "tags": "Tagi",
+    "nutrition": "WartoÅ›ci odÅ¼ywcze",
+    "nutritionPerServing": "(na porcjÄ™, opcjonalnie)",
+    "details": "SzczegÃ³Å‚y",
+    "additionalInfo": "Dodatkowe informacje",
+    "recipeName": "Nazwa przepisu",
+    "recipeNamePlaceholder": "np. Ciasteczka czekoladowe",
+    "description": "Opis",
+    "descriptionPlaceholder": "KrÃ³tki opis przepisu...",
+    "notes": "Notatki",
+    "notesPlaceholder": "Uwagi, wskazÃ³wki dotyczÄ…ce podania...",
+    "ingredientsHelp": "Wpisuj skÅ‚adniki jak \"2 szklanki mÄ…ki\" â€“ automatycznie przetworzymy iloÅ›ci i jednostki.",
+    "instructionsHelp": "Pisz jasne instrukcje krok po kroku. NaciÅ›nij Enter, aby przejÅ›Ä‡ do nastÄ™pnego kroku.",
+    "tagsHelp": "Wpisuj tagi i klikaj sugestie, aby dodaÄ‡.",
+    "tagsAndCategories": "Tagi i kategorie",
+    "categoriesHelp": "Wybierz kategorie posiÅ‚ku.",
+    "category": {
+      "breakfast": "Åšniadanie",
+      "lunch": "Lunch",
+      "dinner": "Obiad",
+      "snack": "PrzekÄ…ska"
+    },
+    "calories": "Kalorie",
+    "fat": "TÅ‚uszcze (g)",
+    "carbs": "WÄ™glowodany (g)",
+    "protein": "BiaÅ‚ko (g)",
+    "servings": "Porcje",
+    "cookingTimes": "Czasy gotowania",
+    "optional": "(opcjonalnie)",
+    "sourceUrl": "URL ÅºrÃ³dÅ‚a",
+    "sourceUrlPlaceholder": "https://przykÅ‚ad.pl/przepis",
+    "measurementSystemNote": "Automatycznie wykrywamy system miar ze skÅ‚adnikÃ³w, moÅ¼esz go zmieniÄ‡ rÄ™cznie.",
+    "measurementSystemEditNote": "Uwaga: zmiana etykiety systemu nie konwertuje jednostek. UÅ¼yj akcji Przelicz po zapisaniu.",
+    "createRecipe": "UtwÃ³rz przepis",
+    "saveChanges": "Zapisz zmiany",
+    "uploading": "PrzesyÅ‚anie...",
+    "clickToUpload": "Kliknij lub przeciÄ…gnij i upuÅ›Ä‡",
+    "pasteToUpload": "aby wkleiÄ‡",
+    "imageFormats": "PNG, JPG, WEBP do 5MB"
   },
   "gallery": {
-    "addImage": "Dodaj obraz", "uploading": "Przesyłanie...",
-    "uploadFailed": "Przesyłanie nie powiodło się", "dragToReorder": "Przeciągnij, aby zmienić kolejność",
-    "maxImagesReached": "Maksymalnie {max} obrazów", "maxVideosReached": "Maksymalnie {max} filmów",
-    "invalidFileType": "Nieprawidłowy typ pliku"
+    "addImage": "Dodaj obraz",
+    "uploading": "PrzesyÅ‚anie...",
+    "uploadFailed": "PrzesyÅ‚anie nie powiodÅ‚o siÄ™",
+    "dragToReorder": "PrzeciÄ…gnij, aby zmieniÄ‡ kolejnoÅ›Ä‡",
+    "maxImagesReached": "Maksymalnie {max} obrazÃ³w",
+    "maxVideosReached": "Maksymalnie {max} filmÃ³w",
+    "invalidFileType": "NieprawidÅ‚owy typ pliku"
   },
   "carousel": {
-    "noImageAvailable": "Brak obrazu", "noMediaAvailable": "Brak mediów",
-    "videoPlayer": { "mute": "Wycisz", "unmute": "Włącz dźwięk", "fullscreen": "Pełny ekran", "exitFullscreen": "Wyjdź z pełnego ekranu" }
+    "noImageAvailable": "Brak obrazu",
+    "noMediaAvailable": "Brak mediÃ³w",
+    "videoPlayer": {
+      "mute": "Wycisz",
+      "unmute": "WÅ‚Ä…cz dÅºwiÄ™k",
+      "fullscreen": "PeÅ‚ny ekran",
+      "exitFullscreen": "WyjdÅº z peÅ‚nego ekranu"
+    }
   },
   "validation": {
     "nameRequired": "Nazwa przepisu jest wymagana",
-    "ingredientsRequired": "Wymagany jest co najmniej jeden składnik",
+    "ingredientsRequired": "Wymagany jest co najmniej jeden skÅ‚adnik",
     "stepsRequired": "Wymagany jest co najmniej jeden krok",
-    "servingsMin": "Liczba porcji musi wynosić co najmniej 1"
+    "servingsMin": "Liczba porcji musi wynosiÄ‡ co najmniej 1"
   },
   "nutrition": {
-    "title": "Wartości odżywcze", "calories": "Kalorie", "fat": "Tłuszcze",
-    "carbs": "Węglowodany", "protein": "Białko",
-    "showingPortions": "Wartości dla {count} {count, plural, one {porcji} other {porcji}}",
-    "noInfo": "Brak informacji o wartościach odżywczych",
+    "title": "WartoÅ›ci odÅ¼ywcze",
+    "calories": "Kalorie",
+    "fat": "TÅ‚uszcze",
+    "carbs": "WÄ™glowodany",
+    "protein": "BiaÅ‚ko",
+    "showingPortions": "WartoÅ›ci dla {count} {count, plural, one {porcji} other {porcji}}",
+    "noInfo": "Brak informacji o wartoÅ›ciach odÅ¼ywczych",
     "estimateWithAI": "Oszacuj z AI"
   },
-  "measurementSystem": { "label": "System miar", "detected": "Wykryto: {system}", "metric": "Metryczny", "us": "Amerykański" },
-  "timeInputs": { "prep": "Przygot.", "cook": "Gotowanie", "total": "Łącznie" },
-  "stepInput": { "stepPlaceholder": "Krok {number}: Opisz krok...", "stepPlaceholderShort": "Krok {number}" },
-  "ingredientInput": { "placeholder": "np. 2 szklanki mąki" },
+  "measurementSystem": {
+    "label": "System miar",
+    "detected": "Wykryto: {system}",
+    "metric": "Metryczny",
+    "us": "AmerykaÅ„ski"
+  },
+  "timeInputs": { "prep": "Przygot.", "cook": "Gotowanie", "total": "ÅÄ…cznie" },
+  "stepInput": {
+    "stepPlaceholder": "Krok {number}: Opisz krok...",
+    "stepPlaceholderShort": "Krok {number}"
+  },
+  "ingredientInput": { "placeholder": "np. 2 szklanki mÄ…ki" },
   "wakeLock": {
-    "keepScreenOn": "Utrzymaj ekran włączony",
-    "notSupported": "Utrzymywanie ekranu nie jest obsługiwane w tej przeglądarce",
-    "activeTooltip": "Ekran pozostanie włączony podczas gotowania",
-    "inactiveTooltip": "Utrzymaj ekran włączony podczas śledzenia kroków",
-    "ariaLabel": "Utrzymaj ekran włączony"
+    "keepScreenOn": "Utrzymaj ekran wÅ‚Ä…czony",
+    "notSupported": "Utrzymywanie ekranu nie jest obsÅ‚ugiwane w tej przeglÄ…darce",
+    "activeTooltip": "Ekran pozostanie wÅ‚Ä…czony podczas gotowania",
+    "inactiveTooltip": "Utrzymaj ekran wÅ‚Ä…czony podczas Å›ledzenia krokÃ³w",
+    "ariaLabel": "Utrzymaj ekran wÅ‚Ä…czony"
   },
   "toasts": {
-    "processingBoth": "Przetwarzanie tagów i alergenów",
-    "processingTags": "Generowanie tagów",
-    "processingAllergies": "Wykrywanie alergenów",
+    "processingBoth": "Przetwarzanie tagÃ³w i alergenÃ³w",
+    "processingTags": "Generowanie tagÃ³w",
+    "processingAllergies": "Wykrywanie alergenÃ³w",
     "bothComplete": "Tagi i alergeny zaktualizowane",
     "tagsComplete": "Tagi wygenerowane",
     "allergiesComplete": "Alergeny wykryte",
     "imported": "Przepis zaimportowany",
     "converted": "Miary przeliczone",
     "convertedDescription": "Przepis przeliczony na jednostki {system}",
-    "failed": "Operacja na przepisie nie powiodła się",
-    "failedDescription": "Coś poszło nie tak. Sprawdź konsolę przeglądarki.",
+    "failed": "Operacja na przepisie nie powiodÅ‚a siÄ™",
+    "failedDescription": "CoÅ› poszÅ‚o nie tak. SprawdÅº konsolÄ™ przeglÄ…darki.",
     "batchImported": "Przepisy zaimportowane",
-    "batchImportedDescription": "{count} przepisów zaimportowanych z archiwum",
-    "view": "Zobacz", "open": "Otwórz"
+    "batchImportedDescription": "{count} przepisÃ³w zaimportowanych z archiwum",
+    "view": "Zobacz",
+    "open": "OtwÃ³rz"
   },
-  "tags": { "panel": { "editTitle": "Edytuj tag", "editPlaceholder": "Wpisz nazwę tagu...", "duplicateTag": "Ten tag już istnieje" } },
+  "tags": {
+    "panel": {
+      "editTitle": "Edytuj tag",
+      "editPlaceholder": "Wpisz nazwÄ™ tagu...",
+      "duplicateTag": "Ten tag juÅ¼ istnieje"
+    }
+  },
   "cookMode": {
     "steps": "Kroki",
-    "ingredients": "Składniki",
+    "ingredients": "SkÅ‚adniki",
     "servings": "Porcje",
     "serving": "{count, plural, one {# porcja} other {# porcji}}",
     "stepCounter": "{current} / {total}",
-    "swipeSteps": "Przesuń, aby nawigować kroki",
-    "swipeIngredients": "Przesuń w lewo, aby zobaczyć składniki",
-    "swipeBackToSteps": "Przesuń w prawo, aby wrócić do kroków"
+    "swipeSteps": "PrzesuÅ„, aby nawigowaÄ‡ kroki",
+    "swipeIngredients": "PrzesuÅ„ w lewo, aby zobaczyÄ‡ skÅ‚adniki",
+    "swipeBackToSteps": "PrzesuÅ„ w prawo, aby wrÃ³ciÄ‡ do krokÃ³w"
   }
 }

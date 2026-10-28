@@ -68,6 +68,11 @@
     "uuid": "13.0.0",
     "zod": "catalog:"
   },
+  "dependenciesMeta": {
+    "@norish/db": {
+      "injected": false
+    }
+  },
   "devDependencies": {
     "@norish/eslint-config": "workspace:*",
     "@norish/prettier-config": "workspace:*",

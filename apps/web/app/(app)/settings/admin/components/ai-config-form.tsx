@@ -1,26 +1,20 @@
 "use client";
 
-import type { AIConfig, AutoTaggingMode } from "@norish/config/zod/server-config";
-
 import { useCallback, useEffect, useMemo, useState } from "react";
+import SecretInput from "@/components/shared/secret-input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Autocomplete, AutocompleteItem, Select, SelectItem } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useAvailableModelsQuery } from "@/hooks/admin";
 import { BeakerIcon, CheckIcon, XMarkIcon } from "@heroicons/react/16/solid";
-import {
-  Autocomplete,
-  AutocompleteItem,
-  Button,
-  Input,
-  Select,
-  SelectItem,
-  Slider,
-  Switch,
-} from "@heroui/react";
+import { Slider } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
+
+import type { AIConfig, AutoTaggingMode } from "@norish/config/zod/server-config";
 import { ServerConfigKeys } from "@norish/config/zod/server-config";
 
 import { useAdminSettingsContext } from "../context";
-
-import { useAvailableModelsQuery } from "@/hooks/admin";
-import SecretInput from "@/components/shared/secret-input";
 
 interface AIConfigFormProps {
   onDirtyChange?: (isDirty: boolean) => void;
@@ -379,7 +373,12 @@ export default function AIConfigForm({ onDirtyChange }: AIConfigFormProps) {
           step={0.1}
           value={temperature}
           onChange={(v) => setTemperature(v as number)}
-        />
+        >
+          <Slider.Track>
+            <Slider.Fill />
+            <Slider.Thumb />
+          </Slider.Track>
+        </Slider>
         <span className="text-default-500 text-xs">{t("temperatureHint")}</span>
       </div>
 

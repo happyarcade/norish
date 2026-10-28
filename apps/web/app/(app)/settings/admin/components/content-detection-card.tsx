@@ -1,14 +1,15 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { Accordion, AccordionItem } from "@/components/ui/accordion";
+import { Card } from "@/components/ui/card";
 import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { Accordion, AccordionItem, Card, CardBody, CardHeader } from "@heroui/react";
 import { useTranslations } from "next-intl";
+
 import { ServerConfigKeys } from "@norish/config/zod/server-config";
 
 import NewFeatureChip from "../../components/new-feature-chip";
 import { useAdminSettingsContext } from "../context";
-
 import JsonEditor from "./json-editor";
 import TimerKeywordsEditor from "./timer-keywords-editor";
 import { UnsavedChangesChip } from "./unsaved-changes-chip";
@@ -45,18 +46,18 @@ export default function ContentDetectionCard() {
 
   return (
     <Card>
-      <CardHeader>
+      <Card.Header>
         <h2 className="flex items-center gap-2 text-lg font-semibold">
           <DocumentMagnifyingGlassIcon className="h-5 w-5" />
           {t("title")}
         </h2>
-      </CardHeader>
-      <CardBody>
+      </Card.Header>
+      <Card.Content>
         <p className="text-default-500 mb-4 text-base">{t("description")}</p>
 
         <Accordion selectionMode="multiple" variant="bordered">
           <AccordionItem
-            key="timer-keywords"
+            id="timer-keywords"
             subtitle={t("timerKeywords.subtitle")}
             title={
               <div className="flex items-center gap-2">
@@ -79,7 +80,7 @@ export default function ContentDetectionCard() {
             </div>
           </AccordionItem>
           <AccordionItem
-            key="content-indicators"
+            id="content-indicators"
             subtitle={t("contentIndicators.subtitle")}
             title={
               <div className="flex items-center gap-2">
@@ -99,7 +100,7 @@ export default function ContentDetectionCard() {
             </div>
           </AccordionItem>
           <AccordionItem
-            key="units"
+            id="units"
             subtitle={t("units.subtitle")}
             title={
               <div className="flex items-center gap-2">
@@ -119,7 +120,7 @@ export default function ContentDetectionCard() {
             </div>
           </AccordionItem>
           <AccordionItem
-            key="recurrence"
+            id="recurrence"
             subtitle={t("recurrence.subtitle")}
             title={
               <div className="flex items-center gap-2">
@@ -139,7 +140,7 @@ export default function ContentDetectionCard() {
             </div>
           </AccordionItem>
         </Accordion>
-      </CardBody>
+      </Card.Content>
     </Card>
   );
 }

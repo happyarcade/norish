@@ -1,13 +1,25 @@
-import { relations } from "drizzle-orm";
+﻿import { relations } from "drizzle-orm";
 
 import { users } from "./auth";
 import { groceries } from "./groceries";
+import { householdPeople } from "./household-people";
+import { householdPlannerProfiles } from "./household-planner-profiles";
 import { householdUsers } from "./household-users";
 import { households } from "./households";
 import { ingredients } from "./ingredients";
+import { planSlotItems } from "./plan-slot-items";
+import { planSlotPeople } from "./plan-slot-people";
+import { planSlots } from "./plan-slots";
+import { plannerSlotDefinitions } from "./planner-slot-definitions";
+import { prepSessionItems } from "./prep-session-items";
+import { prepSessions } from "./prep-sessions";
 import { recipeImages } from "./recipe-images";
+import { recipeImportReviews } from "./recipe-import-reviews";
 import { recipeIngredients } from "./recipe-ingredients";
+import { recipeCookEvents } from "./recipe-cook-events";
+import { recipePlannerProfiles } from "./recipe-planner-profiles";
 import { recipeRatings } from "./recipe-ratings";
+import { recipeSources } from "./recipe-sources";
 import { recipeTags } from "./recipe-tags";
 import { recipeVideos } from "./recipe-videos";
 import { recipes } from "./recipes";
@@ -25,6 +37,37 @@ export const recipesRelations = relations(recipes, ({ many }) => ({
   ratings: many(recipeRatings),
   images: many(recipeImages),
   videos: many(recipeVideos),
+  sources: many(recipeSources),
+  plannerProfiles: many(recipePlannerProfiles),
+  importReviews: many(recipeImportReviews),
+  cookEvents: many(recipeCookEvents),
+  planSlotItems: many(planSlotItems),
+  prepSessionItems: many(prepSessionItems),
+}));
+
+export const recipeSourcesRelations = relations(recipeSources, ({ one }) => ({
+  recipe: one(recipes, {
+    fields: [recipeSources.recipeId],
+    references: [recipes.id],
+  }),
+}));
+
+export const recipePlannerProfilesRelations = relations(recipePlannerProfiles, ({ one }) => ({
+  recipe: one(recipes, {
+    fields: [recipePlannerProfiles.recipeId],
+    references: [recipes.id],
+  }),
+}));
+
+export const recipeImportReviewsRelations = relations(recipeImportReviews, ({ one }) => ({
+  recipe: one(recipes, {
+    fields: [recipeImportReviews.recipeId],
+    references: [recipes.id],
+  }),
+  reviewedByUser: one(users, {
+    fields: [recipeImportReviews.reviewedBy],
+    references: [users.id],
+  }),
 }));
 
 export const tagsRelations = relations(tags, ({ many }) => ({
@@ -89,6 +132,12 @@ export const recipeVideosRelations = relations(recipeVideos, ({ one }) => ({
 
 export const householdsRelations = relations(households, ({ many }) => ({
   users: many(householdUsers),
+  plannerProfiles: many(householdPlannerProfiles),
+  people: many(householdPeople),
+  slotDefinitions: many(plannerSlotDefinitions),
+  planSlots: many(planSlots),
+  prepSessions: many(prepSessions),
+  cookEvents: many(recipeCookEvents),
 }));
 
 export const householdUsersRelations = relations(householdUsers, ({ one }) => ({
@@ -99,6 +148,110 @@ export const householdUsersRelations = relations(householdUsers, ({ one }) => ({
   user: one(users, {
     fields: [householdUsers.userId],
     references: [users.id],
+  }),
+}));
+
+export const householdPlannerProfilesRelations = relations(householdPlannerProfiles, ({ one }) => ({
+  household: one(households, {
+    fields: [householdPlannerProfiles.householdId],
+    references: [households.id],
+  }),
+}));
+
+export const householdPeopleRelations = relations(householdPeople, ({ one, many }) => ({
+  household: one(households, {
+    fields: [householdPeople.householdId],
+    references: [households.id],
+  }),
+  linkedUser: one(users, {
+    fields: [householdPeople.linkedUserId],
+    references: [users.id],
+  }),
+  planSlotPeople: many(planSlotPeople),
+}));
+
+export const plannerSlotDefinitionsRelations = relations(plannerSlotDefinitions, ({ one, many }) => ({
+  household: one(households, {
+    fields: [plannerSlotDefinitions.householdId],
+    references: [households.id],
+  }),
+  planSlots: many(planSlots),
+}));
+
+export const planSlotsRelations = relations(planSlots, ({ one, many }) => ({
+  household: one(households, {
+    fields: [planSlots.householdId],
+    references: [households.id],
+  }),
+  slotDefinition: one(plannerSlotDefinitions, {
+    fields: [planSlots.plannerSlotDefinitionId],
+    references: [plannerSlotDefinitions.id],
+  }),
+  items: many(planSlotItems),
+  participants: many(planSlotPeople),
+}));
+
+export const planSlotItemsRelations = relations(planSlotItems, ({ one }) => ({
+  planSlot: one(planSlots, {
+    fields: [planSlotItems.planSlotId],
+    references: [planSlots.id],
+  }),
+  recipe: one(recipes, {
+    fields: [planSlotItems.recipeId],
+    references: [recipes.id],
+  }),
+}));
+
+export const planSlotPeopleRelations = relations(planSlotPeople, ({ one }) => ({
+  planSlot: one(planSlots, {
+    fields: [planSlotPeople.planSlotId],
+    references: [planSlots.id],
+  }),
+  householdPerson: one(householdPeople, {
+    fields: [planSlotPeople.householdPersonId],
+    references: [householdPeople.id],
+  }),
+}));
+
+export const prepSessionsRelations = relations(prepSessions, ({ one, many }) => ({
+  household: one(households, {
+    fields: [prepSessions.householdId],
+    references: [households.id],
+  }),
+  items: many(prepSessionItems),
+}));
+
+export const prepSessionItemsRelations = relations(prepSessionItems, ({ one }) => ({
+  prepSession: one(prepSessions, {
+    fields: [prepSessionItems.prepSessionId],
+    references: [prepSessions.id],
+  }),
+  recipe: one(recipes, {
+    fields: [prepSessionItems.recipeId],
+    references: [recipes.id],
+  }),
+}));
+
+export const recipeCookEventsRelations = relations(recipeCookEvents, ({ one }) => ({
+  household: one(households, {
+    fields: [recipeCookEvents.householdId],
+    references: [households.id],
+  }),
+  recipe: one(recipes, {
+    fields: [recipeCookEvents.recipeId],
+    references: [recipes.id],
+  }),
+  user: one(users, {
+    fields: [recipeCookEvents.userId],
+    references: [users.id],
+  }),
+  planSlotItem: one(planSlotItems, {
+    fields: [recipeCookEvents.planSlotItemId],
+    references: [planSlotItems.id],
+  }),
+  prepSessionItem: one(prepSessionItems, {
+    fields: [recipeCookEvents.prepSessionItemId],
+    references: [prepSessionItems.id],
   }),
 }));
 

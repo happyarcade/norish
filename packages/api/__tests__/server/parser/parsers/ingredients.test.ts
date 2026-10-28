@@ -45,6 +45,15 @@ describe("parseIngredients", () => {
 
       expect(result.ingredients).toHaveLength(1);
     });
+    it("normalizes non-finite quantities to null", () => {
+      const json = {
+        ingredients: ["New! Get this recipe in Meal Plan #4."],
+      };
+
+      const result = parseIngredients(json, emptyUnits);
+
+      expect(result.ingredients[0].amount).toBeNull();
+    });
   });
 
   describe("grammatically correct unit forms", () => {

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { addToast } from "@/lib/ui/toast";
 import { DevicePhoneMobileIcon } from "@heroicons/react/20/solid";
-import { Switch, Tooltip } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
 import { useWakeLockContext } from "./wake-lock-context";
@@ -10,38 +10,72 @@ import { useWakeLockContext } from "./wake-lock-context";
 export default function WakeLockToggle() {
   const { isSupported, isActive, toggle } = useWakeLockContext();
   const t = useTranslations("recipes.wakeLock");
-  const hasAttemptedAutoEnableRef = useRef(false);
+  const [isPending, setIsPending] = useState(false);
+  const autoEnableAttempted = useRef(false);
 
   useEffect(() => {
-    if (!isSupported || isActive || hasAttemptedAutoEnableRef.current) return;
+    if (!isSupported || isActive || autoEnableAttempted.current) return;
 
-    hasAttemptedAutoEnableRef.current = true;
-    toggle();
-  }, [isSupported, isActive, toggle]);
+    autoEnableAttempted.current = true;
+    void Promise.resolve(toggle());
+  }, [isActive, isSupported, toggle]);
 
-  if (!isSupported) {
-    return (
-      <Tooltip content={t("notSupported")}>
-        <div className="flex items-center gap-2 opacity-50">
-          <DevicePhoneMobileIcon className="h-5 w-5" />
-          <span className="text-sm">{t("keepScreenOn")}</span>
-        </div>
-      </Tooltip>
-    );
-  }
+  const handleToggle = async () => {
+    if (isPending) return;
+
+    if (!isSupported) {
+      addToast({
+        color: "warning",
+        description: "Mobile browsers usually require HTTPS for this feature.",
+        radius: "full",
+        title: t("notSupported"),
+      });
+
+      return;
+    }
+
+    setIsPending(true);
+
+    try {
+      await toggle();
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  const title = !isSupported
+    ? t("notSupported")
+    : isActive
+      ? t("activeTooltip")
+      : t("inactiveTooltip");
 
   return (
-    <Tooltip content={isActive ? t("activeTooltip") : t("inactiveTooltip")}>
-      <div className="flex items-center gap-2">
-        <DevicePhoneMobileIcon className="h-5 w-5" />
-        <Switch
-          aria-label={t("ariaLabel")}
-          color="success"
-          isSelected={isActive}
-          size="sm"
-          onValueChange={toggle}
+    <button
+      aria-checked={isActive}
+      aria-label={t("ariaLabel")}
+      aria-disabled={!isSupported || isPending}
+      className={`relative z-20 flex touch-manipulation items-center gap-2 rounded-full px-1 py-1 transition active:scale-95 ${
+        isSupported ? "text-default-600 hover:text-foreground" : "text-default-400 opacity-70"
+      }`}
+      disabled={isPending}
+      role="switch"
+      title={title}
+      type="button"
+      onClick={handleToggle}
+    >
+      <DevicePhoneMobileIcon className="h-5 w-5" />
+      <span
+        aria-hidden="true"
+        className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
+          isActive ? "bg-success" : "bg-default-200"
+        } ${isPending ? "opacity-70" : ""}`}
+      >
+        <span
+          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+            isActive ? "translate-x-4" : "translate-x-0.5"
+          }`}
         />
-      </div>
-    </Tooltip>
+      </span>
+    </button>
   );
 }

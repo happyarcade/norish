@@ -10,10 +10,13 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-vi.mock("@heroui/react", () => ({
+vi.mock("@/components/ui/textarea", () => ({
   Textarea: ({ value, onChange, placeholder }: any) => (
     <textarea aria-label="json" placeholder={placeholder} value={value} onChange={onChange} />
   ),
+}));
+
+vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onPress, isDisabled }: any) => (
     <button disabled={!!isDisabled} type="button" onClick={onPress}>
       {children}

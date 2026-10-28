@@ -1,7 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { BeakerIcon, CheckIcon, TrashIcon } from "@heroicons/react/16/solid";
-import { Button } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
 interface ProviderActionsProps {
@@ -28,31 +28,18 @@ export function ProviderActions({
   return (
     <div className="flex items-center justify-between pt-2">
       {hasConfig && (
-        <Button
-          color="danger"
-          startContent={<TrashIcon className="h-5 w-5" />}
-          variant="flat"
-          onPress={onDeleteClick}
-        >
+        <Button variant="danger-soft" onPress={onDeleteClick}>
+          <TrashIcon className="h-5 w-5" />
           {tActions("remove")}
         </Button>
       )}
       <div className="ml-auto flex gap-2">
-        <Button
-          isLoading={testing}
-          startContent={<BeakerIcon className="h-5 w-5" />}
-          variant="flat"
-          onPress={onTest}
-        >
+        <Button isPending={testing} variant="secondary" onPress={onTest}>
+          <BeakerIcon className="h-5 w-5" />
           {tActions("test")}
         </Button>
-        <Button
-          color="primary"
-          isDisabled={!hasChanges}
-          isLoading={saving}
-          startContent={<CheckIcon className="h-5 w-5" />}
-          onPress={onSave}
-        >
+        <Button isDisabled={!hasChanges} isPending={saving} variant="primary" onPress={onSave}>
+          <CheckIcon className="h-5 w-5" />
           {tActions("save")}
         </Button>
       </div>

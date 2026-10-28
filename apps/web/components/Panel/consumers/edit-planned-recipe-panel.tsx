@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useCalendarContext } from "@/app/(app)/calendar/context";
+import { PlannedItemThumbnail } from "@/components/calendar/planned-item-thumbnail";
+import { Panel, PANEL_HEIGHT_COMPACT } from "@/components/Panel/Panel";
+import { Button } from "@/components/ui/button";
 import { ArrowTopRightOnSquareIcon, TrashIcon } from "@heroicons/react/16/solid";
-import { Button, DatePicker, Select, SelectItem } from "@heroui/react";
+import { Calendar, DatePicker, Label, ListBox, Select } from "@heroui-v3/react";
+import { DateInputGroup } from "@heroui-v3/react/date-input-group";
 import { parseDate } from "@internationalized/date";
 import { useTranslations } from "next-intl";
-import { Slot } from "@norish/shared/contracts";
 
-import { Panel, PANEL_HEIGHT_COMPACT } from "@/components/Panel/Panel";
-import { PlannedItemThumbnail } from "@/components/calendar/planned-item-thumbnail";
-import { useCalendarContext } from "@/app/(app)/calendar/context";
+import { Slot } from "@norish/shared/contracts";
 
 const SLOTS: Slot[] = ["Breakfast", "Lunch", "Dinner", "Snack"];
 
@@ -94,36 +96,79 @@ export function EditPlannedRecipePanel({
           <DatePicker
             isRequired
             className="flex-1"
-            label={t("date")}
             value={selectedDate}
             onChange={(d) => d && setSelectedDate(d)}
-          />
-          <Select
-            className="flex-1"
-            label={t("slot")}
-            selectedKeys={[selectedSlot]}
-            onChange={(e) => setSelectedSlot(e.target.value as Slot)}
           >
-            {SLOTS.map((s) => (
-              <SelectItem key={s}>{tSlots(s.toLowerCase())}</SelectItem>
-            ))}
+            <Label>{t("date")}</Label>
+            <DateInputGroup fullWidth variant="secondary">
+              <DateInputGroup.Input>
+                {(segment) => <DateInputGroup.Segment segment={segment} />}
+              </DateInputGroup.Input>
+              <DateInputGroup.Suffix>
+                <DatePicker.Trigger aria-label={t("date")}>
+                  <DatePicker.TriggerIndicator />
+                </DatePicker.Trigger>
+              </DateInputGroup.Suffix>
+            </DateInputGroup>
+            <DatePicker.Popover>
+              <Calendar>
+                <Calendar.Header>
+                  <Calendar.NavButton slot="previous" />
+                  <Calendar.Heading />
+                  <Calendar.NavButton slot="next" />
+                </Calendar.Header>
+                <Calendar.Grid>
+                  <Calendar.GridHeader>
+                    {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                  </Calendar.GridHeader>
+                  <Calendar.GridBody>
+                    {(calendarDate) => <Calendar.Cell date={calendarDate} />}
+                  </Calendar.GridBody>
+                </Calendar.Grid>
+              </Calendar>
+            </DatePicker.Popover>
+          </DatePicker>
+          <Select
+            fullWidth
+            className="flex-1"
+            selectedKey={selectedSlot}
+            variant="secondary"
+            onSelectionChange={(key) => {
+              if (typeof key === "string") setSelectedSlot(key as Slot);
+            }}
+          >
+            <Label>{t("slot")}</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox aria-label={t("slot")}>
+                {SLOTS.map((s) => (
+                  <ListBox.Item key={s} id={s} textValue={tSlots(s.toLowerCase())}>
+                    {tSlots(s.toLowerCase())}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
           </Select>
         </div>
 
         <div className="mt-2 flex justify-end gap-2">
-          <Button isIconOnly color="danger" size="sm" variant="light" onPress={handleDelete}>
+          <Button
+            isIconOnly
+            aria-label={tActions("delete")}
+            size="sm"
+            variant="danger"
+            onPress={handleDelete}
+          >
             <TrashIcon className="h-4 w-4" />
           </Button>
-          <Button
-            className="min-w-16"
-            color="default"
-            size="sm"
-            variant="flat"
-            onPress={handleDuplicate}
-          >
+          <Button className="min-w-16" size="sm" variant="secondary" onPress={handleDuplicate}>
             {tActions("duplicate")}
           </Button>
-          <Button className="min-w-16" color="primary" size="sm" onPress={handleSave}>
+          <Button className="min-w-16" size="sm" variant="primary" onPress={handleSave}>
             {tActions("save")}
           </Button>
         </div>

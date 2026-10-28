@@ -8,12 +8,14 @@
 
 import type { Job } from "bullmq";
 import type { ImageImportJobData } from "@norish/queue/contracts/job-types";
-import type { PolicyEmitContext } from "@norish/trpc/helpers";
+import type { PolicyEmitContext } from "@norish/queue/events/policy";
 
 import { extractRecipeFromImages } from "@norish/api/ai/image-recipe-parser";
 import { deleteRecipeImagesDir, saveImageBytes } from "@norish/shared-server/media/storage";
 import { createLogger } from "@norish/shared-server/logger";
 import { getAIConfig, getRecipePermissionPolicy } from "@norish/config/server-config-loader";
+import { emitByPolicy } from "@norish/queue/events/policy";
+import { recipeEmitter } from "@norish/queue/events/recipes";
 import {
   addRecipeImages,
   createRecipeWithRefs,
@@ -21,8 +23,6 @@ import {
   getAllergiesForUsers,
 } from "@norish/db";
 import { getBullClient } from "@norish/queue/redis/bullmq";
-import { emitByPolicy } from "@norish/trpc/helpers";
-import { recipeEmitter } from "@norish/trpc/routers/recipes/emitter";
 
 import { baseWorkerOptions, QUEUE_NAMES, STALLED_INTERVAL, WORKER_CONCURRENCY } from "../config";
 import { createLazyWorker, stopLazyWorker } from "../lazy-worker-manager";
@@ -74,7 +74,21 @@ async function processImageImportJob(job: Job<ImageImportJobData>): Promise<void
   const parsedRecipe = result.data;
 
   // Save the recipe
-  const createdId = await createRecipeWithRefs(recipeId, userId, parsedRecipe);
+  const createdId = await createRecipeWithRefs(recipeId, userId, parsedRecipe, {
+    source: {
+      sourceType: "image_import",
+      sourceUrl: null,
+      sourceDomain: null,
+      siteName: null,
+      author: null,
+      language: null,
+      rawPayload: {
+        source: "image_import",
+        fileCount: files.length,
+        files: files.map((file) => ({ filename: file.filename, mimeType: file.mimeType })),
+      },
+    },
+  });
 
   if (!createdId) {
     throw new Error("Failed to save imported recipe");

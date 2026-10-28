@@ -1,0 +1,171 @@
+name: ${COMPOSE_PROJECT_NAME:-norish}
+
+services:
+  norish:
+    image: ${NORISH_IMAGE:-norish-local}:${NORISH_TAG:-latest}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: runtime
+      args:
+        UID: ${PUID:-1000}
+        GID: ${PGID:-1000}
+        YT_DLP_VERSION: ${YT_DLP_VERSION:-2026.02.04}
+    init: true
+    restart: unless-stopped
+    user: "${PUID:-1000}:${PGID:-1000}"
+    ports:
+      - "${NORISH_BIND_ADDRESS:-127.0.0.1}:${NORISH_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      AUTH_URL: ${AUTH_URL:?Set AUTH_URL in docker/.env.production}
+      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-}
+      MASTER_KEY: ${MASTER_KEY:?Set MASTER_KEY in docker/.env.production}
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE: ${POSTGRES_DB:-norish}
+      DATABASE_USER: ${POSTGRES_USER:-norish}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in docker/.env.production}
+      REDIS_URL: redis://redis:6379
+      CHROME_WS_ENDPOINT: ws://chrome-headless:3000
+      UPLOADS_DIR: /app/uploads
+      YT_DLP_BIN_DIR: /app/bin
+      SWC_NATIVE_BINDING_CACHE: /app/.cache/swc
+      PASSWORD_AUTH_ENABLED: ${PASSWORD_AUTH_ENABLED:-true}
+      ENABLE_REGISTRATION: ${ENABLE_REGISTRATION:-false}
+      SCHEDULER_CLEANUP_MONTHS: ${SCHEDULER_CLEANUP_MONTHS:-3}
+    volumes:
+      - norish_uploads:/app/uploads
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=256m,mode=1777
+      - /app/.cache:rw,exec,nosuid,nodev,size=64m,uid=${PUID:-1000},gid=${PGID:-1000},mode=0700
+      - /app/apps/web/.next/cache:rw,noexec,nosuid,nodev,size=256m,uid=${PUID:-1000},gid=${PGID:-1000},mode=0755
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    stop_grace_period: 75s
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''http'').get(''http://127.0.0.1:3000/api/health'',r=>process.exit(r.statusCode===200?0:1)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chrome-headless:
+        condition: service_started
+    networks:
+      - data
+      - outbound
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+  db:
+    image: ${POSTGRES_IMAGE:-postgres:17-alpine}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-norish}
+      POSTGRES_USER: ${POSTGRES_USER:-norish}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in docker/.env.production}
+      POSTGRES_INITDB_ARGS: --data-checksums
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    shm_size: 256m
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - data
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+  redis:
+    image: ${REDIS_IMAGE:-redis:8.6.0}
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --save
+      - "60"
+      - "1000"
+    volumes:
+      - redis_data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=32m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - data
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  chrome-headless:
+    image: ${CHROME_IMAGE:-zenika/alpine-chrome:latest}
+    restart: unless-stopped
+    command:
+      - --no-sandbox
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --disable-features=dbus
+      - --remote-debugging-address=0.0.0.0
+      - --remote-debugging-port=3000
+      - --headless
+    shm_size: 512m
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=256m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - outbound
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  norish_uploads:
+  postgres_data:
+  redis_data:
+
+networks:
+  data:
+    internal: true
+  outbound:

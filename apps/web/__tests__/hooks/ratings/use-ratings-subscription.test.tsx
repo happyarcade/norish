@@ -51,7 +51,7 @@ vi.mock("@trpc/tanstack-react-query", () => ({
   }),
 }));
 
-vi.mock("@heroui/react", () => ({
+vi.mock("@/lib/ui/toast", () => ({
   addToast: vi.fn(),
 }));
 
@@ -72,7 +72,7 @@ describe("useRatingsSubscription", () => {
 
   it("shows generic toast copy for rating failures", async () => {
     const { useRatingsSubscription } = await import("@/hooks/ratings/use-ratings-subscription");
-    const { addToast } = await import("@heroui/react");
+    const { addToast } = await import("@/lib/ui/toast");
 
     renderHook(() => useRatingsSubscription(), {
       wrapper: createTestWrapper(queryClient),

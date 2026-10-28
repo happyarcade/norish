@@ -9,22 +9,35 @@ import {
   addStepsAndIngredientsToRecipeByInput,
   createRecipeWithRefs,
   dashboardRecipe,
+  deleteLatestRecipeCookEvent,
   deleteRecipeById,
   FullRecipeInsertSchema,
   getRandomRecipeCandidates,
   getRecipeFull,
+  getRecipeImportReviewByRecipeId,
   getRecipeOwnerId,
+  getRecipePlannerProfileByRecipeId,
+  listRecipeMetadataReviewItems,
+  listRecipeNutritionReviewItems,
   listRecipes,
+  listRecipeSourceOptions,
+  markRecipeCooked,
   RecipeConvertInputSchema,
   RecipeDeleteInputSchema,
   RecipeGetInputSchema,
   RecipeImportInputSchema,
   RecipeListInputSchema,
+  RecipeMetadataReviewListInputSchema,
+  RecipeMetadataReviewSaveInputSchema,
+  RecipeNutritionReviewListInputSchema,
+  RecipeNutritionReviewSaveInputSchema,
   RecipeUpdateInputSchema,
   searchRecipesByName,
   setActiveSystemForRecipe,
   updateRecipeCategories,
   updateRecipeWithRefs,
+  upsertRecipeImportReview,
+  upsertRecipePlannerProfile,
 } from "@norish/db";
 import {
   addAllergyDetectionJob,
@@ -41,6 +54,11 @@ import { deleteRecipeImagesDir } from "@norish/shared-server/media/storage";
 import { selectWeightedRandomRecipe } from "@norish/shared-server/recipes/randomizer";
 import { FilterMode, RecipeCategory, SortOrder } from "@norish/shared/contracts";
 import { MAX_RECIPE_PASTE_CHARS } from "@norish/shared/contracts/uploads";
+import {
+  auditRecipeNutrition,
+  divideRecipeNutritionByServings,
+  getNutritionAuditValues,
+} from "@norish/shared/lib/nutrition-quality";
 
 import { emitByPolicy } from "../../helpers";
 import { authedProcedure } from "../../middleware";
@@ -50,10 +68,26 @@ import { recipeEmitter } from "./emitter";
 
 interface UserContext {
   user: { id: string };
+  household: { id: string } | null;
   householdUserIds: string[] | null;
   householdKey: string;
   isServerAdmin: boolean;
 }
+
+const DEFAULT_PLANNER_PROFILE = {
+  mealTypes: [] as string[],
+  suitableSlots: [] as string[],
+  recipeTypes: [] as string[],
+  dietaryFlags: [] as string[],
+  allergenFlags: [] as string[],
+  cuisines: [] as string[],
+  heatLevel: null as string | null,
+  prepScore: null as number | null,
+  fruitVegCount: null as number | null,
+  isDivisible: true,
+  isFreezerFriendly: false,
+  sourceYield: null as string | null,
+};
 
 /**
  * Emit a failure event based on the view policy
@@ -132,10 +166,17 @@ const list = authedProcedure.input(RecipeListInputSchema).query(async ({ ctx, in
     search,
     searchFields,
     tags,
+    recipeTypes,
+    suitableSlots,
     filterMode,
     sortMode,
     minRating,
     maxCookingTime,
+    maxSodium,
+    maxCholesterol,
+    minFiber,
+    sourceDomains,
+    nutritionDetail,
     categories,
   } = input;
 
@@ -144,6 +185,7 @@ const list = authedProcedure.input(RecipeListInputSchema).query(async ({ ctx, in
   const listCtx: RecipeListContext = {
     userId: ctx.user.id,
     householdUserIds: ctx.householdUserIds,
+    householdId: ctx.household?.id ?? null,
     isServerAdmin: ctx.isServerAdmin,
   };
 
@@ -158,7 +200,14 @@ const list = authedProcedure.input(RecipeListInputSchema).query(async ({ ctx, in
     sortMode as SortOrder,
     minRating,
     maxCookingTime,
-    categories
+    maxSodium,
+    maxCholesterol,
+    minFiber,
+    categories,
+    recipeTypes,
+    suitableSlots,
+    sourceDomains,
+    nutritionDetail
   );
 
   log.debug({ count: result.recipes.length, total: result.total }, "Listed recipes");
@@ -170,10 +219,45 @@ const list = authedProcedure.input(RecipeListInputSchema).query(async ({ ctx, in
   };
 });
 
+const listSourceOptions = authedProcedure.query(async ({ ctx }) =>
+  listRecipeSourceOptions({
+    userId: ctx.user.id,
+    householdUserIds: ctx.householdUserIds,
+    householdId: ctx.household?.id ?? null,
+    isServerAdmin: ctx.isServerAdmin,
+  })
+);
+
+const listMetadataReview = authedProcedure
+  .input(RecipeMetadataReviewListInputSchema)
+  .query(async ({ ctx, input }) =>
+    listRecipeMetadataReviewItems(
+      {
+        userId: ctx.user.id,
+        householdUserIds: ctx.householdUserIds,
+        isServerAdmin: ctx.isServerAdmin,
+      },
+      input
+    )
+  );
+
+const listNutritionReview = authedProcedure
+  .input(RecipeNutritionReviewListInputSchema)
+  .query(async ({ ctx, input }) =>
+    listRecipeNutritionReviewItems(
+      {
+        userId: ctx.user.id,
+        householdUserIds: ctx.householdUserIds,
+        isServerAdmin: ctx.isServerAdmin,
+      },
+      input
+    )
+  );
+
 const get = authedProcedure.input(RecipeGetInputSchema).query(async ({ ctx, input }) => {
   log.debug({ userId: ctx.user.id, recipeId: input.id }, "Getting recipe");
 
-  const recipe = await getRecipeFull(input.id);
+  const recipe = await getRecipeFull(input.id, ctx.household?.id ?? null);
 
   if (!recipe) {
     return null;
@@ -221,7 +305,7 @@ const create = authedProcedure.input(FullRecipeInsertSchema).mutation(({ ctx, in
         });
       }
 
-      const dashboardDto = await dashboardRecipe(createdId);
+      const dashboardDto = await dashboardRecipe(createdId, ctx.household?.id ?? null);
 
       if (dashboardDto) {
         log.info({ userId: ctx.user.id, recipeId: createdId }, "Recipe created");
@@ -251,7 +335,7 @@ const update = authedProcedure.input(RecipeUpdateInputSchema).mutation(({ ctx, i
     .then(async () => {
       await updateRecipeWithRefs(id, ctx.user.id, data);
 
-      const updatedRecipe = await getRecipeFull(id);
+      const updatedRecipe = await getRecipeFull(id, ctx.household?.id ?? null);
 
       if (updatedRecipe) {
         log.info({ userId: ctx.user.id, recipeId: id }, "Recipe updated");
@@ -283,7 +367,7 @@ const updateCategories = authedProcedure
 
     await updateRecipeCategories(input.recipeId, input.categories as RecipeCategory[]);
 
-    const updated = await getRecipeFull(input.recipeId);
+    const updated = await getRecipeFull(input.recipeId, ctx.household?.id ?? null);
 
     if (updated) {
       const policy = await getRecipePermissionPolicy();
@@ -296,6 +380,263 @@ const updateCategories = authedProcedure
         { recipe: updated }
       );
     }
+
+    return { success: true };
+  });
+
+const markCooked = authedProcedure
+  .input(
+    z.object({
+      recipeId: z.uuid(),
+      cookedAt: z.coerce.date().optional(),
+      source: z.enum(["recipe_detail", "planner", "prep", "manual"]).default("recipe_detail"),
+      planSlotItemId: z.uuid().nullable().optional(),
+      prepSessionItemId: z.uuid().nullable().optional(),
+      notes: z.string().nullable().optional(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    if (!ctx.household?.id) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "Mark cooked requires an active household",
+      });
+    }
+
+    await assertRecipeAccess(ctx, input.recipeId, "view");
+
+    const event = await markRecipeCooked({
+      householdId: ctx.household.id,
+      recipeId: input.recipeId,
+      userId: ctx.user.id,
+      cookedAt: input.cookedAt ?? new Date(),
+      source: input.source,
+      planSlotItemId: input.planSlotItemId ?? null,
+      prepSessionItemId: input.prepSessionItemId ?? null,
+      notes: input.notes ?? null,
+    });
+    const updated = await getRecipeFull(input.recipeId, ctx.household.id);
+
+    if (updated) {
+      const policy = await getRecipePermissionPolicy();
+
+      emitByPolicy(
+        recipeEmitter,
+        policy.view,
+        { userId: ctx.user.id, householdKey: ctx.householdKey },
+        "updated",
+        { recipe: updated }
+      );
+    }
+
+    return event;
+  });
+
+const removeLastCooked = authedProcedure
+  .input(
+    z.object({
+      recipeId: z.uuid(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    if (!ctx.household?.id) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "Removing cook history requires an active household",
+      });
+    }
+
+    await assertRecipeAccess(ctx, input.recipeId, "view");
+
+    const deleted = await deleteLatestRecipeCookEvent(ctx.household.id, input.recipeId);
+
+    if (!deleted) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "No cook history found for this recipe",
+      });
+    }
+
+    const updated = await getRecipeFull(input.recipeId, ctx.household.id);
+
+    if (updated) {
+      const policy = await getRecipePermissionPolicy();
+
+      emitByPolicy(
+        recipeEmitter,
+        policy.view,
+        { userId: ctx.user.id, householdKey: ctx.householdKey },
+        "updated",
+        { recipe: updated }
+      );
+    }
+
+    return deleted;
+  });
+
+const saveMetadataReview = authedProcedure
+  .input(RecipeMetadataReviewSaveInputSchema)
+  .mutation(async ({ ctx, input }) => {
+    await assertRecipeAccess(ctx, input.recipeId, "edit");
+
+    const recipe = await getRecipeFull(input.recipeId, ctx.household?.id ?? null);
+
+    if (!recipe) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Recipe not found",
+      });
+    }
+
+    const existingProfile = (await getRecipePlannerProfileByRecipeId(input.recipeId)) ?? {
+      recipeId: input.recipeId,
+      ...DEFAULT_PLANNER_PROFILE,
+    };
+    const existingReview = await getRecipeImportReviewByRecipeId(input.recipeId);
+
+    await upsertRecipePlannerProfile({
+      ...existingProfile,
+      recipeId: input.recipeId,
+      recipeTypes: input.recipeTypes,
+      suitableSlots: input.suitableSlots,
+      mealTypes: input.suitableSlots.length > 0 ? input.suitableSlots : existingProfile.mealTypes,
+      sourceYield:
+        existingProfile.sourceYield ??
+        (recipe.servings ? `${recipe.servings} serving${recipe.servings === 1 ? "" : "s"}` : null),
+    });
+
+    await upsertRecipeImportReview({
+      recipeId: input.recipeId,
+      sourceFingerprint: existingReview?.sourceFingerprint ?? null,
+      needsReview: false,
+      issues:
+        existingReview?.issues.filter(
+          (issue) =>
+            !(
+              (issue === "missing inferred recipe type" && input.recipeTypes.length > 0) ||
+              (issue === "missing inferred suitable slot" && input.suitableSlots.length > 0)
+            )
+        ) ?? [],
+      confidenceByField: existingReview?.confidenceByField ?? {},
+      inferredData: existingReview?.inferredData ?? {},
+      reviewOverrides: {
+        ...(existingReview?.reviewOverrides ?? {}),
+        recipeTypes: input.recipeTypes,
+        suitableSlots: input.suitableSlots,
+      },
+      reviewedAt: new Date(),
+      reviewedBy: ctx.user.id,
+    });
+
+    const updated = await getRecipeFull(input.recipeId, ctx.household?.id ?? null);
+
+    if (updated) {
+      const policy = await getRecipePermissionPolicy();
+
+      emitByPolicy(
+        recipeEmitter,
+        policy.view,
+        { userId: ctx.user.id, householdKey: ctx.householdKey },
+        "updated",
+        { recipe: updated }
+      );
+    }
+
+    return { success: true };
+  });
+
+const saveNutritionReview = authedProcedure
+  .input(RecipeNutritionReviewSaveInputSchema)
+  .mutation(async ({ ctx, input }) => {
+    await assertRecipeAccess(ctx, input.recipeId, "edit");
+
+    const recipe = await getRecipeFull(input.recipeId, ctx.household?.id ?? null);
+
+    if (!recipe) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Recipe not found",
+      });
+    }
+
+    const originalNutrition = getNutritionAuditValues(recipe);
+
+    if (input.action === "divideByServings") {
+      if (recipe.servings <= 1) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Nutrition cannot be divided when the recipe has one serving",
+        });
+      }
+
+      const corrected = divideRecipeNutritionByServings(recipe);
+      const correctedNutritionDetails = corrected.nutritionDetails
+        ? {
+            servingSize: corrected.nutritionDetails.servingSize,
+            nutrients: Object.fromEntries(
+              Object.entries(corrected.nutritionDetails.nutrients ?? {}).map(([key, metric]) => [
+                key,
+                {
+                  label: metric.label,
+                  value: metric.value == null ? null : Number(metric.value),
+                  unit: metric.unit,
+                  raw: metric.raw,
+                },
+              ])
+            ),
+          }
+        : corrected.nutritionDetails;
+
+      await updateRecipeWithRefs(input.recipeId, ctx.user.id, {
+        calories: typeof corrected.calories === "number" ? corrected.calories : recipe.calories,
+        fat: corrected.fat == null ? null : String(corrected.fat),
+        carbs: corrected.carbs == null ? null : String(corrected.carbs),
+        protein: corrected.protein == null ? null : String(corrected.protein),
+        nutritionDetails: correctedNutritionDetails,
+      });
+    }
+
+    const updated = await getRecipeFull(input.recipeId, ctx.household?.id ?? null);
+
+    if (!updated) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to reload updated recipe",
+      });
+    }
+
+    const audit = auditRecipeNutrition(updated);
+    const existingReview = await getRecipeImportReviewByRecipeId(input.recipeId);
+
+    await upsertRecipeImportReview({
+      recipeId: input.recipeId,
+      sourceFingerprint: existingReview?.sourceFingerprint ?? null,
+      needsReview: existingReview?.needsReview ?? false,
+      issues: existingReview?.issues ?? [],
+      confidenceByField: existingReview?.confidenceByField ?? {},
+      inferredData: existingReview?.inferredData ?? {},
+      reviewOverrides: {
+        ...(existingReview?.reviewOverrides ?? {}),
+        nutritionAudit: {
+          fingerprint: audit.fingerprint,
+          status: input.action === "divideByServings" ? "corrected" : "confirmed",
+          reviewedAt: new Date().toISOString(),
+          originalNutrition: input.action === "divideByServings" ? originalNutrition : undefined,
+        },
+      },
+      reviewedAt: existingReview?.reviewedAt ?? null,
+      reviewedBy: existingReview?.reviewedBy ?? null,
+    });
+
+    const policy = await getRecipePermissionPolicy();
+
+    emitByPolicy(
+      recipeEmitter,
+      policy.view,
+      { userId: ctx.user.id, householdKey: ctx.householdKey },
+      "updated",
+      { recipe: updated }
+    );
 
     return { success: true };
   });
@@ -515,6 +856,8 @@ const getRandomRecipe = authedProcedure
   .input(
     z.object({
       category: z.enum(["Breakfast", "Lunch", "Dinner", "Snack"]).optional(),
+      recipeTypes: z.array(z.string()).optional(),
+      suitableSlots: z.array(z.string()).optional(),
     })
   )
   .query(async ({ ctx, input }) => {
@@ -524,10 +867,20 @@ const getRandomRecipe = authedProcedure
       isServerAdmin: ctx.isServerAdmin,
     };
 
-    let candidates = await getRandomRecipeCandidates(listCtx, input.category);
+    let candidates = await getRandomRecipeCandidates(
+      listCtx,
+      input.category,
+      input.recipeTypes,
+      input.suitableSlots
+    );
 
-    if (candidates.length <= 1 && input.category) {
-      candidates = await getRandomRecipeCandidates(listCtx, undefined);
+    if (
+      candidates.length <= 1 &&
+      input.category &&
+      !input.recipeTypes?.length &&
+      !input.suitableSlots?.length
+    ) {
+      candidates = await getRandomRecipeCandidates(listCtx, undefined, undefined, undefined);
     }
 
     const selected = selectWeightedRandomRecipe(candidates);
@@ -884,6 +1237,9 @@ const triggerAllergyDetection = authedProcedure
 
 export const recipesProcedures = router({
   list,
+  listSourceOptions,
+  listMetadataReview,
+  listNutritionReview,
   get,
   create,
   update,
@@ -899,5 +1255,9 @@ export const recipesProcedures = router({
   reserveId,
   autocomplete,
   updateCategories,
+  saveMetadataReview,
+  saveNutritionReview,
+  markCooked,
+  removeLastCooked,
   getRandomRecipe,
 });

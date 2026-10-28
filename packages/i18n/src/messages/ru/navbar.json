@@ -27,6 +27,7 @@
   "nav": {
     "home": "Рецепты",
     "calendar": "Календарь",
+    "prep": "Prep Table",
     "groceries": "Список покупок"
   },
   "mobile": {

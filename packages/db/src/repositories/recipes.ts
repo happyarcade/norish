@@ -13,23 +13,40 @@ import type {
   RecipeIngredientsDto,
 } from "@norish/shared/contracts/dto/recipe-ingredient";
 import type { StepDto, StepInsertDto } from "@norish/shared/contracts/dto/steps";
-import type { FilterMode, SearchField, SortOrder } from "@norish/shared/contracts/store-types";
+import type {
+  FilterMode,
+  NutritionDetailFilter,
+  SearchField,
+  SortOrder,
+} from "@norish/shared/contracts/store-types";
+import type { WeeklyMealCandidate } from "@norish/shared/lib/weekly-meal-suggestions";
+import type { RecipeImportReviewInsertDto } from "./recipe-import-reviews";
+import type { RecipePlannerProfileInsertDto } from "./recipe-planner-profiles";
+import type { RecipeSourceInsertDto } from "./recipe-sources";
 
-import z from "zod";
-import { and, asc, desc, eq, ilike, inArray, lte, or, sql } from "drizzle-orm";
-import { dbLogger } from "@norish/db/logger";
 import {
   DEFAULT_RECIPE_PERMISSION_POLICY,
   ServerConfigKeys,
 } from "@norish/config/zod/server-config";
+import { dbLogger } from "@norish/db/logger";
 import { stripHtmlTags } from "@norish/shared/lib/helpers";
+import {
+  auditRecipeNutrition,
+  getKnownNutritionMetricValue,
+} from "@norish/shared/lib/nutrition-quality";
+import { isAliasedRecipeTag, matchesRecipeTagFilter } from "@norish/shared/lib/recipe-tag-aliases";
+import z from "zod";
+import { and, asc, desc, eq, ilike, inArray, lte, or, sql } from "drizzle-orm";
 
 import { db } from "../drizzle";
 import {
   ingredients,
   recipeImages,
+  recipeImportReviews,
   recipeIngredients,
+  recipePlannerProfiles,
   recipes,
+  recipeSources,
   recipeTags,
   recipeVideos,
   steps as stepsTable,
@@ -43,6 +60,10 @@ import {
 } from "../zodSchemas";
 
 import { attachIngredientsToRecipeByInputTx } from "./ingredients";
+import { getRecipeCookStats, getRecipeCookStatsByRecipeIds } from "./recipe-cook-events";
+import { getNutritionReviewFingerprint, upsertRecipeImportReviewTx } from "./recipe-import-reviews";
+import { upsertRecipePlannerProfileTx } from "./recipe-planner-profiles";
+import { createRecipeSourceTx } from "./recipe-sources";
 import { getConfig } from "./server-config";
 import { createManyRecipeStepsTx } from "./steps";
 import { attachTagsToRecipeByInputTx } from "./tags";
@@ -202,6 +223,7 @@ export async function findExistingRecipe(
 export interface RecipeListContext {
   userId: string;
   householdUserIds: string[] | null;
+  householdId?: string | null;
   isServerAdmin: boolean;
 }
 
@@ -247,6 +269,60 @@ async function buildViewPolicyCondition(ctx: RecipeListContext) {
   }
 }
 
+function buildNutritionMetricValueSubquery(metricPattern: string) {
+  return sql<number | null>`(
+    select max(nullif(nutrient.value->>'value', '')::numeric)
+    from jsonb_each(coalesce(${recipes.nutritionDetails}->'nutrients', '{}'::jsonb)) as nutrient(key, value)
+    where lower(nutrient.key) ~ ${metricPattern}
+      or lower(coalesce(nutrient.value->>'label', '')) ~ ${metricPattern}
+  )`;
+}
+
+const CORE_NUTRITION_KEYS = [
+  "sodiumcontent",
+  "saturatedfatcontent",
+  "fibercontent",
+  "sugarcontent",
+] as const;
+
+const COMPLETE_NUTRITION_KEYS = [
+  "sodiumcontent",
+  "cholesterolcontent",
+  "saturatedfatcontent",
+  "transfatcontent",
+  "fibercontent",
+  "sugarcontent",
+] as const;
+
+function buildNutritionMetricCountSubquery(metricKeys: readonly string[]) {
+  return sql<number>`(
+    select count(*)::int
+    from jsonb_each(coalesce(${recipes.nutritionDetails}->'nutrients', '{}'::jsonb)) as nutrient(key, value)
+    where lower(nutrient.key) in (${sql.join(
+      metricKeys.map((key) => sql`${key}`),
+      sql`, `
+    )})
+      and nullif(nutrient.value->>'value', '') is not null
+  )`;
+}
+
+function buildRecipeSourceSummary(
+  sources:
+    | Array<{ siteName: string | null; sourceDomain: string | null; sourceUrl: string | null }>
+    | null
+    | undefined
+) {
+  const source = sources?.[0];
+
+  if (!source) return null;
+
+  return {
+    siteName: source.siteName ?? null,
+    sourceDomain: source.sourceDomain ?? null,
+    sourceUrl: source.sourceUrl ?? null,
+  };
+}
+
 export async function listRecipes(
   ctx: RecipeListContext,
   limit: number,
@@ -258,9 +334,19 @@ export async function listRecipes(
   sortMode: SortOrder = "dateDesc",
   minRating?: number,
   maxCookingTime?: number,
-  categories?: RecipeCategory[]
+  maxSodium?: number,
+  maxCholesterol?: number,
+  minFiber?: number,
+  categories?: RecipeCategory[],
+  recipeTypes?: string[],
+  suitableSlots?: string[],
+  sourceDomains?: string[],
+  nutritionDetail?: NutritionDetailFilter
 ): Promise<{ recipes: RecipeDashboardDTO[]; total: number }> {
   const whereConditions: any[] = [];
+
+  const toPgTextArray = (values: string[]) =>
+    `{${values.map((value) => `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`).join(",")}}`;
 
   // Apply view policy filtering
   const policyCondition = await buildViewPolicyCondition(ctx);
@@ -379,11 +465,30 @@ export async function listRecipes(
       recipeTagMap.get(rel.recipeId)!.add(tagName);
     }
 
+    const aliasedTags = normalizedTags.filter(isAliasedRecipeTag);
+
+    if (aliasedTags.length > 0) {
+      const recipeNames = await db.select({ id: recipes.id, name: recipes.name }).from(recipes);
+
+      for (const recipe of recipeNames) {
+        const matchingAliases = aliasedTags.filter((tagName) =>
+          matchesRecipeTagFilter([recipe.name], tagName)
+        );
+
+        if (matchingAliases.length === 0) continue;
+
+        const tagSet = recipeTagMap.get(recipe.id) ?? new Set<string>();
+
+        matchingAliases.forEach((tagName) => tagSet.add(tagName));
+        recipeTagMap.set(recipe.id, tagSet);
+      }
+    }
+
     tagFilteredIds = Array.from(recipeTagMap.entries())
       .filter(([_, tagSet]) =>
         filterMode === "AND"
-          ? normalizedTags.every((t) => tagSet.has(t))
-          : normalizedTags.some((t) => tagSet.has(t))
+          ? normalizedTags.every((tagName) => matchesRecipeTagFilter(tagSet, tagName))
+          : normalizedTags.some((tagName) => matchesRecipeTagFilter(tagSet, tagName))
       )
       .map(([recipeId]) => recipeId);
 
@@ -400,11 +505,89 @@ export async function listRecipes(
     whereConditions.push(sql`${recipes.categories} && ${categoryArray}::recipe_category[]`);
   }
 
+  if (recipeTypes?.length) {
+    const recipeTypeArray = toPgTextArray(recipeTypes);
+
+    whereConditions.push(
+      sql`exists (
+        select 1
+        from ${recipePlannerProfiles} rpp
+        where rpp.recipe_id = ${recipes.id}
+          and rpp.recipe_types && ${recipeTypeArray}::text[]
+      )`
+    );
+  }
+
+  if (suitableSlots?.length) {
+    const suitableSlotArray = toPgTextArray(suitableSlots);
+
+    whereConditions.push(
+      sql`exists (
+        select 1
+        from ${recipePlannerProfiles} rpp
+        where rpp.recipe_id = ${recipes.id}
+          and rpp.suitable_slots && ${suitableSlotArray}::text[]
+      )`
+    );
+  }
+
   if (maxCookingTime !== undefined) {
     const hasTime = sql`(${recipes.totalMinutes} IS NOT NULL OR ${recipes.prepMinutes} IS NOT NULL OR ${recipes.cookMinutes} IS NOT NULL)`;
     const effectiveMinutes = sql<number>`CASE WHEN ${recipes.totalMinutes} IS NOT NULL THEN ${recipes.totalMinutes} ELSE COALESCE(${recipes.prepMinutes}, 0) + COALESCE(${recipes.cookMinutes}, 0) END`;
 
     whereConditions.push(and(hasTime, lte(effectiveMinutes, maxCookingTime)));
+  }
+
+  if (maxSodium !== undefined) {
+    const sodiumValue = buildNutritionMetricValueSubquery("sodium");
+
+    whereConditions.push(sql`${sodiumValue} IS NOT NULL AND ${sodiumValue} <= ${maxSodium}`);
+  }
+
+  if (maxCholesterol !== undefined) {
+    const cholesterolValue = buildNutritionMetricValueSubquery("cholesterol");
+
+    whereConditions.push(
+      sql`${cholesterolValue} IS NOT NULL AND ${cholesterolValue} <= ${maxCholesterol}`
+    );
+  }
+
+  if (minFiber !== undefined) {
+    const fiberValue = buildNutritionMetricValueSubquery("fib(er|re)");
+
+    whereConditions.push(sql`${fiberValue} IS NOT NULL AND ${fiberValue} >= ${minFiber}`);
+  }
+
+  if (sourceDomains?.length) {
+    const normalizedSourceDomains = sourceDomains
+      .map((sourceDomain) => sourceDomain.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (normalizedSourceDomains.length) {
+      const sourceDomainArray = toPgTextArray(normalizedSourceDomains);
+
+      whereConditions.push(
+        sql`exists (
+          select 1
+          from ${recipeSources} rs
+          where rs.recipe_id = ${recipes.id}
+            and lower(rs.source_domain) = any(${sourceDomainArray}::text[])
+        )`
+      );
+    }
+  }
+
+  if (nutritionDetail) {
+    const coreMetricCount = buildNutritionMetricCountSubquery(CORE_NUTRITION_KEYS);
+    const completeMetricCount = buildNutritionMetricCountSubquery(COMPLETE_NUTRITION_KEYS);
+
+    if (nutritionDetail === "core") {
+      whereConditions.push(sql`${coreMetricCount} >= ${CORE_NUTRITION_KEYS.length}`);
+    } else if (nutritionDetail === "complete") {
+      whereConditions.push(sql`${completeMetricCount} >= ${COMPLETE_NUTRITION_KEYS.length}`);
+    } else {
+      whereConditions.push(sql`${coreMetricCount} < ${CORE_NUTRITION_KEYS.length}`);
+    }
   }
 
   const whereClause = whereConditions.length ? and(...whereConditions) : undefined;
@@ -440,6 +623,10 @@ export async function listRecipes(
         cookMinutes: true,
         totalMinutes: true,
         calories: true,
+        fat: true,
+        carbs: true,
+        protein: true,
+        nutritionDetails: true,
         categories: true,
         createdAt: true,
         updatedAt: true,
@@ -449,8 +636,22 @@ export async function listRecipes(
           with: { tag: { columns: { id: true, name: true } } },
           orderBy: (rt, { asc }) => [asc(rt.order)],
         },
+        plannerProfiles: {
+          columns: {
+            recipeTypes: true,
+          },
+        },
         ratings: {
           columns: { rating: true },
+        },
+        sources: {
+          columns: {
+            siteName: true,
+            sourceDomain: true,
+            sourceUrl: true,
+          },
+          orderBy: (sources, { desc }) => [desc(sources.createdAt)],
+          limit: 1,
         },
       },
       where: whereClause,
@@ -464,7 +665,15 @@ export async function listRecipes(
       .where(whereClause),
   ]);
 
+  const cookStatsByRecipeId = ctx.householdId
+    ? await getRecipeCookStatsByRecipeIds(
+        ctx.householdId,
+        rows.map((r) => r.id)
+      )
+    : {};
+
   const formatted = rows.map((r) => {
+    const cookStats = cookStatsByRecipeId[r.id];
     // Compute average rating
     const ratingValues = (r.ratings ?? []).map((rating) => rating.rating);
     const ratingCount = ratingValues.length;
@@ -484,6 +693,12 @@ export async function listRecipes(
       cookMinutes: r.cookMinutes ?? null,
       totalMinutes: r.totalMinutes ?? null,
       calories: r.calories ?? null,
+      fat: r.fat != null ? Number(r.fat) : null,
+      carbs: r.carbs != null ? Number(r.carbs) : null,
+      protein: r.protein != null ? Number(r.protein) : null,
+      nutritionDetails: r.nutritionDetails ?? null,
+      source: buildRecipeSourceSummary(r.sources),
+      recipeTypes: r.plannerProfiles?.[0]?.recipeTypes ?? [],
       categories: r.categories ?? [],
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
@@ -493,6 +708,8 @@ export async function listRecipes(
         .map((name) => ({ name })),
       averageRating,
       ratingCount,
+      lastCookedAt: cookStats?.lastCookedAt ?? null,
+      cookCount: cookStats?.cookCount ?? 0,
     };
   });
 
@@ -515,7 +732,50 @@ export async function listRecipes(
   };
 }
 
-export async function dashboardRecipe(id: string): Promise<RecipeDashboardDTO | null> {
+export type RecipeSourceOption = {
+  sourceDomain: string;
+  siteName: string | null;
+  count: number;
+};
+
+export async function listRecipeSourceOptions(
+  ctx: RecipeListContext
+): Promise<RecipeSourceOption[]> {
+  const policyCondition = await buildViewPolicyCondition(ctx);
+  const whereConditions = [
+    sql`${recipeSources.sourceDomain} IS NOT NULL`,
+    sql`${recipeSources.sourceDomain} <> ''`,
+  ];
+
+  if (policyCondition) {
+    whereConditions.push(policyCondition);
+  }
+
+  const rows = await db
+    .select({
+      sourceDomain: recipeSources.sourceDomain,
+      siteName: sql<string | null>`max(${recipeSources.siteName})`,
+      count: sql<number>`count(*)`,
+    })
+    .from(recipeSources)
+    .innerJoin(recipes, eq(recipeSources.recipeId, recipes.id))
+    .where(and(...whereConditions))
+    .groupBy(recipeSources.sourceDomain)
+    .orderBy(sql`count(*) desc`);
+
+  return rows
+    .filter((row): row is typeof row & { sourceDomain: string } => nonEmpty(row.sourceDomain))
+    .map((row) => ({
+      sourceDomain: row.sourceDomain,
+      siteName: row.siteName ?? null,
+      count: Number(row.count),
+    }));
+}
+
+export async function dashboardRecipe(
+  id: string,
+  householdId?: string | null
+): Promise<RecipeDashboardDTO | null> {
   const rows = await db.query.recipes.findMany({
     where: eq(recipes.id, id),
     columns: {
@@ -531,6 +791,10 @@ export async function dashboardRecipe(id: string): Promise<RecipeDashboardDTO | 
       cookMinutes: true,
       totalMinutes: true,
       calories: true,
+      fat: true,
+      carbs: true,
+      protein: true,
+      nutritionDetails: true,
       categories: true,
       createdAt: true,
       updatedAt: true,
@@ -546,6 +810,15 @@ export async function dashboardRecipe(id: string): Promise<RecipeDashboardDTO | 
       ratings: {
         columns: { rating: true },
       },
+      sources: {
+        columns: {
+          siteName: true,
+          sourceDomain: true,
+          sourceUrl: true,
+        },
+        orderBy: (sources, { desc }) => [desc(sources.createdAt)],
+        limit: 1,
+      },
     },
     limit: 1,
   });
@@ -560,6 +833,7 @@ export async function dashboardRecipe(id: string): Promise<RecipeDashboardDTO | 
   const ratingCount = ratingValues.length;
   const averageRating =
     ratingCount > 0 ? ratingValues.reduce((sum, val) => sum + val, 0) / ratingCount : null;
+  const cookStats = householdId ? await getRecipeCookStats(householdId, id) : null;
 
   const dto = {
     id: r.id,
@@ -574,6 +848,11 @@ export async function dashboardRecipe(id: string): Promise<RecipeDashboardDTO | 
     cookMinutes: r.cookMinutes ?? null,
     totalMinutes: r.totalMinutes ?? null,
     calories: r.calories ?? null,
+    fat: r.fat != null ? Number(r.fat) : null,
+    carbs: r.carbs != null ? Number(r.carbs) : null,
+    protein: r.protein != null ? Number(r.protein) : null,
+    nutritionDetails: r.nutritionDetails ?? null,
+    source: buildRecipeSourceSummary(r.sources),
     categories: r.categories ?? [],
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
@@ -583,6 +862,8 @@ export async function dashboardRecipe(id: string): Promise<RecipeDashboardDTO | 
       .map((name: string) => ({ name })),
     averageRating,
     ratingCount,
+    lastCookedAt: cookStats?.lastCookedAt ?? null,
+    cookCount: cookStats?.cookCount ?? 0,
   };
 
   const parsed = RecipeDashboardSchema.safeParse(dto);
@@ -590,10 +871,116 @@ export async function dashboardRecipe(id: string): Promise<RecipeDashboardDTO | 
   return parsed.success ? parsed.data : null;
 }
 
+const CATEGORY_TO_SLOT_KEY: Partial<Record<RecipeCategory, string>> = {
+  Breakfast: "breakfast",
+  Lunch: "lunch",
+  Dinner: "dinner",
+  Snack: "snack",
+};
+
+export interface CreateRecipeWithRefsOptions {
+  plannerProfile?: Omit<RecipePlannerProfileInsertDto, "recipeId"> | null;
+  importReview?: Omit<RecipeImportReviewInsertDto, "recipeId"> | null;
+  source?: Omit<RecipeSourceInsertDto, "recipeId"> | null;
+}
+
+function uniqueStrings(values: Array<string | null | undefined>): string[] {
+  return Array.from(new Set(values.filter(nonEmpty)));
+}
+
+function getSourceDomain(url: string | null | undefined): string | null {
+  if (!url) return null;
+
+  try {
+    return new URL(url).hostname.replace(/^www\./, "") || null;
+  } catch {
+    return null;
+  }
+}
+
+function buildRecipeSourceSnapshot(payload: FullRecipeInsertDTO) {
+  const tags = payload.tags ?? [];
+  const ingredients = payload.recipeIngredients ?? [];
+  const steps = payload.steps ?? [];
+
+  return {
+    source: "manual",
+    capturedAt: new Date().toISOString(),
+    recipe: {
+      name: payload.name,
+      url: payload.url ?? null,
+      categories: payload.categories ?? [],
+      tags: tags.map((tag) => tag.name),
+      servings: payload.servings ?? null,
+      ingredientGroups: payload.ingredientGroups ?? [],
+      ingredientLines: ingredients
+        .map((ingredient) => ingredient.rawLine ?? ingredient.ingredientName ?? null)
+        .filter(Boolean),
+      stepCount: steps.length,
+    },
+  };
+}
+
+function buildRecipeSourceInput(
+  payload: FullRecipeInsertDTO,
+  override?: CreateRecipeWithRefsOptions["source"] | undefined
+): Omit<RecipeSourceInsertDto, "recipeId"> {
+  const defaultSource: Omit<RecipeSourceInsertDto, "recipeId"> = {
+    sourceType: "manual",
+    sourceUrl: payload.url ?? null,
+    sourceDomain: getSourceDomain(payload.url ?? null),
+    siteName: null,
+    author: null,
+    language: null,
+    rawPayload: buildRecipeSourceSnapshot(payload),
+  };
+
+  const merged = {
+    ...defaultSource,
+    ...(override ?? {}),
+  };
+
+  return {
+    ...merged,
+    sourceDomain: override?.sourceDomain ?? getSourceDomain(merged.sourceUrl ?? null),
+  };
+}
+
+function buildRecipePlannerProfileInput(
+  payload: FullRecipeInsertDTO,
+  override?: CreateRecipeWithRefsOptions["plannerProfile"] | undefined
+): Omit<RecipePlannerProfileInsertDto, "recipeId"> {
+  const categories = payload.categories ?? [];
+  const mealTypes = uniqueStrings(categories.map((category) => category.toLowerCase()));
+  const suitableSlots = uniqueStrings(categories.map((category) => CATEGORY_TO_SLOT_KEY[category]));
+  const defaultSourceYield =
+    payload.servings != null
+      ? `${payload.servings} serving${payload.servings === 1 ? "" : "s"}`
+      : null;
+
+  return {
+    mealTypes,
+    suitableSlots,
+    recipeTypes: [],
+    dietaryFlags: [],
+    allergenFlags: [],
+    cuisines: [],
+    heatLevel: null,
+    prepScore: null,
+    fruitVegCount: null,
+    isDivisible: true,
+    isFreezerFriendly: false,
+    sourceYield: defaultSourceYield,
+    ...(payload.plannerProfile ?? {}),
+    ...(override ?? {}),
+  };
+}
+
 export async function createRecipeWithRefs(
   recipeId: string,
   userId: string | null | undefined,
-  input: FullRecipeInsertDTO
+  input: FullRecipeInsertDTO,
+  options?: CreateRecipeWithRefsOptions
 ): Promise<string | null> {
   const parsed = FullRecipeInsertSchema.safeParse(input);
 
@@ -603,6 +990,11 @@ export async function createRecipeWithRefs(
   }
 
   const payload = parsed.data;
+  const plannerProfileInput = buildRecipePlannerProfileInput(
+    payload,
+    options?.plannerProfile ?? undefined
+  );
+  const sourceInput = buildRecipeSourceInput(payload, options?.source ?? undefined);
 
   const toInsert = {
     id: recipeId,
@@ -621,6 +1013,8 @@ export async function createRecipeWithRefs(
     fat: payload.fat ?? null,
     carbs: payload.carbs ?? null,
     protein: payload.protein ?? null,
+    nutritionDetails: payload.nutritionDetails ?? null,
+    ingredientGroups: payload.ingredientGroups ?? [],
     categories: payload.categories ?? [],
   };
 
@@ -674,7 +1068,6 @@ export async function createRecipeWithRefs(
       );
     }
 
-    // Insert gallery images if provided
     if (payload.images && payload.images.length > 0) {
       await tx.insert(recipeImages).values(
         payload.images.map((img) => ({
@@ -685,7 +1078,6 @@ export async function createRecipeWithRefs(
       );
     }
 
-    // Insert videos if provided
     if (payload.videos && payload.videos.length > 0) {
       await tx.insert(recipeVideos).values(
         payload.videos.map((v) => ({
@@ -697,6 +1089,23 @@ export async function createRecipeWithRefs(
         }))
       );
     }
+
+    await upsertRecipePlannerProfileTx(tx, {
+      recipeId: rid,
+      ...plannerProfileInput,
+    });
+
+    if (options?.importReview) {
+      await upsertRecipeImportReviewTx(tx, {
+        recipeId: rid,
+        ...options.importReview,
+      });
+    }
+
+    await createRecipeSourceTx(tx, {
+      recipeId: rid,
+      ...sourceInput,
+    });
 
     return rid;
   });
@@ -730,7 +1139,10 @@ export async function getRecipesWithoutCategories(): Promise<{ id: string; name:
   return rows;
 }
 
-export async function getRecipeFull(id: string): Promise<FullRecipeDTO | null> {
+export async function getRecipeFull(
+  id: string,
+  householdId?: string | null
+): Promise<FullRecipeDTO | null> {
   const full = await db.query.recipes.findFirst({
     where: eq(recipes.id, id),
     columns: {
@@ -750,6 +1162,8 @@ export async function getRecipeFull(id: string): Promise<FullRecipeDTO | null> {
       fat: true,
       carbs: true,
       protein: true,
+      nutritionDetails: true,
+      ingredientGroups: true,
       categories: true,
       createdAt: true,
       updatedAt: true,
@@ -760,12 +1174,16 @@ export async function getRecipeFull(id: string): Promise<FullRecipeDTO | null> {
         with: { tag: { columns: { id: true, name: true } } },
         orderBy: (rt, { asc }) => [asc(rt.order)],
       },
+      plannerProfiles: {
+        limit: 1,
+      },
       ingredients: {
         columns: {
           id: true,
           ingredientId: true,
           amount: true,
           unit: true,
+          rawLine: true,
           systemUsed: true,
           order: true,
         },
@@ -787,6 +1205,15 @@ export async function getRecipeFull(id: string): Promise<FullRecipeDTO | null> {
         columns: { id: true, video: true, thumbnail: true, duration: true, order: true },
         orderBy: (videos, { asc }) => [asc(videos.order)],
       },
+      sources: {
+        columns: {
+          siteName: true,
+          sourceDomain: true,
+          sourceUrl: true,
+        },
+        orderBy: (sources, { desc }) => [desc(sources.createdAt)],
+        limit: 1,
+      },
     },
   });
 
@@ -803,6 +1230,8 @@ export async function getRecipeFull(id: string): Promise<FullRecipeDTO | null> {
       author = userInfo;
     }
   }
+
+  const cookStats = householdId ? await getRecipeCookStats(householdId, id) : null;
 
   const dto = {
     id: full.id,
@@ -821,7 +1250,11 @@ export async function getRecipeFull(id: string): Promise<FullRecipeDTO | null> {
     fat: full.fat ?? null,
     carbs: full.carbs ?? null,
     protein: full.protein ?? null,
+    nutritionDetails: full.nutritionDetails ?? null,
+    source: buildRecipeSourceSummary(full.sources),
+    ingredientGroups: full.ingredientGroups ?? [],
     categories: full.categories ?? [],
+    plannerProfile: full.plannerProfiles?.[0] ?? null,
     steps: ((full.steps as any) ?? []).map((s: any) => ({
       step: s.step,
       systemUsed: s.systemUsed,
@@ -845,9 +1278,12 @@ export async function getRecipeFull(id: string): Promise<FullRecipeDTO | null> {
       unit: ri.unit ?? null,
       systemUsed: ri.systemUsed,
       ingredientName: ri.ingredient?.name ?? "",
+      rawLine: ri.rawLine ?? null,
       order: ri.order,
     })),
     author,
+    lastCookedAt: cookStats?.lastCookedAt ?? null,
+    cookCount: cookStats?.cookCount ?? 0,
     images: (full.images ?? []).map((img: any) => ({
       id: img.id,
       image: img.image,
@@ -934,6 +1370,10 @@ export async function updateRecipeWithRefs(
     if (payload.fat !== undefined) updateData.fat = payload.fat;
     if (payload.carbs !== undefined) updateData.carbs = payload.carbs;
     if (payload.protein !== undefined) updateData.protein = payload.protein;
+    if (payload.nutritionDetails !== undefined)
+      updateData.nutritionDetails = payload.nutritionDetails;
+    if (payload.ingredientGroups !== undefined)
+      updateData.ingredientGroups = payload.ingredientGroups;
 
     updateData.updatedAt = new Date();
 
@@ -949,6 +1389,13 @@ export async function updateRecipeWithRefs(
         recipeId,
         payload.tags.map((t) => t.name)
       );
+    }
+
+    if (payload.plannerProfile !== undefined) {
+      await upsertRecipePlannerProfileTx(tx, {
+        recipeId,
+        ...payload.plannerProfile,
+      });
     }
 
     // Replace ingredients if provided
@@ -1084,9 +1531,13 @@ export interface RandomRecipeCandidate {
 
 export async function getRandomRecipeCandidates(
   ctx: RecipeListContext,
-  category?: RecipeCategory
+  category?: RecipeCategory | RecipeCategory[],
+  recipeTypes?: string[],
+  suitableSlots?: string[]
 ): Promise<RandomRecipeCandidate[]> {
   const whereConditions: any[] = [];
+  const toPgTextArray = (values: string[]) =>
+    `{${values.map((value) => `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`).join(",")}}`;
 
   const policyCondition = await buildViewPolicyCondition(ctx);
 
@@ -1095,7 +1546,39 @@ export async function getRandomRecipeCandidates(
   }
 
   if (category) {
-    whereConditions.push(sql`${category} = ANY(${recipes.categories})`);
+    const categories = Array.isArray(category) ? category : [category];
+
+    if (categories.length > 0) {
+      whereConditions.push(
+        or(...categories.map((candidate) => sql`${candidate} = ANY(${recipes.categories})`))
+      );
+    }
+  }
+
+  if (recipeTypes?.length) {
+    const recipeTypeArray = toPgTextArray(recipeTypes);
+
+    whereConditions.push(
+      sql`exists (
+        select 1
+        from ${recipePlannerProfiles} rpp
+        where rpp.recipe_id = ${recipes.id}
+          and rpp.recipe_types && ${recipeTypeArray}::text[]
+      )`
+    );
+  }
+
+  if (suitableSlots?.length) {
+    const suitableSlotArray = toPgTextArray(suitableSlots);
+
+    whereConditions.push(
+      sql`exists (
+        select 1
+        from ${recipePlannerProfiles} rpp
+        where rpp.recipe_id = ${recipes.id}
+          and rpp.suitable_slots && ${suitableSlotArray}::text[]
+      )`
+    );
   }
 
   const whereClause = whereConditions.length ? and(...whereConditions) : undefined;
@@ -1160,6 +1643,139 @@ export async function getRandomRecipeCandidates(
     householdFavoriteCount: favoriteMap.get(r.id) ?? 0,
     householdAverageRating: ratingMap.get(r.id) ?? null,
   }));
+}
+
+export async function getWeeklyPlannerRecipeCandidates(
+  ctx: RecipeListContext,
+  categories: RecipeCategory[] = ["Dinner"]
+): Promise<WeeklyMealCandidate[]> {
+  if (categories.length === 0) return [];
+
+  const candidates = await getRandomRecipeCandidates(ctx, categories);
+
+  if (candidates.length === 0) return [];
+
+  const recipeIds = candidates.map((candidate) => candidate.id);
+  const householdId = ctx.householdId ?? null;
+  const emptyCookStats = Promise.resolve<
+    Record<string, { lastCookedAt: Date | null; cookCount: number }>
+  >({});
+
+  const [details, tagRows, ingredientRows, cookStats] = await Promise.all([
+    db
+      .select({
+        id: recipes.id,
+        servings: recipes.servings,
+        protein: recipes.protein,
+        fat: recipes.fat,
+        carbs: recipes.carbs,
+        calories: recipes.calories,
+        totalMinutes: recipes.totalMinutes,
+        prepMinutes: recipes.prepMinutes,
+        cookMinutes: recipes.cookMinutes,
+        nutritionDetails: recipes.nutritionDetails,
+        dietaryFlags: recipePlannerProfiles.dietaryFlags,
+        cuisines: recipePlannerProfiles.cuisines,
+        recipeTypes: recipePlannerProfiles.recipeTypes,
+        suitableSlots: recipePlannerProfiles.suitableSlots,
+        fruitVegCount: recipePlannerProfiles.fruitVegCount,
+        isFreezerFriendly: recipePlannerProfiles.isFreezerFriendly,
+        nutritionReviewOverrides: recipeImportReviews.reviewOverrides,
+      })
+      .from(recipes)
+      .leftJoin(recipePlannerProfiles, eq(recipePlannerProfiles.recipeId, recipes.id))
+      .leftJoin(recipeImportReviews, eq(recipeImportReviews.recipeId, recipes.id))
+      .where(inArray(recipes.id, recipeIds)),
+    db
+      .select({
+        recipeId: recipeTags.recipeId,
+        name: tags.name,
+      })
+      .from(recipeTags)
+      .innerJoin(tags, eq(tags.id, recipeTags.tagId))
+      .where(inArray(recipeTags.recipeId, recipeIds)),
+    db
+      .select({
+        recipeId: recipeIngredients.recipeId,
+        name: ingredients.name,
+      })
+      .from(recipeIngredients)
+      .innerJoin(ingredients, eq(ingredients.id, recipeIngredients.ingredientId))
+      .where(inArray(recipeIngredients.recipeId, recipeIds)),
+    householdId ? getRecipeCookStatsByRecipeIds(householdId, recipeIds) : emptyCookStats,
+  ]);
+
+  const detailsById = new Map(details.map((detail) => [detail.id, detail]));
+  const groupNames = (rows: Array<{ recipeId: string; name: string }>) =>
+    rows.reduce<Map<string, string[]>>((grouped, row) => {
+      const existing = grouped.get(row.recipeId) ?? [];
+
+      existing.push(row.name);
+      grouped.set(row.recipeId, existing);
+
+      return grouped;
+    }, new Map());
+  const tagsByRecipeId = groupNames(tagRows);
+  const ingredientsByRecipeId = groupNames(ingredientRows);
+
+  return candidates.flatMap((candidate) => {
+    const detail = detailsById.get(candidate.id);
+
+    if (!detail) return [];
+
+    const stats = cookStats[candidate.id];
+    const nutritionAudit = auditRecipeNutrition({
+      servings: detail.servings,
+      protein: detail.protein,
+      fat: detail.fat,
+      carbs: detail.carbs,
+      calories: detail.calories,
+      nutritionDetails: detail.nutritionDetails,
+    });
+    const confirmedNutritionFingerprint = getNutritionReviewFingerprint(
+      detail.nutritionReviewOverrides?.nutritionAudit
+    );
+    const confirmedConfidence = {
+      missing: 0,
+      basic: 0.45,
+      extended: 0.7,
+      rich: 0.9,
+    }[nutritionAudit.confidence];
+
+    return [
+      {
+        ...candidate,
+        protein: detail.protein == null ? null : Number(detail.protein),
+        calories: detail.calories,
+        nutritionConfidence:
+          confirmedNutritionFingerprint === nutritionAudit.fingerprint
+            ? confirmedConfidence
+            : nutritionAudit.confidenceScore,
+        sodium: getKnownNutritionMetricValue(
+          { nutritionDetails: detail.nutritionDetails },
+          "sodium"
+        ),
+        totalMinutes:
+          detail.totalMinutes ?? ((detail.prepMinutes ?? 0) + (detail.cookMinutes ?? 0) || null),
+        dietaryFlags: detail.dietaryFlags ?? [],
+        cuisines: (detail.cuisines ?? [])
+          .map((cuisine) => cuisine.trim())
+          .filter(
+            (cuisine) =>
+              cuisine.length > 0 &&
+              !/^(?:not set|unknown|none|n\/a|unspecified|other)$/i.test(cuisine)
+          ),
+        recipeTypes: detail.recipeTypes ?? [],
+        suitableSlots: detail.suitableSlots ?? [],
+        fruitVegCount: detail.fruitVegCount == null ? null : Number(detail.fruitVegCount),
+        isFreezerFriendly: detail.isFreezerFriendly ?? false,
+        tags: tagsByRecipeId.get(candidate.id) ?? [],
+        ingredientNames: ingredientsByRecipeId.get(candidate.id) ?? [],
+        lastCookedAt: stats?.lastCookedAt ?? null,
+        cookCount: stats?.cookCount ?? 0,
+      },
+    ];
+  });
 }
 
 export async function searchRecipesByName(

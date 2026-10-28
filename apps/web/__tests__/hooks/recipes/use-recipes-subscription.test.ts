@@ -1,4 +1,7 @@
+import { useRecipesSubscription } from "@/hooks/recipes/use-recipes-subscription";
+import { addToast } from "@/lib/ui/toast";
 import { renderHook } from "@testing-library/react";
+import { useSubscription } from "@trpc/tanstack-react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createMockInfiniteData, createTestQueryClient, createTestWrapper } from "./test-utils";
@@ -144,7 +147,7 @@ vi.mock("@trpc/tanstack-react-query", () => ({
 }));
 
 // Mock HeroUI toast
-vi.mock("@heroui/react", () => ({
+vi.mock("@/lib/ui/toast", () => ({
   addToast: vi.fn(),
   Button: () => null,
 }));
@@ -180,13 +183,9 @@ describe("useRecipesSubscription", () => {
       queryClient.setQueryData(["recipes", "list", {}], createMockInfiniteData());
       queryClient.setQueryData(["recipes", "pending"], []);
 
-      const { useRecipesSubscription } = await import("@/hooks/recipes/use-recipes-subscription");
-
       renderHook(() => useRecipesSubscription(), {
         wrapper: createTestWrapper(queryClient),
       });
-
-      const { useSubscription } = await import("@trpc/tanstack-react-query");
 
       expect(useSubscription).toHaveBeenCalled();
     });
@@ -197,15 +196,11 @@ describe("useRecipesSubscription", () => {
       queryClient.setQueryData(["recipes", "list", {}], createMockInfiniteData());
       queryClient.setQueryData(["recipes", "pending"], []);
 
-      const { useRecipesSubscription } = await import("@/hooks/recipes/use-recipes-subscription");
-
       renderHook(() => useRecipesSubscription(), {
         wrapper: createTestWrapper(queryClient),
       });
 
       // Verify useSubscription was called (handlers are registered)
-      const { useSubscription } = await import("@trpc/tanstack-react-query");
-
       expect(useSubscription).toHaveBeenCalled();
     });
   });
@@ -215,13 +210,9 @@ describe("useRecipesSubscription", () => {
       queryClient.setQueryData(["recipes", "list", {}], createMockInfiniteData());
       queryClient.setQueryData(["recipes", "pending"], []);
 
-      const { useRecipesSubscription } = await import("@/hooks/recipes/use-recipes-subscription");
-
       renderHook(() => useRecipesSubscription(), {
         wrapper: createTestWrapper(queryClient),
       });
-
-      const { useSubscription } = await import("@trpc/tanstack-react-query");
 
       expect(useSubscription).toHaveBeenCalled();
     });
@@ -232,13 +223,9 @@ describe("useRecipesSubscription", () => {
       queryClient.setQueryData(["recipes", "list", {}], createMockInfiniteData());
       queryClient.setQueryData(["recipes", "pending"], []);
 
-      const { useRecipesSubscription } = await import("@/hooks/recipes/use-recipes-subscription");
-
       renderHook(() => useRecipesSubscription(), {
         wrapper: createTestWrapper(queryClient),
       });
-
-      const { useSubscription } = await import("@trpc/tanstack-react-query");
 
       expect(useSubscription).toHaveBeenCalled();
     });
@@ -249,13 +236,9 @@ describe("useRecipesSubscription", () => {
       queryClient.setQueryData(["recipes", "list", {}], createMockInfiniteData());
       queryClient.setQueryData(["recipes", "pending"], []);
 
-      const { useRecipesSubscription } = await import("@/hooks/recipes/use-recipes-subscription");
-
       renderHook(() => useRecipesSubscription(), {
         wrapper: createTestWrapper(queryClient),
       });
-
-      const { useSubscription } = await import("@trpc/tanstack-react-query");
 
       expect(useSubscription).toHaveBeenCalled();
     });
@@ -266,13 +249,9 @@ describe("useRecipesSubscription", () => {
       queryClient.setQueryData(["recipes", "list", {}], createMockInfiniteData());
       queryClient.setQueryData(["recipes", "pending"], []);
 
-      const { useRecipesSubscription } = await import("@/hooks/recipes/use-recipes-subscription");
-
       renderHook(() => useRecipesSubscription(), {
         wrapper: createTestWrapper(queryClient),
       });
-
-      const { useSubscription } = await import("@trpc/tanstack-react-query");
 
       expect(useSubscription).toHaveBeenCalled();
     });
@@ -283,13 +262,9 @@ describe("useRecipesSubscription", () => {
       queryClient.setQueryData(["recipes", "list", {}], createMockInfiniteData());
       queryClient.setQueryData(["recipes", "pending"], []);
 
-      const { useRecipesSubscription } = await import("@/hooks/recipes/use-recipes-subscription");
-
       renderHook(() => useRecipesSubscription(), {
         wrapper: createTestWrapper(queryClient),
       });
-
-      const { useSubscription } = await import("@trpc/tanstack-react-query");
 
       expect(useSubscription).toHaveBeenCalled();
     });
@@ -300,13 +275,9 @@ describe("useRecipesSubscription", () => {
       queryClient.setQueryData(["recipes", "list", {}], createMockInfiniteData());
       queryClient.setQueryData(["recipes", "pending"], []);
 
-      const { useRecipesSubscription } = await import("@/hooks/recipes/use-recipes-subscription");
-
       renderHook(() => useRecipesSubscription(), {
         wrapper: createTestWrapper(queryClient),
       });
-
-      const { useSubscription } = await import("@trpc/tanstack-react-query");
 
       expect(useSubscription).toHaveBeenCalled();
     });
@@ -314,8 +285,6 @@ describe("useRecipesSubscription", () => {
     it("shows a generic error toast instead of raw backend errors", async () => {
       queryClient.setQueryData(["recipes", "list", {}], createMockInfiniteData());
       queryClient.setQueryData(["recipes", "pending"], []);
-
-      const { useRecipesSubscription } = await import("@/hooks/recipes/use-recipes-subscription");
 
       renderHook(() => useRecipesSubscription(), {
         wrapper: createTestWrapper(queryClient),
@@ -325,8 +294,6 @@ describe("useRecipesSubscription", () => {
         reason:
           "Error processing URL https://instagram.com/p/abc123... stacktrace: very long technical details",
       });
-
-      const { addToast } = await import("@heroui/react");
 
       expect(addToast).toHaveBeenCalledWith(
         expect.objectContaining({

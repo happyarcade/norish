@@ -15,9 +15,14 @@ export function normalizeIngredientNameForGrouping(name: string | null): string 
   if (!name) return "";
 
   return name
+    .replace(/[\u2013\u2014]/g, "-")
+    .replace(/^\s*[-+*]+\s*/g, "")
+    .replace(/\*+/g, "")
     .replace(/\s*\([^)]*\)\s*/g, " ")
     .replace(/\s*\[[^\]]*\]\s*/g, " ")
     .replace(/\s*\{[^}]*\}\s*/g, " ")
+    .replace(/\s*,+\s*$/g, "")
+    .replace(/\s*\.+\s*$/g, "")
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
@@ -177,8 +182,13 @@ function getDisplayName(name: string | null): string {
 
   return (
     name
+      .replace(/[\u2013\u2014]/g, "-")
+      .replace(/^\s*[-+*]+\s*/g, "")
+      .replace(/\*+/g, "")
       .replace(/\s*\([^)]*\)\s*/g, " ")
       .replace(/\s*\[[^\]]*\]\s*/g, " ")
+      .replace(/\s*,+\s*$/g, "")
+      .replace(/\s*\.+\s*$/g, "")
       .replace(/\s+/g, " ")
       .trim() || "Unknown item"
   );

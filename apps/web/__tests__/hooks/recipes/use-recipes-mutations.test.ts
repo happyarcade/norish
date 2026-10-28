@@ -16,7 +16,7 @@ vi.mock("@tanstack/react-query", async () => {
   };
 });
 
-vi.mock("@heroui/react", () => ({
+vi.mock("@/lib/ui/toast", () => ({
   addToast: vi.fn(),
 }));
 
@@ -220,7 +220,7 @@ describe("useRecipesMutations", () => {
       });
 
       const { useRecipesMutations } = await import("@/hooks/recipes/use-recipes-mutations");
-      const { addToast } = await import("@heroui/react");
+      const { addToast } = await import("@/lib/ui/toast");
       const { result } = renderHook(() => useRecipesMutations(), {
         wrapper: createTestWrapper(queryClient),
       });

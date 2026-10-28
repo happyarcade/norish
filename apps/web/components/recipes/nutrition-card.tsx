@@ -1,15 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BeakerIcon, BoltIcon, CubeIcon, FireIcon } from "@heroicons/react/16/solid";
-import { Card, CardBody, Divider, Skeleton } from "@heroui/react";
+import { useRecipeContext } from "@/app/(app)/recipes/[id]/context";
+import AIActionButton from "@/components/shared/ai-action-button";
+import { Card } from "@/components/ui/card";
+import { usePermissionsContext } from "@/context/permissions-context";
+import {
+  BeakerIcon,
+  BoltIcon,
+  CubeIcon,
+  ExclamationTriangleIcon,
+  FireIcon,
+  HeartIcon,
+  ShieldExclamationIcon,
+} from "@heroicons/react/16/solid";
+import { Separator, Skeleton } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
 import NutritionPortionControl from "./nutrition-portion-control";
-
-import { usePermissionsContext } from "@/context/permissions-context";
-import AIActionButton from "@/components/shared/ai-action-button";
-import { useRecipeContext } from "@/app/(app)/recipes/[id]/context";
 
 const MACROS = [
   {
@@ -46,6 +54,90 @@ const MACROS = [
   },
 ] as const;
 
+type NutrientStyle = {
+  icon: typeof FireIcon;
+  color: string;
+  bg: string;
+};
+
+const EXTENDED_NUTRIENT_STYLES: Array<{ pattern: RegExp; style: NutrientStyle }> = [
+  {
+    pattern: /fib(?:er|re)/i,
+    style: { icon: BeakerIcon, color: "text-green-500", bg: "bg-green-100 dark:bg-green-900/30" },
+  },
+  {
+    pattern: /sugar/i,
+    style: { icon: CubeIcon, color: "text-amber-500", bg: "bg-amber-100 dark:bg-amber-900/30" },
+  },
+  {
+    pattern: /sodium/i,
+    style: {
+      icon: BeakerIcon,
+      color: "text-violet-500",
+      bg: "bg-violet-100 dark:bg-violet-900/30",
+    },
+  },
+  {
+    pattern: /trans\s*fat/i,
+    style: {
+      icon: ExclamationTriangleIcon,
+      color: "text-red-500",
+      bg: "bg-red-100 dark:bg-red-900/30",
+    },
+  },
+  {
+    pattern: /unsaturated/i,
+    style: { icon: HeartIcon, color: "text-teal-500", bg: "bg-teal-100 dark:bg-teal-900/30" },
+  },
+  {
+    pattern: /saturated/i,
+    style: {
+      icon: ExclamationTriangleIcon,
+      color: "text-red-400",
+      bg: "bg-red-100 dark:bg-red-900/30",
+    },
+  },
+  {
+    pattern: /cholesterol/i,
+    style: {
+      icon: ShieldExclamationIcon,
+      color: "text-slate-500",
+      bg: "bg-slate-100 dark:bg-slate-900/30",
+    },
+  },
+];
+
+const DEFAULT_NUTRIENT_STYLE: NutrientStyle = {
+  icon: BeakerIcon,
+  color: "text-default-400",
+  bg: "bg-default-100 dark:bg-default-800/30",
+};
+
+function matchNutrientStyle(key: string, label?: string | null): NutrientStyle {
+  const text = `${key} ${label ?? ""}`.toLowerCase();
+
+  return (
+    EXTENDED_NUTRIENT_STYLES.find(({ pattern }) => pattern.test(text))?.style ??
+    DEFAULT_NUTRIENT_STYLE
+  );
+}
+
+function formatMetricValue(
+  metric: { value?: number | null; unit?: string | null; raw?: string | null },
+  portions: number
+) {
+  if (metric.value != null) {
+    const scaledValue = metric.value * portions;
+    const formattedValue = Number.isInteger(scaledValue)
+      ? String(scaledValue)
+      : scaledValue.toFixed(1).replace(/\.0$/, "");
+
+    return metric.unit ? `${formattedValue} ${metric.unit}` : formattedValue;
+  }
+
+  return metric.raw ?? null;
+}
+
 function NutritionDisplay({ inCard = true }: { inCard?: boolean }) {
   const { recipe, isEstimatingNutrition, estimateNutrition } = useRecipeContext();
   const { isAIEnabled } = usePermissionsContext();
@@ -75,6 +167,14 @@ function NutritionDisplay({ inCard = true }: { inCard?: boolean }) {
         carbs: parsedCarbs != null ? parsedCarbs * portions : null,
         protein: parsedProtein != null ? parsedProtein * portions : null,
       },
+      extras: Object.entries(recipe.nutritionDetails?.nutrients ?? {})
+        .map(([key, metric]) => ({
+          key,
+          label: metric.label ?? key,
+          value: formatMetricValue(metric, portions),
+        }))
+        .filter((metric) => metric.value != null),
+      servingSize: recipe.nutritionDetails?.servingSize ?? null,
     };
   }, [recipe, portions, isAIEnabled]);
 
@@ -124,6 +224,40 @@ function NutritionDisplay({ inCard = true }: { inCard?: boolean }) {
               );
             })}
           </div>
+          {nutritionData.extras.length > 0 && (
+            <>
+              <div className="text-default-400 mt-4 mb-1 text-[11px] tracking-[0.18em] uppercase">
+                Additional Nutrition
+              </div>
+              <div className="divide-default-100 divide-y">
+                {nutritionData.extras.map((metric) => {
+                  const style = matchNutrientStyle(metric.key, metric.label);
+                  const Icon = style.icon;
+
+                  return (
+                    <div key={metric.key} className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-full ${style.bg}`}
+                        >
+                          <Icon className={`h-4 w-4 ${style.color}`} />
+                        </div>
+                        <span className="text-base">{metric.label}</span>
+                      </div>
+                      <span className="text-foreground text-base font-semibold">
+                        {metric.value}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+          {nutritionData.servingSize && (
+            <p className="text-default-400 mt-3 text-center text-xs">
+              Serving size: {nutritionData.servingSize}
+            </p>
+          )}
           {portions !== 1 && (
             <p className="text-default-400 mt-2 text-center text-xs">
               {t("showingPortions", { count: portions })}
@@ -147,11 +281,11 @@ function NutritionDisplay({ inCard = true }: { inCard?: boolean }) {
 
   return inCard ? (
     <Card className="bg-content1 rounded-2xl shadow-md">
-      <CardBody className="p-5">{content}</CardBody>
+      <Card.Content className="p-5">{content}</Card.Content>
     </Card>
   ) : (
     <>
-      <Divider />
+      <Separator />
       <div className="space-y-2">{content}</div>
     </>
   );

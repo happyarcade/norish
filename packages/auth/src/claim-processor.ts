@@ -1,5 +1,5 @@
 import type { OIDCClaimConfig } from "@norish/config/zod/server-config";
-import type { HouseholdUserInfo } from "@norish/trpc/routers/households/types";
+import type { HouseholdUserInfo } from "@norish/queue/events/households";
 
 import { authLogger } from "@norish/shared-server/logger";
 import { invalidateHouseholdCacheForUsers } from "@norish/db/cached-household";
@@ -10,9 +10,9 @@ import {
   getUsersByHouseholdId,
 } from "@norish/db/repositories/households";
 import { getUserById, setUserAdminStatus } from "@norish/db/repositories/users";
+import { emitConnectionInvalidation } from "@norish/queue/events/connection-invalidation";
+import { householdEmitter } from "@norish/queue/events/households";
 import { getPublisherClient } from "@norish/queue/redis/client";
-import { emitConnectionInvalidation } from "@norish/trpc/connection-manager";
-import { householdEmitter } from "@norish/trpc/routers/households/emitter";
 
 // Redis key prefix and TTL for OIDC profiles during auth flow
 const OIDC_PROFILE_PREFIX = "oidc:profile:";

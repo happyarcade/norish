@@ -1,7 +1,6 @@
 "use client";
 
 import type { PanInfo } from "motion/react";
-
 import React, {
   createContext,
   ReactElement,
@@ -12,8 +11,8 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { Button } from "@/components/ui/button";
 import { XMarkIcon } from "@heroicons/react/16/solid";
-import { Button } from "@heroui/react";
 import { AnimatePresence, motion, useDragControls } from "motion/react";
 import { createPortal } from "react-dom";
 
@@ -149,10 +148,9 @@ export const Panel: React.FC<PanelProps> = ({
                       <Button
                         isIconOnly
                         aria-label="Close panel"
-                        color="primary"
-                        radius="full"
+                        className="rounded-full"
                         size="md"
-                        variant="solid"
+                        variant="primary"
                         onPress={close}
                       >
                         <XMarkIcon className="h-5 w-5" />

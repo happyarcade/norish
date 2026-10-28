@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./contracts/*": "./src/contracts/*.ts",
+    "./events/*": "./src/events/*.ts",
     "./redis/client": "./src/redis/client.ts",
     "./redis/bullmq": "./src/redis/bullmq.ts",
     "./*": "./src/*.ts"
@@ -28,6 +29,11 @@
     "drizzle-orm": "catalog:",
     "ioredis": "catalog:",
     "superjson": "catalog:"
+  },
+  "dependenciesMeta": {
+    "@norish/db": {
+      "injected": false
+    }
   },
   "devDependencies": {
     "@norish/eslint-config": "workspace:*",

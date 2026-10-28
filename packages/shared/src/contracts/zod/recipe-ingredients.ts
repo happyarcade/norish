@@ -1,4 +1,4 @@
-import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
+﻿import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import z from "zod";
 import { recipeIngredients } from "@norish/db/schema";
 
@@ -12,6 +12,7 @@ export const RecipeIngredientsInsertBaseSchema = createInsertSchema(recipeIngred
   .extend({
     amount: z.number().nullable(),
     order: z.coerce.number(),
+    rawLine: z.string().nullable().optional(),
   });
 
 export const RecipeIngredientsUpdateBaseSchema = createUpdateSchema(recipeIngredients);
@@ -25,12 +26,14 @@ export const RecipeIngredientsWithIdSchema = RecipeIngredientsSelectBaseSchema.o
   ingredientId: z.string().nullable(),
   amount: z.number().nullable(),
   order: z.coerce.number(),
+  rawLine: z.string().nullable().optional(),
 });
 
 export const RecipeIngredientSelectWithNameSchema = RecipeIngredientsSelectBaseSchema.extend({
   amount: z.coerce.number().nullable(),
   ingredientName: z.string(),
   order: z.coerce.number(),
+  rawLine: z.string().nullable().optional(),
 }).omit({ recipeId: true });
 
 export const RecipeIngredientInputBaseSchema = RecipeIngredientsInsertBaseSchema.partial({
@@ -42,6 +45,7 @@ export const RecipeIngredientInputBaseSchema = RecipeIngredientsInsertBaseSchema
   ingredientName: z.string().trim().min(1).optional(),
   ingredientId: z.string().nullable(),
   order: z.coerce.number(),
+  rawLine: z.string().trim().min(1).nullable().optional(),
 });
 
 export const RecipeIngredientInputSchema = RecipeIngredientInputBaseSchema.refine(

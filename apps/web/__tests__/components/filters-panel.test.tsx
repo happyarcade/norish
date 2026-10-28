@@ -8,12 +8,18 @@ import FiltersPanel from "@/components/Panel/consumers/filters-panel";
 const filtersState = {
   searchTags: [] as string[],
   categories: [] as string[],
+  suitableSlots: [] as string[],
+  sourceDomains: [] as string[],
+  nutritionDetail: null,
   filterMode: "AND" as const,
   sortMode: "dateDesc" as "dateDesc" | undefined,
   rawInput: "",
   showFavoritesOnly: false,
   minRating: null as number | null,
   maxCookingTime: null as number | null,
+  maxSodium: null as number | null,
+  maxCholesterol: null as number | null,
+  minFiber: null as number | null,
 };
 
 const userPreferencesState = {
@@ -27,12 +33,22 @@ vi.mock("next-intl", () => ({
 
 vi.mock("motion/react", () => ({
   motion: {
-    span: ({ children, ...props }: any) => <span {...props}>{children}</span>,
+    span: ({
+      children,
+      animate: _animate,
+      initial: _initial,
+      transition: _transition,
+      ...props
+    }: any) => <span {...props}>{children}</span>,
   },
 }));
 
 vi.mock("@/components/Panel/Panel", () => ({
   default: ({ children }: any) => <div>{children}</div>,
+}));
+
+vi.mock("@/components/planner/use-is-desktop", () => ({
+  useIsDesktop: () => false,
 }));
 
 vi.mock("@/components/dashboard/search-field-toggles", () => ({
@@ -68,27 +84,51 @@ vi.mock("@/hooks/config", () => ({
   }),
 }));
 
-vi.mock("@heroui/react", () => ({
-  Button: ({ children, onPress, startContent: _startContent, ...props }: any) => (
+vi.mock("@tanstack/react-query", () => ({
+  useQuery: () => ({ data: [], isLoading: false }),
+}));
+
+vi.mock("@/app/providers/trpc-provider", () => ({
+  useTRPC: () => ({
+    recipes: {
+      listSourceOptions: {
+        queryOptions: () => ({}),
+      },
+    },
+  }),
+}));
+
+vi.mock("@heroui-v3/react", () => {
+  const Button = ({ children, onPress, ...props }: any) => (
     <button onClick={onPress} {...props}>
       {children}
     </button>
-  ),
-  Chip: ({ children, onClick, ...props }: any) => (
-    <button onClick={onClick} {...props}>
-      {children}
-    </button>
-  ),
-  Input: ({
-    value,
-    onChange,
-    isClearable: _isClearable,
-    startContent: _startContent,
-    onClear: _onClear,
-    classNames: _classNames,
-    ...props
-  }: any) => <input value={value} onChange={onChange} {...props} />,
-}));
+  );
+  const InputGroup = ({ children, fullWidth: _fullWidth, ...props }: any) => (
+    <div {...props}>{children}</div>
+  );
+  const Modal = ({ children }: any) => <>{children}</>;
+
+  InputGroup.Prefix = ({ children }: any) => <span>{children}</span>;
+  InputGroup.Input = (props: any) => <input {...props} />;
+  InputGroup.Suffix = ({ children }: any) => <span>{children}</span>;
+  Modal.Backdrop = ({ children }: any) => <div>{children}</div>;
+  Modal.Container = ({ children }: any) => <div>{children}</div>;
+  Modal.Dialog = ({ children }: any) => <div>{children}</div>;
+  Modal.CloseTrigger = () => null;
+  Modal.Header = ({ children }: any) => <div>{children}</div>;
+  Modal.Heading = ({ children }: any) => <h2>{children}</h2>;
+  Modal.Body = ({ children, ...props }: any) => <div {...props}>{children}</div>;
+
+  return {
+    Button,
+    InputGroup,
+    Label: ({ children }: any) => <label>{children}</label>,
+    Modal,
+    TextField: ({ children }: any) => <div>{children}</div>,
+    useOverlayState: ({ isOpen, onOpenChange }: any) => ({ isOpen, onOpenChange }),
+  };
+});
 
 describe("FiltersPanel", () => {
   it("does not crash when sort mode is missing", () => {
@@ -96,8 +136,8 @@ describe("FiltersPanel", () => {
 
     expect(() => render(<FiltersPanel open onOpenChange={vi.fn()} />)).not.toThrow();
 
-    expect(screen.getByText("sortByDate")).toHaveAttribute("color", "default");
-    expect(screen.getByText("sortByTitle")).toHaveAttribute("color", "default");
+    expect(screen.getByText("sortByDate")).toHaveAttribute("variant", "tertiary");
+    expect(screen.getByText("sortByTitle")).toHaveAttribute("variant", "tertiary");
 
     filtersState.sortMode = "dateDesc";
   });

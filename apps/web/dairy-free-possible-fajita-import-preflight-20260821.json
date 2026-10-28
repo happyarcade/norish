@@ -1,0 +1,85 @@
+{
+  "generatedAt": "2026-08-21T14:25:54.345Z",
+  "mode": "dry-run",
+  "targetPath": "C:\\Users\\Stuart\\Documents\\new-recipes\\selected\\tier_1a_complete\\thewoodenskillet.com\\slow-cooker-chicken-fajitas-recipe--e88d5f5337.json",
+  "fileCount": 1,
+  "totals": {
+    "candidates": 1,
+    "valid": 1,
+    "imported": 0,
+    "skippedExisting": 0,
+    "skippedInvalid": 0,
+    "failed": 0,
+    "archived": 0
+  },
+  "skipReasons": {},
+  "issues": {},
+  "coverage": {
+    "fields": {
+      "category": 1,
+      "cuisine": 1,
+      "description": 1,
+      "image": 1,
+      "ingredient_groups": 1,
+      "ingredients": 1,
+      "instructions": 1,
+      "instructions_list": 1,
+      "keywords": 1,
+      "nutrients": 1,
+      "title": 1,
+      "url": 1,
+      "yields": 1
+    },
+    "categories": {},
+    "tags": {
+      "best slow cooker chicken fajitas": 1,
+      "crockpot chicken fajitas": 1,
+      "dairy-free-possible": 1,
+      "dinner/entree": 1,
+      "easy crockpot chicken fajitas": 1,
+      "mexican-inspired": 1,
+      "slow cooker": 1,
+      "slow cooker chicken fajitas": 1,
+      "slow cooker chicken fajitas recipe": 1,
+      "slow cooker chicken fajitas shredded": 1,
+      "slow cooker chicken fajitas with fajita seasoning": 1
+    },
+    "nutrientKeys": {
+      "calories": 1,
+      "carbohydrateContent": 1,
+      "cholesterolContent": 1,
+      "fatContent": 1,
+      "fiberContent": 1,
+      "proteinContent": 1,
+      "saturatedFatContent": 1,
+      "servingSize": 1,
+      "sodiumContent": 1,
+      "sugarContent": 1,
+      "transFatContent": 1,
+      "unsaturatedFatContent": 1
+    },
+    "siteNames": {
+      "The Wooden Skillet": 1
+    },
+    "recipeTypes": {
+      "main": 1
+    },
+    "suitableSlots": {
+      "dinner": 1
+    },
+    "dietaryFlags": {
+      "dairy-free-possible": 1
+    },
+    "cuisines": {
+      "mexican-inspired": 1
+    },
+    "ingredientGroups": {
+      "Serving Suggestions:": 1,
+      "ungrouped": 1
+    }
+  },
+  "samples": {
+    "skipped": [],
+    "failures": []
+  }
+}

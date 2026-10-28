@@ -38,43 +38,64 @@ vi.mock("@/hooks/config", () => ({
   }),
 }));
 
-vi.mock("@heroui/react", () => ({
-  Card: ({ children }: any) => <div>{children}</div>,
-  CardHeader: ({ children }: any) => <div>{children}</div>,
-  CardBody: ({ children }: any) => <div>{children}</div>,
-  Switch: ({ isSelected, isDisabled, onValueChange }: any) => (
-    <button
-      aria-pressed={isSelected}
-      disabled={isDisabled}
-      type="button"
-      onClick={() => onValueChange?.(!isSelected)}
-    >
-      toggle
-    </button>
-  ),
-  Chip: ({ children }: any) => <span>{children}</span>,
-  Select: ({
-    children,
-    "aria-label": ariaLabel,
-    selectedKeys,
-    onSelectionChange,
-    isDisabled,
-  }: any) => (
+vi.mock("@heroui-v3/react", () => {
+  const Card = ({ children }: any) => <div>{children}</div>;
+  const Chip = ({ children }: any) => <span>{children}</span>;
+  const InputGroup = ({ children }: any) => <div>{children}</div>;
+  const ListBox = ({ children }: any) => <>{children}</>;
+  const Select = ({ children, selectedKey, onSelectionChange, isDisabled, ...props }: any) => (
     <select
-      aria-label={ariaLabel}
+      aria-label={props["aria-label"]}
       disabled={isDisabled}
-      value={selectedKeys?.[0] ?? ""}
-      onChange={(e) => onSelectionChange?.(new Set([e.target.value]))}
+      value={selectedKey ?? ""}
+      onChange={(event) => onSelectionChange?.(event.target.value)}
     >
       {children}
     </select>
-  ),
-  SelectItem: ({ children, ...props }: any) => (
-    <option value={props.id ?? props["data-key"]} {...props}>
-      {children}
-    </option>
-  ),
-}));
+  );
+  const Switch = ({ isSelected, isDisabled, onChange }: any) => (
+    <button
+      aria-pressed={isSelected}
+      aria-label="toggle"
+      disabled={isDisabled}
+      type="button"
+      onClick={() => onChange?.(!isSelected)}
+    >
+      toggle
+    </button>
+  );
+
+  Card.Header = ({ children }: any) => <div>{children}</div>;
+  Card.Content = ({ children }: any) => <div>{children}</div>;
+  Chip.Label = ({ children }: any) => <>{children}</>;
+  InputGroup.Input = (props: any) => <input {...props} />;
+  InputGroup.Suffix = ({ children }: any) => <span>{children}</span>;
+  ListBox.Item = ({ children, id }: any) => <option value={id}>{children}</option>;
+  ListBox.ItemIndicator = () => null;
+  Select.Trigger = () => null;
+  Select.Value = () => null;
+  Select.Indicator = () => null;
+  Select.Popover = ({ children }: any) => <>{children}</>;
+  Switch.Content = () => null;
+  Switch.Control = () => null;
+  Switch.Thumb = () => null;
+
+  return {
+    Button: ({ children, onPress, ...props }: any) => (
+      <button type="button" onClick={onPress} {...props}>
+        {children}
+      </button>
+    ),
+    Card,
+    Chip,
+    InputGroup,
+    Label: ({ children }: any) => <label>{children}</label>,
+    ListBox,
+    Select,
+    Switch,
+    TextField: ({ children }: any) => <div>{children}</div>,
+  };
+});
 
 describe("PreferencesCard", () => {
   beforeEach(() => {

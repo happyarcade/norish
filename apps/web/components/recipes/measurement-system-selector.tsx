@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
-import { Button, ButtonGroup } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
+
 import { MeasurementSystem } from "@norish/shared/contracts";
 
 export interface MeasurementSystemSelectorProps {

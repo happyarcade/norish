@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Tooltip } from "@heroui/react";
-import { useTranslations } from "next-intl";
-
+import { Button } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { useAmountDisplayPreference } from "@/hooks/use-amount-display-preference";
+import { useTranslations } from "next-intl";
 
 /**
  * Toggle button to switch between decimal and fraction display modes.

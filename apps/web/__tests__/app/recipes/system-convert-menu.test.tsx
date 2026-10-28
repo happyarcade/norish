@@ -26,7 +26,15 @@ vi.mock("@/context/permissions-context", () => ({
   usePermissionsContext: () => ({ isAIEnabled: false }),
 }));
 
-vi.mock("@heroui/react", () => ({
+vi.mock("@/components/ui/button", () => ({
+  Button: ({ children, isDisabled }: any) => <button disabled={isDisabled}>{children}</button>,
+}));
+
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: any) => <div>{children}</div>,
+}));
+
+vi.mock("@heroui-v3/react", () => ({
   Dropdown: ({ children }: any) => <div>{children}</div>,
   DropdownTrigger: ({ children }: any) => <div>{children}</div>,
   DropdownMenu: ({ children }: any) => <div>{children}</div>,
@@ -45,9 +53,9 @@ describe("SystemConvertMenu", () => {
     vi.clearAllMocks();
   });
 
-  it("does not render when no conversion options available", () => {
+  it("keeps conversion discoverable when no alternative system is available", () => {
     render(<SystemConvertMenu />);
 
-    expect(screen.queryByText("metric")).toBeNull();
+    expect(screen.getByRole("button", { name: "metric" })).toBeDisabled();
   });
 });

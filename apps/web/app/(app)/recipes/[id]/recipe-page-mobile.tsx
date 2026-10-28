@@ -1,15 +1,35 @@
+import { useEffect, useMemo, useState } from "react";
+import ActionsMenu from "@/app/(app)/recipes/[id]/components/actions-menu";
+import AddToGroceries from "@/app/(app)/recipes/[id]/components/add-to-groceries-button";
+import AmountDisplayToggle from "@/app/(app)/recipes/[id]/components/amount-display-toggle";
+import IngredientsList from "@/app/(app)/recipes/[id]/components/ingredient-list";
+import ServingsControl from "@/app/(app)/recipes/[id]/components/servings-control";
+import StepsList from "@/app/(app)/recipes/[id]/components/steps-list";
+import SystemConvertMenu from "@/app/(app)/recipes/[id]/components/system-convert-menu";
+import WakeLockToggle from "@/app/(app)/recipes/[id]/components/wake-lock-toggle";
+import { MOBILE_RECIPE_MEDIA_HEIGHT_STYLE } from "@/app/(app)/recipes/[id]/recipe-layout-constants";
+import { CookHistoryMeta } from "@/components/recipes/cook-history";
+import { NutritionSection } from "@/components/recipes/nutrition-card";
+import { RecipeSourceMeta } from "@/components/recipes/recipe-source-meta";
+import { RecipeTypeSummary } from "@/components/recipes/recipe-type-summary";
+import DoubleTapContainer from "@/components/shared/double-tap-container";
+import HeartButton from "@/components/shared/heart-button";
+import MediaCarousel, { buildMediaItems } from "@/components/shared/media-carousel";
+import SmartMarkdownRenderer from "@/components/shared/smart-markdown-renderer";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { useUserContext } from "@/context/user-context";
+import { useFavoritesMutation, useFavoritesQuery } from "@/hooks/favorites";
+import { useRatingQuery, useRatingsMutation } from "@/hooks/ratings";
 import {
   ArrowLeftIcon,
   ArrowTopRightOnSquareIcon,
-  CakeIcon,
   ClockIcon,
   FireIcon,
-  MoonIcon,
-  SunIcon,
 } from "@heroicons/react/16/solid";
-import { Card, CardBody, Chip, Divider, Link } from "@heroui/react";
+import { Link, Separator } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+
 import {
   formatMinutesHM,
   isAllergenTag,
@@ -24,25 +44,6 @@ import StarRating from "@norish/ui/star-rating";
 import AuthorChip from "./components/author-chip";
 import { useRecipeContextRequired } from "./context";
 
-import ActionsMenu from "@/app/(app)/recipes/[id]/components/actions-menu";
-import AddToGroceries from "@/app/(app)/recipes/[id]/components/add-to-groceries-button";
-import AmountDisplayToggle from "@/app/(app)/recipes/[id]/components/amount-display-toggle";
-import IngredientsList from "@/app/(app)/recipes/[id]/components/ingredient-list";
-import ServingsControl from "@/app/(app)/recipes/[id]/components/servings-control";
-import StepsList from "@/app/(app)/recipes/[id]/components/steps-list";
-import SystemConvertMenu from "@/app/(app)/recipes/[id]/components/system-convert-menu";
-import WakeLockToggle from "@/app/(app)/recipes/[id]/components/wake-lock-toggle";
-import { MOBILE_RECIPE_MEDIA_HEIGHT_STYLE } from "@/app/(app)/recipes/[id]/recipe-layout-constants";
-import { NutritionSection } from "@/components/recipes/nutrition-card";
-import DoubleTapContainer from "@/components/shared/double-tap-container";
-import HeartButton from "@/components/shared/heart-button";
-import MediaCarousel, { buildMediaItems } from "@/components/shared/media-carousel";
-import SmartMarkdownRenderer from "@/components/shared/smart-markdown-renderer";
-import { useUserContext } from "@/context/user-context";
-import { useFavoritesMutation, useFavoritesQuery } from "@/hooks/favorites";
-import { useRatingQuery, useRatingsMutation } from "@/hooks/ratings";
-
-
 export default function RecipePageMobile() {
   const {
     recipe,
@@ -56,7 +57,6 @@ export default function RecipePageMobile() {
   const { rateRecipe, isRating } = useRatingsMutation();
   const { user } = useUserContext();
   const t = useTranslations("recipes.detail");
-  const tForm = useTranslations("recipes.form");
   const showRatings = getShowRatingsPreference(user);
   const showFavorites = getShowFavoritesPreference(user);
 
@@ -151,7 +151,7 @@ export default function RecipePageMobile() {
         radius="none"
         shadow="sm"
       >
-        <CardBody className="space-y-6 px-4 py-5">
+        <Card.Content className="space-y-6 px-4 py-5">
           {/* Back link and Actions */}
           <div className="flex items-center justify-between">
             <div className="w-fit hover:underline">
@@ -188,27 +188,11 @@ export default function RecipePageMobile() {
             </p>
           )}
 
-          {/* Categories */}
-          {recipe.categories.length > 0 && (
-            <div className="text-default-500 flex flex-wrap items-center gap-4 text-base">
-              {recipe.categories.map((category) => {
-                const IconComponent =
-                  {
-                    Breakfast: FireIcon,
-                    Lunch: SunIcon,
-                    Dinner: MoonIcon,
-                    Snack: CakeIcon,
-                  }[category] || SunIcon;
-
-                return (
-                  <span key={category} className="flex items-center gap-1">
-                    <IconComponent className="h-4 w-4" />
-                    {tForm(`category.${category.toLowerCase()}`)}
-                  </span>
-                );
-              })}
-            </div>
-          )}
+          <RecipeTypeSummary
+            categories={recipe.categories}
+            plannerProfile={recipe.plannerProfile}
+          />
+          <RecipeSourceMeta fallbackUrl={recipe.url} source={recipe.source} />
 
           {/* Time info */}
           {(recipe.prepMinutes || recipe.totalMinutes) && (
@@ -227,6 +211,12 @@ export default function RecipePageMobile() {
               )}
             </div>
           )}
+
+          <CookHistoryMeta
+            className="text-default-500 text-base"
+            cookCount={recipe.cookCount}
+            lastCookedAt={recipe.lastCookedAt}
+          />
 
           {/* Tags */}
           {recipe.tags.length > 0 && (
@@ -248,7 +238,7 @@ export default function RecipePageMobile() {
             </div>
           )}
 
-          <Divider />
+          <Separator />
 
           {/* Ingredients Section */}
           <div className="space-y-4">
@@ -269,7 +259,7 @@ export default function RecipePageMobile() {
             <AddToGroceries recipeId={recipe.id} />
           </div>
 
-          <Divider />
+          <Separator />
 
           {/* Notes */}
           {recipe.notes && (
@@ -282,7 +272,7 @@ export default function RecipePageMobile() {
                   <SmartMarkdownRenderer text={recipe.notes} />
                 </div>
               </div>
-              <Divider />
+              <Separator />
             </>
           )}
 
@@ -312,7 +302,7 @@ export default function RecipePageMobile() {
 
           {/* Nutrition Section */}
           <NutritionSection />
-        </CardBody>
+        </Card.Content>
       </Card>
 
       <div className="pb-5" />

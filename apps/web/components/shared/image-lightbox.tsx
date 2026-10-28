@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/16/solid";
-import { Button, Modal, ModalContent } from "@heroui/react";
+import { Modal, useOverlayState } from "@heroui-v3/react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { FallbackPlaceholder, useImageErrors } from "./fallback-image";
@@ -24,6 +25,12 @@ export default function ImageLightbox({
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [direction, setDirection] = useState(0);
   const { handleImageError, hasError } = useImageErrors();
+  const modalState = useOverlayState({
+    isOpen,
+    onOpenChange: (open) => {
+      if (!open) onClose();
+    },
+  });
 
   // Reset to initial index when opening
   useEffect(() => {
@@ -89,135 +96,130 @@ export default function ImageLightbox({
   };
 
   return (
-    <Modal
-      hideCloseButton
-      classNames={{
-        backdrop: "z-[1099] bg-black/90 backdrop-blur-md",
-        base: "bg-transparent shadow-none max-w-full max-h-full",
-        wrapper: "z-[1100] items-center justify-center",
-      }}
-      isOpen={isOpen}
-      size="full"
-      onClose={onClose}
-    >
-      <ModalContent className="bg-transparent" onClick={(e) => e.stopPropagation()}>
-        {() => (
-          <div className="relative flex h-screen w-screen items-center justify-center">
-            {/* Close button */}
-            <Button
-              isIconOnly
-              className="absolute right-4 z-50 bg-black/50 text-white hover:bg-black/70"
-              radius="full"
-              size="lg"
-              style={{ top: "calc(1rem + env(safe-area-inset-top))" }}
-              variant="flat"
-              onPress={onClose}
-            >
-              <XMarkIcon className="h-6 w-6" />
-            </Button>
-
-            {/* Image counter */}
-            {showNavigation && (
-              <div
-                className="absolute left-4 z-50 rounded-full bg-black/50 px-4 py-2 text-sm text-white"
-                style={{ top: "calc(1rem + env(safe-area-inset-top))" }}
-              >
-                {currentIndex + 1} / {images.length}
-              </div>
-            )}
-
-            {/* Previous button */}
-            {showNavigation && (
-              <Button
-                isIconOnly
-                className="absolute left-4 z-50 bg-black/50 text-white hover:bg-black/70"
-                radius="full"
-                size="lg"
-                variant="flat"
-                onPress={goToPrevious}
-              >
-                <ChevronLeftIcon className="h-6 w-6" />
-              </Button>
-            )}
-
-            {/* Image container */}
-            <div className="relative h-[80vh] w-[90vw] overflow-hidden">
-              <AnimatePresence custom={direction} initial={false} mode="wait">
-                <motion.div
-                  key={currentIndex}
-                  animate="center"
-                  className="absolute inset-0 flex items-center justify-center"
-                  custom={direction}
-                  exit="exit"
-                  initial="enter"
-                  transition={{
-                    x: { type: "spring", stiffness: 300, damping: 30 },
-                    opacity: { duration: 0.2 },
-                  }}
-                  variants={slideVariants}
-                >
-                  {hasError(currentImage?.src || "") ? (
-                    <FallbackPlaceholder className="rounded-lg" />
-                  ) : (
-                    <Image
-                      fill
-                      unoptimized
-                      alt={currentImage?.alt || `Image ${currentIndex + 1}`}
-                      className="object-contain"
-                      src={currentImage?.src || ""}
-                      onError={() => handleImageError(currentImage?.src || "")}
-                    />
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Next button */}
-            {showNavigation && (
+    <Modal state={modalState}>
+      <Modal.Backdrop className="z-[1099] bg-black/90 backdrop-blur-md">
+        <Modal.Container className="z-[1100] h-screen max-w-none p-0" size="full">
+          <Modal.Dialog
+            className="h-screen max-h-none max-w-none bg-transparent p-0 shadow-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative flex h-screen w-screen items-center justify-center">
+              {/* Close button */}
               <Button
                 isIconOnly
                 className="absolute right-4 z-50 bg-black/50 text-white hover:bg-black/70"
                 radius="full"
                 size="lg"
+                style={{ top: "calc(1rem + env(safe-area-inset-top))" }}
                 variant="flat"
-                onPress={goToNext}
+                onPress={onClose}
               >
-                <ChevronRightIcon className="h-6 w-6" />
+                <XMarkIcon className="h-6 w-6" />
               </Button>
-            )}
 
-            {/* Thumbnail strip (optional for multiple images) */}
-            {showNavigation && (
-              <div className="absolute bottom-6 left-1/2 z-50 flex -translate-x-1/2 gap-2">
-                {images.map((img, idx) => (
-                  <button
-                    key={`${img.src}-${idx}`}
-                    className={`h-16 w-16 overflow-hidden rounded-lg border-2 transition-all ${
-                      idx === currentIndex
-                        ? "border-white opacity-100"
-                        : "border-transparent opacity-60 hover:opacity-80"
-                    }`}
-                    type="button"
-                    onClick={() => {
-                      setDirection(idx > currentIndex ? 1 : -1);
-                      setCurrentIndex(idx);
+              {/* Image counter */}
+              {showNavigation && (
+                <div
+                  className="absolute left-4 z-50 rounded-full bg-black/50 px-4 py-2 text-sm text-white"
+                  style={{ top: "calc(1rem + env(safe-area-inset-top))" }}
+                >
+                  {currentIndex + 1} / {images.length}
+                </div>
+              )}
+
+              {/* Previous button */}
+              {showNavigation && (
+                <Button
+                  isIconOnly
+                  className="absolute left-4 z-50 bg-black/50 text-white hover:bg-black/70"
+                  radius="full"
+                  size="lg"
+                  variant="flat"
+                  onPress={goToPrevious}
+                >
+                  <ChevronLeftIcon className="h-6 w-6" />
+                </Button>
+              )}
+
+              {/* Image container */}
+              <div className="relative h-[80vh] w-[90vw] overflow-hidden">
+                <AnimatePresence custom={direction} initial={false} mode="wait">
+                  <motion.div
+                    key={currentIndex}
+                    animate="center"
+                    className="absolute inset-0 flex items-center justify-center"
+                    custom={direction}
+                    exit="exit"
+                    initial="enter"
+                    transition={{
+                      x: { type: "spring", stiffness: 300, damping: 30 },
+                      opacity: { duration: 0.2 },
                     }}
+                    variants={slideVariants}
                   >
-                    <Image
-                      unoptimized
-                      alt={img.alt || `Thumbnail ${idx + 1}`}
-                      className="h-full w-full object-cover"
-                      height={64}
-                      src={img.src}
-                      width={64}
-                    />
-                  </button>
-                ))}
+                    {hasError(currentImage?.src || "") ? (
+                      <FallbackPlaceholder className="rounded-lg" />
+                    ) : (
+                      <Image
+                        fill
+                        unoptimized
+                        alt={currentImage?.alt || `Image ${currentIndex + 1}`}
+                        className="object-contain"
+                        src={currentImage?.src || ""}
+                        onError={() => handleImageError(currentImage?.src || "")}
+                      />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
               </div>
-            )}
-          </div>
-        )}
-      </ModalContent>
+
+              {/* Next button */}
+              {showNavigation && (
+                <Button
+                  isIconOnly
+                  className="absolute right-4 z-50 bg-black/50 text-white hover:bg-black/70"
+                  radius="full"
+                  size="lg"
+                  variant="flat"
+                  onPress={goToNext}
+                >
+                  <ChevronRightIcon className="h-6 w-6" />
+                </Button>
+              )}
+
+              {/* Thumbnail strip (optional for multiple images) */}
+              {showNavigation && (
+                <div className="absolute bottom-6 left-1/2 z-50 flex -translate-x-1/2 gap-2">
+                  {images.map((img, idx) => (
+                    <button
+                      key={`${img.src}-${idx}`}
+                      className={`h-16 w-16 overflow-hidden rounded-lg border-2 transition-all ${
+                        idx === currentIndex
+                          ? "border-white opacity-100"
+                          : "border-transparent opacity-60 hover:opacity-80"
+                      }`}
+                      type="button"
+                      onClick={() => {
+                        setDirection(idx > currentIndex ? 1 : -1);
+                        setCurrentIndex(idx);
+                      }}
+                    >
+                      <Image
+                        unoptimized
+                        alt={img.alt || `Thumbnail ${idx + 1}`}
+                        className="h-full w-full object-cover"
+                        height={64}
+                        src={img.src}
+                        width={64}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Modal>
   );
 }

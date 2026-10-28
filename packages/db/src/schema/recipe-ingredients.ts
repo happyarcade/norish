@@ -1,4 +1,4 @@
-import { index, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+﻿import { index, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { ingredients } from "./ingredients";
 import { measurementSystemEnum, recipes } from "./recipes";
@@ -15,6 +15,7 @@ export const recipeIngredients = pgTable(
       .references(() => ingredients.id, { onDelete: "cascade" }),
     amount: numeric("amount", { precision: 10, scale: 3 }),
     unit: text("unit"),
+    rawLine: text("raw_line"),
     order: numeric("order"),
     systemUsed: measurementSystemEnum("system_used").notNull().default("metric"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

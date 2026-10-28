@@ -1,32 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
 import { ShieldCheckIcon, UserMinusIcon } from "@heroicons/react/16/solid";
 import { UserGroupIcon } from "@heroicons/react/24/outline";
-import {
-  addToast,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Chip,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@heroui/react";
+import { Modal, Table, toast, useOverlayState } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
 import { useHouseholdSettingsContext } from "../context";
-
-import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
 
 export default function MembersCard() {
   const t = useTranslations("settings.household.members");
@@ -38,6 +22,14 @@ export default function MembersCard() {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [userToKick, setUserToKick] = useState<{ id: string; name: string } | null>(null);
   const [userToTransfer, setUserToTransfer] = useState<{ id: string; name: string } | null>(null);
+  const kickModalState = useOverlayState({
+    isOpen: showKickModal,
+    onOpenChange: setShowKickModal,
+  });
+  const transferModalState = useOverlayState({
+    isOpen: showTransferModal,
+    onOpenChange: setShowTransferModal,
+  });
 
   if (!household) return null;
 
@@ -71,12 +63,7 @@ export default function MembersCard() {
 
     try {
       await transferAdmin(household.id, userToTransfer.id);
-      addToast({
-        title: t("toasts.transferSuccess", { name: userToTransfer.name }),
-        color: "success",
-        shouldShowTimeoutProgress: true,
-        radius: "full",
-      });
+      toast.success(t("toasts.transferSuccess", { name: userToTransfer.name }));
     } catch (error) {
       showSafeErrorToast({
         title: t("toasts.transferFailed"),
@@ -94,135 +81,138 @@ export default function MembersCard() {
   return (
     <>
       <Card>
-        <CardHeader>
+        <Card.Header>
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <UserGroupIcon className="h-5 w-5" />
             {t("title")}
           </h2>
-        </CardHeader>
-        <CardBody>
-          <Table aria-label={t("title")}>
-            <TableHeader>
-              <TableColumn>{t("tableHeaders.name")}</TableColumn>
-              <TableColumn>{t("tableHeaders.role")}</TableColumn>
-              <TableColumn>{t("tableHeaders.actions")}</TableColumn>
-            </TableHeader>
-            <TableBody>
-              {household.users.map((user) => {
-                const isSelf = user.id === currentUserId;
-                const isUserAdmin = user.isAdmin === true;
+        </Card.Header>
+        <Card.Content>
+          <Table>
+            <Table.ScrollContainer>
+              <Table.Content aria-label={t("title")}>
+                <Table.Header>
+                  <Table.Column isRowHeader>{t("tableHeaders.name")}</Table.Column>
+                  <Table.Column>{t("tableHeaders.role")}</Table.Column>
+                  <Table.Column>{t("tableHeaders.actions")}</Table.Column>
+                </Table.Header>
+                <Table.Body>
+                  {household.users.map((user) => {
+                    const isSelf = user.id === currentUserId;
+                    const isUserAdmin = user.isAdmin === true;
 
-                return (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {user.name}
-                        {isSelf && (
-                          <Chip color="default" size="sm" variant="flat">
-                            {t("you")}
-                          </Chip>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Chip color={isUserAdmin ? "primary" : "default"} size="sm" variant="flat">
-                        {isUserAdmin ? ti("admin") : ti("member")}
-                      </Chip>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {isAdmin && !isSelf && (
-                          <>
-                            <Button
-                              color="danger"
-                              size="sm"
-                              startContent={<UserMinusIcon className="h-4 w-4" />}
-                              variant="light"
-                              onPress={() => {
-                                setUserToKick({ id: user.id, name: user.name || "Unknown" });
-                                setShowKickModal(true);
-                              }}
-                            >
-                              {t("kickButton")}
-                            </Button>
-                            {!isUserAdmin && (
-                              <Button
-                                color="primary"
-                                size="sm"
-                                startContent={<ShieldCheckIcon className="h-4 w-4" />}
-                                variant="light"
-                                onPress={() => {
-                                  setUserToTransfer({ id: user.id, name: user.name || "Unknown" });
-                                  setShowTransferModal(true);
-                                }}
-                              >
-                                {t("makeAdminButton")}
-                              </Button>
+                    return (
+                      <Table.Row key={user.id} id={user.id}>
+                        <Table.Cell>
+                          <div className="flex items-center gap-2">
+                            {user.name}
+                            {isSelf && (
+                              <Chip color="default" size="sm" variant="soft">
+                                <Chip.Label>{t("you")}</Chip.Label>
+                              </Chip>
                             )}
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Chip color={isUserAdmin ? "accent" : "default"} size="sm" variant="soft">
+                            <Chip.Label>{isUserAdmin ? ti("admin") : ti("member")}</Chip.Label>
+                          </Chip>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <div className="flex gap-2">
+                            {isAdmin && !isSelf && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="danger-soft"
+                                  onPress={() => {
+                                    setUserToKick({ id: user.id, name: user.name || "Unknown" });
+                                    setShowKickModal(true);
+                                  }}
+                                >
+                                  <UserMinusIcon className="h-4 w-4" />
+                                  {t("kickButton")}
+                                </Button>
+                                {!isUserAdmin && (
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onPress={() => {
+                                      setUserToTransfer({
+                                        id: user.id,
+                                        name: user.name || "Unknown",
+                                      });
+                                      setShowTransferModal(true);
+                                    }}
+                                  >
+                                    <ShieldCheckIcon className="h-4 w-4" />
+                                    {t("makeAdminButton")}
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </Table.Cell>
+                      </Table.Row>
+                    );
+                  })}
+                </Table.Body>
+              </Table.Content>
+            </Table.ScrollContainer>
           </Table>
-        </CardBody>
+        </Card.Content>
       </Card>
 
       {/* Kick User Modal */}
-      <Modal
-        classNames={{ wrapper: "z-[1100]", backdrop: "z-[1099]" }}
-        isOpen={showKickModal}
-        onOpenChange={setShowKickModal}
-      >
-        <ModalContent>
-          {(onClose: () => void) => (
-            <>
-              <ModalHeader>{t("kickModal.title")}</ModalHeader>
-              <ModalBody>
+      <Modal state={kickModalState}>
+        <Modal.Backdrop className="z-[1099]" variant="blur">
+          <Modal.Container className="z-[1100]" placement="center">
+            <Modal.Dialog>
+              <Modal.CloseTrigger aria-label={tActions("cancel")} />
+              <Modal.Header>
+                <Modal.Heading>{t("kickModal.title")}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
                 <p>{t("kickModal.confirmMessage", { name: userToKick?.name ?? "" })}</p>
                 <p className="text-default-600 mt-2 text-base">{t("kickModal.warning")}</p>
-              </ModalBody>
-              <ModalFooter>
-                <Button variant="flat" onPress={onClose}>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="tertiary" onPress={kickModalState.close}>
                   {tActions("cancel")}
                 </Button>
-                <Button color="danger" onPress={handleKickUser}>
+                <Button variant="danger" onPress={handleKickUser}>
                   {t("kickModal.confirmButton")}
                 </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       {/* Transfer Admin Modal */}
-      <Modal
-        classNames={{ wrapper: "z-[1100]", backdrop: "z-[1099]" }}
-        isOpen={showTransferModal}
-        onOpenChange={setShowTransferModal}
-      >
-        <ModalContent>
-          {(onClose: () => void) => (
-            <>
-              <ModalHeader>{t("transferModal.title")}</ModalHeader>
-              <ModalBody>
+      <Modal state={transferModalState}>
+        <Modal.Backdrop className="z-[1099]" variant="blur">
+          <Modal.Container className="z-[1100]" placement="center">
+            <Modal.Dialog>
+              <Modal.CloseTrigger aria-label={tActions("cancel")} />
+              <Modal.Header>
+                <Modal.Heading>{t("transferModal.title")}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
                 <p>{t("transferModal.confirmMessage", { name: userToTransfer?.name ?? "" })}</p>
                 <p className="text-default-600 mt-2 text-base">{t("transferModal.warning")}</p>
-              </ModalBody>
-              <ModalFooter>
-                <Button variant="flat" onPress={onClose}>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="tertiary" onPress={transferModalState.close}>
                   {tActions("cancel")}
                 </Button>
-                <Button color="primary" onPress={handleTransferAdmin}>
+                <Button variant="primary" onPress={handleTransferAdmin}>
                   {t("transferModal.confirmButton")}
                 </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </>
   );

@@ -2,10 +2,12 @@
 node_modules
 **/node_modules
 .next
+**/.next
+**/.next/**
 .git
 .gitignore
 .env*
-!.env.production
+**/.env*
 dist-server
 coverage
 .vscode
@@ -23,9 +25,26 @@ docker/Dockerfile*
 .github
 .turbo
 uploads/
+backups/
 .sisyphus
 **/ios
 **/android
+
+# Local runtime and import-selection data are persisted or operator-only data,
+# never application build inputs.
+.runtime
+**/.runtime
+**/.runtime/**
+**/.cache
+**/.cache/**
+**/.recipe-import-staging
+**/.recipe-import-staging/**
+recipes/
+**/recipe-*.csv
+**/recipe-*.json
+**/dairy-free-*.json
+**/public/recipes
+**/public/recipes/**
 
 # Exclude dist directories except packages/trpc/dist (type declarations needed for build)
 apps/web/dist

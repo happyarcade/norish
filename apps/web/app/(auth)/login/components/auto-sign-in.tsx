@@ -1,14 +1,14 @@
 "use client";
 
-import type { ProviderInfo } from "@norish/shared/contracts";
-
-import { Card, CardBody, Spinner } from "@heroui/react";
 import { useEffect, useRef } from "react";
+import { BrandLogo } from "@/components/brand/brand-logo";
+import { Card } from "@/components/ui/card";
+import { Spinner } from "@heroui-v3/react";
+
+import type { ProviderInfo } from "@norish/shared/contracts";
 import { signIn } from "@norish/shared/lib/auth/client";
 
 import { ProviderIcon } from "./provider-icon";
-
-import { BrandLogo } from "@/components/brand/brand-logo";
 
 interface AutoSignInProps {
   provider: ProviderInfo;
@@ -44,9 +44,9 @@ export function AutoSignIn({ provider, callbackUrl }: AutoSignInProps) {
   return (
     <div className="flex min-h-full flex-col items-center justify-center">
       <Card className="w-full max-w-sm overflow-hidden">
-        <CardBody className="flex flex-col items-center gap-6 p-8">
+        <Card.Content className="flex flex-col items-center gap-6 p-8">
           {/* Logo */}
-          <BrandLogo priority height={40} width={140} />
+          <BrandLogo priority width={140} />
 
           {/* Provider indicator */}
           <div className="flex flex-col items-center gap-4 py-4">
@@ -62,10 +62,10 @@ export function AutoSignIn({ provider, callbackUrl }: AutoSignInProps) {
                 <span className="text-default-600 font-medium">Redirecting to {provider.name}</span>
               </div>
               <p className="text-tiny text-default-400">You&apos;ll be signed in automatically</p>
-              <Spinner color="primary" size="sm" />
+              <Spinner color="accent" size="sm" />
             </div>
           </div>
-        </CardBody>
+        </Card.Content>
       </Card>
     </div>
   );

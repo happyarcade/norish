@@ -6,7 +6,10 @@ import { configRouter } from "./routers/config";
 import { favoritesRouter } from "./routers/favorites";
 import { groceriesRouter } from "./routers/groceries";
 import { householdsAppRouter } from "./routers/households";
+import { pantryRouter } from "./routers/pantry";
 import { permissionsRouter } from "./routers/permissions";
+import { plannerRouter } from "./routers/planner";
+import { prepRouter } from "./routers/prep";
 import { ratingsRouter } from "./routers/ratings";
 import { recipesRouter } from "./routers/recipes";
 import { siteAuthTokensRouter } from "./routers/site-auth-tokens";
@@ -17,10 +20,13 @@ import { router } from "./trpc";
 export const appRouter = router({
   groceries: groceriesRouter,
   calendar: calendarRouter,
+  planner: plannerRouter,
+  prep: prepRouter,
   recipes: recipesRouter,
   permissions: permissionsRouter,
   admin: adminRouter,
   households: householdsAppRouter,
+  pantry: pantryRouter,
   user: userRouter,
   caldav: caldavRouter,
   caldavSubscriptions: caldavSubscriptions,

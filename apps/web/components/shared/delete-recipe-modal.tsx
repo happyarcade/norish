@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Modal, useOverlayState } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
 interface DeleteRecipeModalProps {
@@ -18,32 +19,37 @@ export function DeleteRecipeModal({
 }: DeleteRecipeModalProps) {
   const t = useTranslations("recipes.deleteModal");
   const tActions = useTranslations("common.actions");
+  const modalState = useOverlayState({
+    isOpen,
+    onOpenChange: (open) => {
+      if (!open) onClose();
+    },
+  });
 
   return (
-    <Modal
-      classNames={{ wrapper: "z-[1100]", backdrop: "z-[1099]" }}
-      isOpen={isOpen}
-      onOpenChange={onClose}
-    >
-      <ModalContent>
-        {(onCloseCallback) => (
-          <>
-            <ModalHeader className="text-danger">{t("title")}</ModalHeader>
-            <ModalBody>
+    <Modal state={modalState}>
+      <Modal.Backdrop className="z-[1099]" variant="blur">
+        <Modal.Container className="z-[1100]" placement="center">
+          <Modal.Dialog>
+            <Modal.CloseTrigger aria-label={tActions("cancel")} />
+            <Modal.Header>
+              <Modal.Heading className="text-danger">{t("title")}</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
               <p className="text-danger mb-2 font-semibold">{t("warning")}</p>
               <p>{t("confirmMessage", { recipeName })}</p>
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="flat" onPress={onCloseCallback}>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="tertiary" onPress={modalState.close}>
                 {tActions("cancel")}
               </Button>
-              <Button color="danger" onPress={onConfirm}>
+              <Button variant="danger" onPress={onConfirm}>
                 {tActions("delete")}
               </Button>
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Modal>
   );
 }

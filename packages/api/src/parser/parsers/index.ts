@@ -5,11 +5,18 @@
  * Schema.org Recipe structured data.
  */
 
-export { extractNutrition, parseNutritionValue } from "./nutrition";
+export {
+  extractNutrition,
+  normalizeNutritionMetricForStorage,
+  parseNutritionValue,
+} from "./nutrition";
 export type { ParsedNutrition } from "./nutrition";
 
 export { parseSteps, collectSteps, deduplicateSteps } from "./steps";
 export type { ParsedStep } from "./steps";
+
+export { classifyDairyAdaptation } from "./dairy";
+export type { DairyAdaptationResult, DairyAdaptationStatus } from "./dairy";
 
 export { parseIngredients } from "./ingredients";
 export type { ParsedIngredient, IngredientParseResult } from "./ingredients";

@@ -1,18 +1,17 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { GroceryDto, RecurringGroceryDto } from "@norish/shared/contracts";
-import type { GroceryGroup, GroupedGrocerySource } from "@norish/shared/lib/grocery-grouping";
-
 import { memo, useCallback, useState } from "react";
+import { RecurrencePill } from "@/app/(app)/groceries/components/recurrence-pill";
+import { useUnitFormatter } from "@/hooks/use-unit-formatter";
 import { ChevronDownIcon } from "@heroicons/react/16/solid";
-import { Checkbox } from "@heroui/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
 
-import { useUnitFormatter } from "@/hooks/use-unit-formatter";
-import { RecurrencePill } from "@/app/(app)/groceries/components/recurrence-pill";
+import type { GroceryDto, RecurringGroceryDto } from "@norish/shared/contracts";
+import type { GroceryGroup, GroupedGrocerySource } from "@norish/shared/lib/grocery-grouping";
 
+import { GroceryCheckbox } from "./grocery-checkbox";
 
 /**
  * Format inline source breakdown showing recipe names and amounts.
@@ -115,12 +114,11 @@ function GroupedGroceryItemComponent({
         <div className="flex h-8 w-8 items-center justify-center">{dragHandle}</div>
 
         {/* Group checkbox - toggles all items */}
-        <Checkbox
+        <GroceryCheckbox
+          ariaLabel={group.displayName || t("unnamedItem")}
           isIndeterminate={group.anyDone && !group.allDone}
           isSelected={group.allDone}
-          radius="full"
-          size="lg"
-          onValueChange={handleGroupToggle}
+          onChange={handleGroupToggle}
         />
 
         {/* Clickable content area */}
@@ -238,11 +236,10 @@ function SourceItem({ source, recurringGroceries, onToggle, onEdit }: SourceItem
     <div
       className={`flex items-center gap-3 px-4 py-2.5 ${hasSubtitle ? "min-h-[56px]" : "min-h-12"}`}
     >
-      <Checkbox
+      <GroceryCheckbox
+        ariaLabel={grocery.name || "Unknown item"}
         isSelected={grocery.isDone}
-        radius="full"
-        size="md"
-        onValueChange={(checked) => onToggle(grocery.id, checked)}
+        onChange={(checked) => onToggle(grocery.id, checked)}
       />
 
       <button

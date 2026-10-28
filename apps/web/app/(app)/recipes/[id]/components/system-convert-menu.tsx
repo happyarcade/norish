@@ -1,24 +1,19 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
+import { usePermissionsContext } from "@/context/permissions-context";
+import { useUserContext } from "@/context/user-context";
 import { ArrowsRightLeftIcon, SparklesIcon } from "@heroicons/react/20/solid";
-import {
-  Button,
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownTrigger,
-  Spinner,
-} from "@heroui/react";
+import { Dropdown, Spinner } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
+
 import { MeasurementSystem } from "@norish/shared/contracts";
 import { getShowConversionButtonPreference } from "@norish/shared/lib/user-preferences";
 import { cssAIGradientText, cssAIIconColor, cssButtonPill } from "@norish/web/config/css-tokens";
 
 import { useRecipeContextRequired } from "../context";
-
-import { useUserContext } from "@/context/user-context";
-import { usePermissionsContext } from "@/context/permissions-context";
 
 type ConversionOption = {
   key: MeasurementSystem;
@@ -58,14 +53,30 @@ export default function SystemConvertMenu() {
     return options;
   }, [availableSystems, isAIEnabled, t]);
 
-  // If no conversion options available, don't show the menu
-  // Hide when there is 0 or only 1 option => nothing to convert to
-  // Respect user preference
-  if (conversionOptions.length <= 1 || !showConversion) {
+  // Respect user preference.
+  if (!showConversion) {
     return null;
   }
 
   const currentSystem: MeasurementSystem = convertingTo != null ? convertingTo : recipe.systemUsed;
+
+  // Keep the preference discoverable even when the recipe only has one stored
+  // measurement system and AI conversion is unavailable.
+  if (conversionOptions.length <= 1) {
+    return (
+      <Tooltip content="Enable AI conversion to add another measurement system" placement="bottom">
+        <Button
+          className="bg-content2 text-foreground/60 capitalize"
+          isDisabled
+          size="sm"
+          startContent={<ArrowsRightLeftIcon className="h-4 w-4" />}
+          variant="flat"
+        >
+          {currentSystem}
+        </Button>
+      </Tooltip>
+    );
+  }
 
   const handleConvert = async (target: MeasurementSystem) => {
     if (target === currentSystem) return;
@@ -75,57 +86,57 @@ export default function SystemConvertMenu() {
 
   return (
     <Dropdown>
-      <DropdownTrigger>
-        <Button
-          className="bg-content2 text-foreground capitalize transition-opacity duration-150 data-[hover=true]:opacity-80"
-          disabled={convertingTo != null}
-          size="sm"
-          startContent={
-            convertingTo != null ? (
-              <Spinner className="mr-2" size="sm" />
-            ) : (
-              <ArrowsRightLeftIcon className="h-4 w-4" />
-            )
-          }
-          variant="flat"
-        >
-          {currentSystem}
-        </Button>
-      </DropdownTrigger>
-
-      <DropdownMenu
-        aria-label={t("ariaLabel")}
-        items={conversionOptions}
-        selectedKeys={[currentSystem]}
-        selectionMode="single"
+      <Button
+        className="bg-content2 text-foreground capitalize transition-opacity duration-150 data-[hover=true]:opacity-80"
+        disabled={convertingTo != null}
+        size="sm"
+        startContent={
+          convertingTo != null ? (
+            <Spinner className="mr-2" size="sm" />
+          ) : (
+            <ArrowsRightLeftIcon className="h-4 w-4" />
+          )
+        }
+        variant="flat"
       >
-        {(item: ConversionOption) => (
-          <DropdownItem
-            key={item.key}
-            className="!bg-transparent py-1 data-[focus=true]:!bg-transparent data-[hover=true]:!bg-transparent data-[selected=true]:!bg-transparent"
-            textValue={item.label}
-          >
-            <Button
-              className={`w-full justify-start bg-transparent ${cssButtonPill}`}
-              radius="full"
-              size="md"
-              startContent={
-                item.requiresAI ? (
-                  <SparklesIcon className={`size-4 ${cssAIIconColor}`} />
-                ) : (
-                  <ArrowsRightLeftIcon className="text-default-400 size-4" />
-                )
-              }
-              variant="light"
-              onPress={() => handleConvert(item.key)}
+        {currentSystem}
+      </Button>
+
+      <Dropdown.Popover placement="bottom end">
+        <Dropdown.Menu
+          aria-label={t("ariaLabel")}
+          items={conversionOptions}
+          selectedKeys={[currentSystem]}
+          selectionMode="single"
+        >
+          {(item: ConversionOption) => (
+            <Dropdown.Item
+              id={item.key}
+              className="!bg-transparent py-1 data-[focus=true]:!bg-transparent data-[hover=true]:!bg-transparent data-[selected=true]:!bg-transparent"
+              textValue={item.label}
             >
-              <span className={`text-sm font-medium ${item.requiresAI ? cssAIGradientText : ""}`}>
-                {item.label}
-              </span>
-            </Button>
-          </DropdownItem>
-        )}
-      </DropdownMenu>
+              <Button
+                className={`w-full justify-start bg-transparent ${cssButtonPill}`}
+                radius="full"
+                size="md"
+                startContent={
+                  item.requiresAI ? (
+                    <SparklesIcon className={`size-4 ${cssAIIconColor}`} />
+                  ) : (
+                    <ArrowsRightLeftIcon className="text-default-400 size-4" />
+                  )
+                }
+                variant="light"
+                onPress={() => handleConvert(item.key)}
+              >
+                <span className={`text-sm font-medium ${item.requiresAI ? cssAIGradientText : ""}`}>
+                  {item.label}
+                </span>
+              </Button>
+            </Dropdown.Item>
+          )}
+        </Dropdown.Menu>
+      </Dropdown.Popover>
     </Dropdown>
   );
 }

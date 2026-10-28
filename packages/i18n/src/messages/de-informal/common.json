@@ -146,6 +146,9 @@
     },
     "menu": {
       "description": "Importiere per URL, scanne ein Foto oder starte von Grund auf."
+    },
+    "clipboard": {
+      "title": "Import a recipe from the link you copied?"
     }
   },
   "formatting": {

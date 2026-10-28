@@ -1,15 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Button,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Switch,
-} from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Modal, Switch, useOverlayState } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
 interface DeleteCalDavModalProps {
@@ -23,6 +16,12 @@ export default function DeleteCalDavModal({ isOpen, onClose, onConfirm }: Delete
   const tActions = useTranslations("common.actions");
   const [deleteEvents, setDeleteEvents] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const modalState = useOverlayState({
+    isOpen,
+    onOpenChange: (open) => {
+      if (!open) onClose();
+    },
+  });
 
   const handleConfirm = async () => {
     setDeleting(true);
@@ -36,33 +35,45 @@ export default function DeleteCalDavModal({ isOpen, onClose, onConfirm }: Delete
   };
 
   return (
-    <Modal
-      classNames={{ wrapper: "z-[1100]", backdrop: "z-[1099]" }}
-      isOpen={isOpen}
-      onClose={onClose}
-    >
-      <ModalContent>
-        <ModalHeader>{t("title")}</ModalHeader>
-        <ModalBody>
-          <p className="text-default-600 text-base">{t("confirmMessage")}</p>
-          <div className="mt-4">
-            <Switch isSelected={deleteEvents} onValueChange={setDeleteEvents}>
-              <div>
-                <p className="text-base font-medium">{t("deleteEventsLabel")}</p>
-                <p className="text-default-500 text-xs">{t("deleteEventsDescription")}</p>
+    <Modal state={modalState}>
+      <Modal.Backdrop className="z-[1099]" variant="blur">
+        <Modal.Container className="z-[1100]" placement="center">
+          <Modal.Dialog>
+            <Modal.CloseTrigger aria-label={tActions("cancel")} />
+            <Modal.Header>
+              <Modal.Heading>{t("title")}</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
+              <p className="text-default-600 text-base">{t("confirmMessage")}</p>
+              <div className="mt-4">
+                <Switch
+                  aria-label={t("deleteEventsLabel")}
+                  isSelected={deleteEvents}
+                  onChange={setDeleteEvents}
+                >
+                  <Switch.Content>
+                    <div>
+                      <p className="text-base font-medium">{t("deleteEventsLabel")}</p>
+                      <p className="text-default-500 text-xs">{t("deleteEventsDescription")}</p>
+                    </div>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                  </Switch.Content>
+                </Switch>
               </div>
-            </Switch>
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="light" onPress={onClose}>
-            {tActions("cancel")}
-          </Button>
-          <Button color="danger" isLoading={deleting} onPress={handleConfirm}>
-            {t("confirmButton")}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="tertiary" onPress={onClose}>
+                {tActions("cancel")}
+              </Button>
+              <Button isPending={deleting} variant="danger" onPress={handleConfirm}>
+                {t("confirmButton")}
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Modal>
   );
 }

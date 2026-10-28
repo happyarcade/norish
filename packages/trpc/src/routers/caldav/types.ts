@@ -1,25 +1,10 @@
-import type { UserCaldavConfigWithoutPasswordDto } from "@norish/shared/contracts";
+export type {
+  CaldavItemType,
+  CaldavSubscriptionEvents,
+  CaldavSyncStatus,
+} from "@norish/queue/events/caldav";
 
 import { z } from "zod";
-
-
-export type CaldavItemType = "recipe" | "note";
-export type CaldavSyncStatus = "pending" | "synced" | "failed" | "removed";
-
-export type CaldavSubscriptionEvents = {
-  configSaved: { config: UserCaldavConfigWithoutPasswordDto | null };
-  syncStarted: { timestamp: string };
-  syncCompleted: { itemId: string; caldavEventUid: string };
-  syncFailed: { itemId: string; errorMessage: string; retryCount: number };
-  itemStatusUpdated: {
-    itemId: string;
-    itemType: CaldavItemType;
-    syncStatus: CaldavSyncStatus;
-    errorMessage: string | null;
-    caldavEventUid: string | null;
-  };
-  initialSyncComplete: { timestamp: string; totalSynced: number; totalFailed: number };
-};
 
 export const SaveCaldavConfigInputSchema = z.object({
   serverUrl: z.url(),

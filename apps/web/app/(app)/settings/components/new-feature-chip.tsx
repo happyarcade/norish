@@ -1,6 +1,6 @@
 "use client";
 
-import { Chip } from "@heroui/react";
+import { Chip } from "@/components/ui/chip";
 import { useTranslations } from "next-intl";
 
 export default function NewFeatureChip() {
@@ -8,13 +8,12 @@ export default function NewFeatureChip() {
 
   return (
     <Chip
-      classNames={{
-        base: "bg-linear-to-br from-indigo-500 to-pink-500 border-small border-white/50 shadow-pink-500/30",
-      }}
+      className="border-small border-white/50 bg-linear-to-br from-indigo-500 to-pink-500 text-white shadow-lg shadow-pink-500/30"
+      color="accent"
       size="sm"
-      variant="shadow"
+      variant="primary"
     >
-      {tCommon("badges.new")}
+      <Chip.Label>{tCommon("badges.new")}</Chip.Label>
     </Chip>
   );
 }

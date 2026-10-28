@@ -1,21 +1,19 @@
 "use client";
 
-import type { ServerConfigKey } from "@norish/config/zod/server-config";
-import type { FieldDef, ProviderKey, TestResult } from "./types";
-
-import { Input, useDisclosure } from "@heroui/react";
-import { useTranslations } from "next-intl";
-import { ServerConfigKeys } from "@norish/config/zod/server-config";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import SecretInput from "@/components/shared/secret-input";
+import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
+import { InputGroup, Label, TextField } from "@heroui-v3/react";
+import { useTranslations } from "next-intl";
 
+import type { ServerConfigKey } from "@norish/config/zod/server-config";
+import { ServerConfigKeys } from "@norish/config/zod/server-config";
+
+import type { FieldDef, ProviderKey, TestResult } from "./types";
 import { useAdminSettingsContext } from "../../context";
-
 import { DeleteProviderModal } from "./delete-provider-modal";
 import { ProviderActions } from "./provider-actions";
 import { TestResultDisplay } from "./test-result-display";
-
-import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
-import SecretInput from "@/components/shared/secret-input";
 
 const CONFIG_KEYS: Record<ProviderKey, ServerConfigKey> = {
   oidc: ServerConfigKeys.AUTH_PROVIDER_OIDC,
@@ -61,7 +59,7 @@ export function AuthProviderForm({
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [saving, setSaving] = useState(false);
-  const deleteModal = useDisclosure();
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const hasChanges = useMemo(
     () =>
@@ -122,7 +120,7 @@ export function AuthProviderForm({
     const result = await deleteAuthProvider(providerKey);
 
     if (!result.success) {
-      deleteModal.onClose();
+      setIsDeleteOpen(false);
       showSafeErrorToast({
         title: tErrors("operationFailed"),
         description: tErrors("technicalDetails"),
@@ -133,7 +131,7 @@ export function AuthProviderForm({
       return;
     }
 
-    deleteModal.onClose();
+    setIsDeleteOpen(false);
     setValues(
       fields.reduce(
         (acc, f) => {
@@ -160,13 +158,17 @@ export function AuthProviderForm({
             onValueChange={(v) => setValues((prev) => ({ ...prev, [field.key]: v }))}
           />
         ) : (
-          <Input
+          <TextField
             key={field.key}
-            label={field.label}
-            placeholder={field.placeholder}
+            fullWidth
             value={values[field.key] ?? ""}
-            onValueChange={(v) => setValues((prev) => ({ ...prev, [field.key]: v }))}
-          />
+            onChange={(value) => setValues((prev) => ({ ...prev, [field.key]: value }))}
+          >
+            <Label>{field.label}</Label>
+            <InputGroup fullWidth variant="secondary">
+              <InputGroup.Input placeholder={field.placeholder} />
+            </InputGroup>
+          </TextField>
         )
       )}
 
@@ -177,15 +179,15 @@ export function AuthProviderForm({
         hasConfig={!!config}
         saving={saving}
         testing={testing}
-        onDeleteClick={deleteModal.onOpen}
+        onDeleteClick={() => setIsDeleteOpen(true)}
         onSave={handleSave}
         onTest={handleTest}
       />
 
       <DeleteProviderModal
-        isOpen={deleteModal.isOpen}
+        isOpen={isDeleteOpen}
         providerName={providerName}
-        onClose={deleteModal.onClose}
+        onClose={() => setIsDeleteOpen(false)}
         onConfirm={handleDelete}
       />
     </div>

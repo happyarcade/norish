@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-10-19T13:50:42.493Z",
+  "mode": "backfill",
+  "totalRecipes": 7925,
+  "qualifyingRecipes": 7589,
+  "statuses": {
+    "dairy-free-possible": 7000,
+    "dairy-free": 589,
+    "contains-dairy": 336
+  },
+  "substitutions": {
+    "Use a dairy-free cheese or omit when it is a topping": 1887,
+    "Use olive oil or a dairy-free spread": 1244,
+    "Use unsweetened dairy-free yoghurt": 737,
+    "Use an unsweetened dairy-free milk": 691,
+    "Use a plant-based cooking cream": 421,
+    "Use plant-based sour cream or unsweetened dairy-free yoghurt": 243,
+    "Use a dairy-free equivalent": 56,
+    "Use dairy-free buttermilk": 42,
+    "Use a dairy-free dressing or topping": 30
+  }
+}

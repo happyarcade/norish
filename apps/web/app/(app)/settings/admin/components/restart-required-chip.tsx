@@ -1,6 +1,6 @@
 "use client";
 
-import { Chip } from "@heroui/react";
+import { Chip } from "@/components/ui/chip";
 import { useTranslations } from "next-intl";
 
 /**
@@ -11,8 +11,8 @@ export function RestartRequiredChip() {
   const t = useTranslations("settings.admin.authProviders");
 
   return (
-    <Chip color="warning" size="sm" variant="flat">
-      {t("requiresRestart")}
+    <Chip color="warning" size="sm" variant="soft">
+      <Chip.Label>{t("requiresRestart")}</Chip.Label>
     </Chip>
   );
 }

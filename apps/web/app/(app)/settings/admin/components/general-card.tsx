@@ -1,29 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Select, SelectItem } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
+import { addToast } from "@/lib/ui/toast";
 import { ChevronDownIcon } from "@heroicons/react/16/solid";
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
-import {
-  addToast,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Divider,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  Select,
-  SelectItem,
-  Switch,
-} from "@heroui/react";
+import { Popover, Separator } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
 import { useAdminSettingsContext } from "../context";
-
 import { UnsavedChangesChip } from "./unsaved-changes-chip";
-
-import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
 
 export default function GeneralCard() {
   const t = useTranslations("settings.admin.general");
@@ -158,13 +148,13 @@ export default function GeneralCard() {
 
   return (
     <Card>
-      <CardHeader>
+      <Card.Header>
         <h2 className="flex items-center gap-2 text-lg font-semibold">
           <Cog6ToothIcon className="h-5 w-5" />
           {t("title")}
         </h2>
-      </CardHeader>
-      <CardBody className="flex flex-col gap-6">
+      </Card.Header>
+      <Card.Content className="flex flex-col gap-6">
         {/* Registration Toggle */}
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-1">
@@ -179,7 +169,7 @@ export default function GeneralCard() {
           />
         </div>
 
-        <Divider />
+        <Separator />
 
         {/* Locale Configuration */}
         <div className="flex flex-col gap-4">
@@ -191,8 +181,8 @@ export default function GeneralCard() {
             <span className="text-default-500 text-base">{t("localesDescription")}</span>
           </div>
 
-          <Popover placement="bottom-start">
-            <PopoverTrigger>
+          <Popover>
+            <Popover.Trigger>
               <Button
                 className="max-w-xs justify-between"
                 endContent={<ChevronDownIcon className="h-4 w-4 shrink-0" />}
@@ -203,9 +193,9 @@ export default function GeneralCard() {
                   {enabledLocaleOptions.map((l) => l.name).join(", ") || t("locales")}
                 </span>
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 items-stretch p-0">
-              <div className="flex w-full flex-col">
+            </Popover.Trigger>
+            <Popover.Content className="w-64 p-0" placement="bottom start">
+              <Popover.Dialog className="flex w-full flex-col p-0">
                 {allLocales.map((locale) => (
                   <div
                     key={locale.code}
@@ -220,8 +210,8 @@ export default function GeneralCard() {
                     />
                   </div>
                 ))}
-              </div>
-            </PopoverContent>
+              </Popover.Dialog>
+            </Popover.Content>
           </Popover>
         </div>
 
@@ -256,7 +246,7 @@ export default function GeneralCard() {
             {t("saveLocales")}
           </Button>
         </div>
-      </CardBody>
+      </Card.Content>
     </Card>
   );
 }

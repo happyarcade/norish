@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Button, Input } from "@heroui/react";
-import { useTranslations } from "next-intl";
-
 import Panel, { PANEL_HEIGHT_COMPACT } from "@/components/Panel/Panel";
+import { Button } from "@/components/ui/button";
+import { FieldError, InputGroup, TextField } from "@heroui-v3/react";
+import { useTranslations } from "next-intl";
 
 type EditTagPanelProps = {
   open: boolean;
@@ -79,42 +79,36 @@ export default function EditTagPanel({
           }}
         >
           <div className="space-y-3">
-            <Input
-              classNames={{
-                input: "text-lg font-medium",
-                inputWrapper: "border-primary-200 dark:border-primary-800",
-              }}
-              errorMessage={isDuplicate ? t("duplicateTag") : undefined}
-              isInvalid={isDuplicate}
-              placeholder={t("editPlaceholder")}
-              size="lg"
-              style={{ fontSize: "16px" }}
-              value={tagName}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-              onValueChange={setTagName}
-            />
+            <TextField fullWidth isInvalid={isDuplicate} value={tagName} onChange={setTagName}>
+              <InputGroup
+                fullWidth
+                className="border-primary-200 dark:border-primary-800"
+                variant="secondary"
+              >
+                <InputGroup.Input
+                  className="text-base font-medium"
+                  placeholder={t("editPlaceholder")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSubmit();
+                    }
+                  }}
+                />
+              </InputGroup>
+              {isDuplicate ? <FieldError>{t("duplicateTag")}</FieldError> : null}
+            </TextField>
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button
-              className="min-w-16"
-              color="danger"
-              size="sm"
-              variant="flat"
-              onPress={handleDelete}
-            >
+            <Button className="min-w-16" size="sm" variant="danger" onPress={handleDelete}>
               {tActions("delete")}
             </Button>
             <Button
               className="min-w-16"
-              color="primary"
               isDisabled={!canSave}
               size="sm"
+              variant="primary"
               onPress={handleSubmit}
             >
               {tActions("save")}

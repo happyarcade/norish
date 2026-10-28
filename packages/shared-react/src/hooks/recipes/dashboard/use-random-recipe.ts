@@ -12,15 +12,21 @@ export type RandomRecipeResult = {
   image: string | null;
 } | null;
 
+export type RandomRecipeFilters = {
+  category?: RecipeCategory;
+  recipeTypes?: string[];
+  suitableSlots?: string[];
+};
+
 export function createUseRandomRecipe({ useTRPC }: CreateRecipeHooksOptions) {
   return function useRandomRecipe() {
     const trpc = useTRPC();
     const queryClient = useQueryClient();
 
     const getRandomRecipe = useCallback(
-      async (category?: RecipeCategory): Promise<RandomRecipeResult> => {
+      async (filters: RandomRecipeFilters = {}): Promise<RandomRecipeResult> => {
         return queryClient.fetchQuery({
-          ...trpc.recipes.getRandomRecipe.queryOptions({ category }),
+          ...trpc.recipes.getRandomRecipe.queryOptions(filters),
           staleTime: 0,
           gcTime: 0,
         });

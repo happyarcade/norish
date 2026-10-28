@@ -6,7 +6,7 @@ import "@testing-library/jest-dom";
 import NutritionPortionControl from "@/components/recipes/nutrition-portion-control";
 
 // Mock HeroUI components
-vi.mock("@heroui/react", () => ({
+vi.mock("@heroui-v3/react", () => ({
   Button: ({ children, onPress, "aria-label": ariaLabel, ...props }: any) => (
     <button aria-label={ariaLabel} onClick={onPress} {...props}>
       {children}

@@ -1,13 +1,12 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { useAutoHide } from "@/hooks/auto-hide";
 import { PlusIcon } from "@heroicons/react/16/solid";
-import { Button } from "@heroui/react";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 
 import { useGroceriesUIContext } from "../context";
-
-import { useAutoHide } from "@/hooks/auto-hide";
 
 /**
  * Mobile floating add button that repositions based on nav visibility.
@@ -45,16 +44,15 @@ export default function AddGroceryButton() {
         whileTap={{ scale: 0.95 }}
       >
         <Button
-          className="font-medium shadow-lg"
-          color="primary"
-          radius="full"
+          className="rounded-full font-medium shadow-lg"
           size="lg"
-          startContent={<PlusIcon className="h-5 w-5" />}
+          variant="primary"
           onPress={() => {
             setAddGroceryPanelOpen(true);
             show();
           }}
         >
+          <PlusIcon className="h-5 w-5" />
           {t("addItems")}
         </Button>
       </motion.div>

@@ -89,8 +89,12 @@ RUN pnpm run build && \
     rm -rf apps/web/.next/standalone/node_modules/typescript \
            apps/web/.next/standalone/node_modules/ffmpeg-static
 
-# Create isolated production deployment with pnpm deploy.
-RUN pnpm deploy --filter @norish/web --prod /app/deploy && \
+# Create an isolated production deployment. This workspace intentionally keeps
+# injectWorkspacePackages disabled, so pnpm 10 requires the legacy deploy mode.
+# The only configured patch belongs to the excluded mobile app; permit that patch
+# to be unused for this filtered deployment without weakening normal installs.
+RUN printf '\nallowUnusedPatches: true\n' >> pnpm-workspace.yaml && \
+    pnpm deploy --legacy --filter @norish/web --prod /app/deploy && \
     cd /app/deploy/node_modules && \
     # Remove workspace copies (source is in packages/, server code in dist-server/)
     rm -rf @norish && \

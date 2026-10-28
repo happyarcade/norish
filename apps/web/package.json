@@ -23,13 +23,8 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@heroicons/react": "catalog:",
-    "@heroui/avatar": "^2.2.25",
-    "@heroui/dropdown": "^2.3.31",
-    "@heroui/navbar": "^2.2.29",
-    "@heroui/react": "catalog:",
-    "@heroui/system": "^2.4.27",
-    "@heroui/theme": "^2.4.26",
-    "@heroui/toast": "^2.0.21",
+    "@heroui-v3/react": "npm:@heroui/react@3.2.4",
+    "@heroui-v3/styles": "npm:@heroui/styles@3.2.4",
     "@iconify/react": "^6.0.2",
     "@internationalized/date": "^3.11.0",
     "@norish/api": "workspace:*",
@@ -45,6 +40,9 @@
     "@norish/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-virtual": "^3.13.18",
+    "@react-aria/i18n": "^3.13.1",
+    "@react-aria/ssr": "^3.10.1",
+    "@react-aria/utils": "^3.34.1",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
@@ -63,6 +61,11 @@
     "usehooks-ts": "^3.1.1",
     "ws": "catalog:",
     "zustand": "5.0.11"
+  },
+  "dependenciesMeta": {
+    "@norish/db": {
+      "injected": false
+    }
   },
   "devDependencies": {
     "@norish/eslint-config": "workspace:*",

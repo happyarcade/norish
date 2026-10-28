@@ -16,10 +16,16 @@ describe("recipe filter contract", () => {
       searchFields: DEFAULT_RECIPE_FILTERS.searchFields,
       tags: undefined,
       categories: undefined,
+      suitableSlots: undefined,
       filterMode: "AND",
       sortMode: "dateDesc",
       minRating: undefined,
       maxCookingTime: undefined,
+      maxSodium: undefined,
+      maxCholesterol: undefined,
+      minFiber: undefined,
+      sourceDomains: undefined,
+      nutritionDetail: undefined,
     });
     expect(serializeRecipeFilters(DEFAULT_RECIPE_FILTERS)).toBe(JSON.stringify(queryFilters));
   });
@@ -28,24 +34,48 @@ describe("recipe filter contract", () => {
     expect(
       normalizePersistedRecipeFilters({
         sortMode: "dateDesc",
-        filterMode: "AND",
+        filterMode: "OR",
         searchTags: ["vegetarian"],
         searchFields: ["name"],
         showFavoritesOnly: true,
         minRating: 4,
         maxCookingTime: 30,
+        sourceDomains: ["bbcgoodfood.com"],
+        nutritionDetail: "core",
         categories: ["Dinner"],
+        suitableSlots: ["dinner", "evening"],
       })
     ).toMatchObject({
       sortMode: "dateDesc",
-      filterMode: "AND",
+      filterMode: "OR",
       searchTags: ["vegetarian"],
       showFavoritesOnly: true,
       minRating: 4,
       maxCookingTime: 30,
+      sourceDomains: ["bbcgoodfood.com"],
+      nutritionDetail: "core",
       categories: ["Dinner"],
+      suitableSlots: ["dinner", "evening"],
     });
 
     expect(normalizePersistedRecipeFilters({ sortMode: "invalid" })).toBeNull();
+  });
+
+  it("maps legacy nutrition detail filters to the current names", () => {
+    expect(
+      normalizePersistedRecipeFilters({
+        sortMode: "dateDesc",
+        filterMode: "AND",
+        nutritionDetail: "extended",
+      })
+    ).toMatchObject({ nutritionDetail: "core" });
+
+    expect(
+      normalizePersistedRecipeFilters({
+        sortMode: "dateDesc",
+        filterMode: "AND",
+        nutritionDetail: "missingExtended",
+      })
+    ).toMatchObject({ nutritionDetail: "missingCore" });
   });
 });

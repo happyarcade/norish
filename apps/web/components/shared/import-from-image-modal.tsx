@@ -2,24 +2,17 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PhotoIcon, SparklesIcon, XMarkIcon } from "@heroicons/react/16/solid";
-import {
-  addToast,
-  Button,
-  Kbd,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from "@heroui/react";
-import { useTranslations } from "next-intl";
-import { ALLOWED_OCR_MIME_SET, MAX_OCR_FILES } from "@norish/shared/contracts";
-
+import { Button } from "@/components/ui/button";
 import { useUploadLimitsQuery } from "@/hooks/config";
 import { useRecipesMutations } from "@/hooks/recipes";
 import { useClipboardImagePaste } from "@/hooks/use-clipboard-image-paste";
 import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
+import { addToast } from "@/lib/ui/toast";
+import { PhotoIcon, SparklesIcon, XMarkIcon } from "@heroicons/react/16/solid";
+import { Kbd, Modal, useOverlayState } from "@heroui-v3/react";
+import { useTranslations } from "next-intl";
+
+import { ALLOWED_OCR_MIME_SET, MAX_OCR_FILES } from "@norish/shared/contracts";
 
 interface ImportFromImageModalProps {
   isOpen: boolean;
@@ -42,6 +35,7 @@ export default function ImportFromImageModal({ isOpen, onOpenChange }: ImportFro
   const [files, setFiles] = useState<FilePreview[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modalState = useOverlayState({ isOpen, onOpenChange });
 
   const handleAddFiles = useCallback(
     (selectedFiles: File[] | FileList | null) => {
@@ -182,17 +176,15 @@ export default function ImportFromImageModal({ isOpen, onOpenChange }: ImportFro
   }, [files, onOpenChange]);
 
   return (
-    <Modal
-      classNames={{ wrapper: "z-[1100]", backdrop: "z-[1099]" }}
-      isOpen={isOpen}
-      size="lg"
-      onOpenChange={onOpenChange}
-    >
-      <ModalContent>
-        {() => (
-          <>
-            <ModalHeader className="flex flex-col gap-1">{t("title")}</ModalHeader>
-            <ModalBody>
+    <Modal state={modalState}>
+      <Modal.Backdrop className="z-[1099]" variant="blur">
+        <Modal.Container className="z-[1100]" placement="center" scroll="inside" size="lg">
+          <Modal.Dialog>
+            <Modal.CloseTrigger aria-label={tActions("cancel")} />
+            <Modal.Header>
+              <Modal.Heading>{t("title")}</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
               {/* Dropzone */}
               <button
                 className="border-default-300 hover:border-primary flex min-h-[180px] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-6 transition-colors"
@@ -205,7 +197,11 @@ export default function ImportFromImageModal({ isOpen, onOpenChange }: ImportFro
                 <div className="text-center">
                   <p className="text-default-600 text-sm font-medium">{t("dropzone")}</p>
                   <p className="text-default-500 mt-1 flex items-center justify-center gap-1.5 text-xs">
-                    <Kbd keys={["ctrl"]}>V</Kbd> {t("paste")}
+                    <Kbd>
+                      <Kbd.Abbr keyValue="ctrl" />
+                      <Kbd.Content>V</Kbd.Content>
+                    </Kbd>{" "}
+                    {t("paste")}
                   </p>
                   <p className="text-default-400 mt-1 text-xs">{t("formats")}</p>
                 </div>
@@ -249,8 +245,8 @@ export default function ImportFromImageModal({ isOpen, onOpenChange }: ImportFro
                   {t("selectedCount", { count: files.length })}
                 </p>
               )}
-            </ModalBody>
-            <ModalFooter>
+            </Modal.Body>
+            <Modal.Footer>
               <Button
                 className="bg-gradient-to-r from-rose-400 via-fuchsia-500 to-indigo-500 text-white hover:brightness-110"
                 isDisabled={files.length === 0}
@@ -260,10 +256,10 @@ export default function ImportFromImageModal({ isOpen, onOpenChange }: ImportFro
               >
                 {tActions("importWithAI")}
               </Button>
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Modal>
   );
 }

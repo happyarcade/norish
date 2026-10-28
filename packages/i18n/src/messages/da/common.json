@@ -146,6 +146,9 @@
     },
     "menu": {
       "description": "Importer fra en URL, scan et billede eller start fra bunden."
+    },
+    "clipboard": {
+      "title": "Import a recipe from the link you copied?"
     }
   },
   "formatting": {

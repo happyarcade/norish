@@ -126,6 +126,17 @@
         "title": "Show Favorites",
         "description": "Display favorite/heart icons on recipe cards and detail pages"
       },
+      "nutritionFocus": {
+        "title": "Nutrition Focus",
+        "description": "Choose the health metrics to watch across your planner and dashboard.",
+        "thresholdLabelMax": "Daily max",
+        "thresholdLabelMin": "Daily min"
+      },
+      "metadataReview": {
+        "title": "Recipe Metadata Review",
+        "description": "Open the bulk editor for recipe types and suitable slots.",
+        "action": "Open"
+      },
       "applyError": "Failed to apply preference"
     }
   },

@@ -1,5 +1,15 @@
 import type { User } from "@norish/shared/contracts";
-import type { UserPreferencesDto } from "@norish/shared/contracts/zod/user";
+import type {
+  NutritionFocusMetricKey,
+  NutritionMetricTargetsDto,
+  UserPreferencesDto,
+} from "@norish/shared/contracts/zod/user";
+
+import {
+  DEFAULT_FOCUS_NUTRITION_METRICS,
+  DEFAULT_NUTRITION_TARGETS,
+  isNutritionFocusMetricKey,
+} from "./nutrition-focus";
 
 export function getUserPreferences(
   user: Pick<User, "preferences"> | null | undefined
@@ -49,4 +59,38 @@ export function getLocalePreference(
   const value = getUserPreferences(user).locale;
 
   return typeof value === "string" ? value : null;
+}
+
+export function getFocusNutritionMetricsPreference(
+  user: Pick<User, "preferences"> | null | undefined,
+  fallback: NutritionFocusMetricKey[] = DEFAULT_FOCUS_NUTRITION_METRICS
+): NutritionFocusMetricKey[] {
+  const value = getUserPreferences(user).focusNutritionMetrics;
+
+  if (!Array.isArray(value)) return fallback;
+
+  const metrics = value.filter(
+    (metric): metric is NutritionFocusMetricKey =>
+      typeof metric === "string" && isNutritionFocusMetricKey(metric)
+  );
+
+  return metrics.length > 0 ? metrics : fallback;
+}
+
+export function getNutritionTargetsPreference(
+  user: Pick<User, "preferences"> | null | undefined
+): NutritionMetricTargetsDto {
+  const value = getUserPreferences(user).nutritionTargets;
+
+  return Object.fromEntries(
+    Object.entries(DEFAULT_NUTRITION_TARGETS).map(([metricKey, defaults]) => [
+      metricKey,
+      {
+        ...defaults,
+        ...((value as NutritionMetricTargetsDto | undefined)?.[
+          metricKey as NutritionFocusMetricKey
+        ] ?? {}),
+      },
+    ])
+  ) as NutritionMetricTargetsDto;
 }

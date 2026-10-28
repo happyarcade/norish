@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { ArrowPathIcon, ClockIcon, PauseIcon, PlayIcon } from "@heroicons/react/16/solid";
-import { Chip } from "@heroui/react";
-import { formatTimerMs } from "@norish/shared/lib/helpers";
-
-import { useTimerStore } from "@/stores/timers";
+import { Chip } from "@/components/ui/chip";
 import { useNotificationPermission } from "@/hooks/use-notification-permission";
+import { useTimerStore } from "@/stores/timers";
+import { ArrowPathIcon, ClockIcon, PauseIcon, PlayIcon } from "@heroicons/react/16/solid";
+
+import { formatTimerMs } from "@norish/shared/lib/helpers";
 
 interface TimerChipProps {
   id: string;

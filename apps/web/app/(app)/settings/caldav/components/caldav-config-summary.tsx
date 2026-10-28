@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
 import {
   ArrowPathIcon,
   CheckCircleIcon,
@@ -9,11 +12,10 @@ import {
   XCircleIcon,
 } from "@heroicons/react/16/solid";
 import { ServerIcon } from "@heroicons/react/24/outline";
-import { Button, Card, CardBody, CardHeader, Chip, Switch, useDisclosure } from "@heroui/react";
+import { Switch } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
 
 import { useCalDavSettingsContext } from "../context";
-
 import DeleteCalDavModal from "./delete-caldav-modal";
 
 interface CalDavConfigSummaryProps {
@@ -31,7 +33,7 @@ export default function CalDavConfigSummary({ onEditClick }: CalDavConfigSummary
     deleteConfig,
   } = useCalDavSettingsContext();
 
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const [connectionStatus, setConnectionStatus] = useState<
     "checking" | "connected" | "disconnected"
@@ -132,51 +134,36 @@ export default function CalDavConfigSummary({ onEditClick }: CalDavConfigSummary
   return (
     <>
       <Card>
-        <CardHeader className="flex items-start justify-between pb-2">
+        <Card.Header className="flex items-start justify-between pb-2">
           <div className="flex flex-1 items-center gap-3">
             <ServerIcon className="text-primary h-6 w-6" />
             <div className="flex flex-col gap-1">
               <h2 className="text-lg font-semibold">{t("title")}</h2>
-              <Chip
-                color={getConnectionStatusColor()}
-                size="sm"
-                startContent={
-                  connectionStatus === "checking" ? (
-                    <ArrowPathIcon className="h-3 w-3 animate-spin" />
-                  ) : connectionStatus === "connected" ? (
-                    <CheckCircleIcon className="h-3 w-3" />
-                  ) : (
-                    <XCircleIcon className="h-3 w-3" />
-                  )
-                }
-                variant="flat"
-              >
-                {getConnectionStatusText()}
+              <Chip color={getConnectionStatusColor()} size="sm" variant="soft">
+                {connectionStatus === "checking" ? (
+                  <ArrowPathIcon className="h-3 w-3 animate-spin" />
+                ) : connectionStatus === "connected" ? (
+                  <CheckCircleIcon className="h-3 w-3" />
+                ) : (
+                  <XCircleIcon className="h-3 w-3" />
+                )}
+                <Chip.Label>{getConnectionStatusText()}</Chip.Label>
               </Chip>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              startContent={<PencilIcon className="h-4 w-4" />}
-              variant="flat"
-              onPress={onEditClick}
-            >
+            <Button size="sm" variant="secondary" onPress={onEditClick}>
+              <PencilIcon className="h-4 w-4" />
               {t("editButton")}
             </Button>
-            <Button
-              color="danger"
-              size="sm"
-              startContent={<TrashIcon className="h-4 w-4" />}
-              variant="flat"
-              onPress={onDeleteOpen}
-            >
+            <Button size="sm" variant="danger-soft" onPress={() => setIsDeleteOpen(true)}>
+              <TrashIcon className="h-4 w-4" />
               {t("deleteButton")}
             </Button>
           </div>
-        </CardHeader>
+        </Card.Header>
 
-        <CardBody className="gap-4">
+        <Card.Content className="gap-4">
           {/* Server URL and Enabled Toggle */}
           <div className="bg-default-100 flex flex-col justify-between gap-4 rounded-lg p-3 sm:flex-row sm:items-center">
             <div className="min-w-0 flex-1">
@@ -187,18 +174,29 @@ export default function CalDavConfigSummary({ onEditClick }: CalDavConfigSummary
               <span className="text-default-600 text-base">
                 {config.enabled ? t("enabled") : t("disabled")}
               </span>
-              <Switch isSelected={config.enabled} size="sm" onValueChange={handleToggleEnabled} />
+              <Switch
+                aria-label={config.enabled ? t("enabled") : t("disabled")}
+                isSelected={config.enabled}
+                size="sm"
+                onChange={(enabled) => void handleToggleEnabled(enabled)}
+              >
+                <Switch.Content>
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch.Content>
+              </Switch>
             </div>
           </div>
-        </CardBody>
+        </Card.Content>
       </Card>
 
       <DeleteCalDavModal
         isOpen={isDeleteOpen}
-        onClose={onDeleteClose}
+        onClose={() => setIsDeleteOpen(false)}
         onConfirm={async (deleteEvents) => {
           await deleteConfig(deleteEvents);
-          onDeleteClose();
+          setIsDeleteOpen(false);
         }}
       />
     </>

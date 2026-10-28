@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { addToast, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { addToast } from "@/lib/ui/toast";
 import { useTranslations } from "next-intl";
 
 import { sharedDashboardRecipeHooks } from "./shared-recipe-hooks";

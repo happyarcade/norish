@@ -2,33 +2,47 @@ import { DeleteRecipeModal } from "@/components/shared/delete-recipe-modal";
 import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-const modalMock = vi.fn(({ children }: any) => <div>{children}</div>);
+const backdropMock = vi.fn(({ children }: any) => <div>{children}</div>);
+const containerMock = vi.fn(({ children }: any) => <div>{children}</div>);
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-vi.mock("@heroui/react", () => ({
-  Modal: (props: any) => modalMock(props),
-  ModalContent: ({ children }: any) =>
-    typeof children === "function" ? <div>{children(vi.fn())}</div> : <div>{children}</div>,
-  ModalHeader: ({ children }: any) => <div>{children}</div>,
-  ModalBody: ({ children }: any) => <div>{children}</div>,
-  ModalFooter: ({ children }: any) => <div>{children}</div>,
+vi.mock("@/components/ui/button", () => ({
   Button: ({ children }: any) => <button type="button">{children}</button>,
 }));
+
+vi.mock("@heroui-v3/react", () => {
+  const Modal = Object.assign(({ children }: any) => <div>{children}</div>, {
+    Backdrop: (props: any) => backdropMock(props),
+    Body: ({ children }: any) => <div>{children}</div>,
+    CloseTrigger: () => null,
+    Container: (props: any) => containerMock(props),
+    Dialog: ({ children }: any) => <div>{children}</div>,
+    Footer: ({ children }: any) => <div>{children}</div>,
+    Header: ({ children }: any) => <div>{children}</div>,
+    Heading: ({ children }: any) => <div>{children}</div>,
+  });
+
+  return {
+    Modal,
+    useOverlayState: ({ isOpen, onOpenChange }: any) => ({
+      close: () => onOpenChange(false),
+      isOpen,
+    }),
+  };
+});
 
 describe("DeleteRecipeModal", () => {
   it("renders above the mobile nav stack", () => {
     render(<DeleteRecipeModal isOpen recipeName="Soup" onClose={vi.fn()} onConfirm={vi.fn()} />);
 
-    expect(modalMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        classNames: {
-          wrapper: "z-[1100]",
-          backdrop: "z-[1099]",
-        },
-      })
+    expect(backdropMock.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({ className: "z-[1099]" })
+    );
+    expect(containerMock.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({ className: "z-[1100]" })
     );
   });
 });

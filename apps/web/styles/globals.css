@@ -1,9 +1,8 @@
 @import "tailwindcss";
-@plugin "@norish/tailwind-config/hero";
-@source "../../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
+@import "@heroui-v3/styles";
 @custom-variant dark (&:is(.dark *));
 
-/* Import our custom theme colors */
+/* Import Norish colors and HeroUI v3 semantic token aliases. */
 @import "@norish/tailwind-config/theme";
 
 /* Custom fade-in animation */

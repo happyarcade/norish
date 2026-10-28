@@ -8,7 +8,10 @@
     "viewMode": "Visningstilstand",
     "manageStores": "Administrer butikker",
     "storeViewOptions": "Butikvisningsindstillinger",
-    "groupIngredients": "Gruppér ingredienser"
+    "groupIngredients": "Gruppér ingredienser",
+    "pantry": "Pantry",
+    "sectionLabel": "Groceries sections",
+    "shopping": "Shopping"
   },
   "empty": {
     "title": "Din indkøbsliste venter",
@@ -26,6 +29,7 @@
     "storeActions": "Butikshandlinger",
     "markAllDone": "Markér alle som færdige",
     "deleteDone": "Slet færdige",
+    "moveDoneToPantry": "Flyt færdige til lager",
     "done": "{count} færdige"
   },
   "storeManager": {
@@ -73,6 +77,68 @@
     "addSelectedToGroceries": "Tilføj til indkøbsliste",
     "ingredientsAdded": "Ingredienser tilføjet til indkøbslisten.",
     "ingredientsFailed": "Kunne ikke tilføje ingredienser til indkøbslisten.",
-    "addToGroceries": "Tilføj til indkøbsliste"
+    "addToGroceries": "Tilføj til indkøbsliste",
+    "inYourPantry": "In your pantry"
+  },
+  "pantry": {
+    "title": "Pantry",
+    "add": "Add pantry item",
+    "remove": "Remove {name} from pantry",
+    "namePlaceholder": "e.g., olive oil",
+    "empty": "No pantry items yet",
+    "loading": "Loading pantry...",
+    "duplicate": "Already in your pantry",
+    "failed": "Could not save this item",
+    "plannedTitle": "In your pantry",
+    "plannedSubtitle": "Already at home",
+    "atHome": "{count, plural, one {# item at home} other {# items at home}}",
+    "addAnyway": "Add anyway",
+    "added": "Added",
+    "addAnywayFailed": "Could not add this grocery",
+    "onHand": "On hand",
+    "low": "Running low",
+    "staple": "Staple",
+    "onHandCount": "{count, plural, one {# on hand} other {# on hand}}",
+    "lowCount": "{count, plural, one {# running low} other {# running low}}",
+    "checkCount": "{count, plural, one {# needs checking} other {# need checking}}",
+    "checkStock": "Check stock - last confirmed over 45 days ago",
+    "markLow": "Mark {name} as running low",
+    "markLowShort": "Mark as running low",
+    "markOnHand": "Mark {name} as on hand",
+    "markOnHandShort": "Mark as on hand",
+    "makeStaple": "Always keep {name} stocked",
+    "makeStapleShort": "Always keep stocked",
+    "removeStaple": "Stop treating {name} as a staple",
+    "removeStapleShort": "Remove staple status",
+    "removeShort": "Remove from pantry",
+    "search": "Search pantry",
+    "searchPlaceholder": "Search household ingredients...",
+    "noMatches": "No pantry items match your search",
+    "checkStockGroup": "Check stock",
+    "staples": "Staples"
+  },
+  "pantryTransfer": {
+    "title": "Sæt indkøbene på plads",
+    "description": "Gennemgå dine indkøb. Fravælg husholdningsartikler eller andet, du ikke vil registrere på lageret.",
+    "loading": "Indlæser lager...",
+    "empty": "Der er ingen færdige indkøb at flytte.",
+    "selectAll": "Vælg alle",
+    "completedEntries": "{count, plural, one {# færdig post} other {# færdige poster}}",
+    "alreadyInPantry": "Allerede registreret",
+    "confirm": "Flyt {count, plural, one {# vare} other {# varer}} til lager",
+    "success": "{count, plural, one {# vare blev flyttet} other {# varer blev flyttet}} til lager",
+    "failed": "Indkøbene kunne ikke flyttes. Intet blev fjernet."
+  },
+  "pantryUsage": {
+    "title": "Opdater lager",
+    "description": "Vælg lagerstatus efter madlavningen for hver matchende ingrediens.",
+    "loading": "Kontrollerer lageret...",
+    "nothingAutomatic": "Intet ændres, før du bekræfter.",
+    "keepUnchanged": "Behold lageret uændret",
+    "onHand": "På lager",
+    "runningLow": "Ved at løbe tør",
+    "usedUp": "Brugt op",
+    "statusFor": "Lagerstatus for {name}",
+    "failed": "Måltidet blev markeret som tilberedt, men lageret kunne ikke opdateres. Prøv igen."
   }
 }

@@ -1,9 +1,10 @@
 import type { TRPCSubscriptionProcedure } from "@trpc/server";
-import type { PermissionLevel } from "@norish/config/zod/server-config";
+import type { PolicyEmitContext as BasePolicyEmitContext } from "@norish/queue/events/policy";
 import type { SubscriptionMultiplexer } from "@norish/queue/redis/subscription-multiplexer";
 import type { TypedEmitter } from "./emitter";
 
 import { trpcLogger as log } from "@norish/shared-server/logger";
+import { emitByPolicy as emitByPolicyBase } from "@norish/queue/events/policy";
 
 import { authedProcedure } from "./middleware";
 
@@ -43,10 +44,7 @@ export async function waitForAbort(signal?: AbortSignal): Promise<void> {
 /**
  * Context for policy-based event emission.
  */
-export interface PolicyEmitContext {
-  userId: string;
-  householdKey: string;
-}
+export type PolicyEmitContext = BasePolicyEmitContext;
 
 /**
  * Extended context for subscriptions that includes the multiplexer.
@@ -90,36 +88,7 @@ export function createSubscriptionIterable<T>(
  * emitByPolicy(recipeEmitter, viewPolicy, ctx, "created", { recipe });
  * ```
  */
-export function emitByPolicy<
-  TEvents extends Record<string, unknown>,
-  K extends keyof TEvents & string,
->(
-  emitter: TypedEmitter<TEvents>,
-  viewPolicy: PermissionLevel,
-  ctx: PolicyEmitContext,
-  event: K,
-  data: TEvents[K]
-): void {
-  log.debug(
-    { event, viewPolicy, householdKey: ctx.householdKey, userId: ctx.userId },
-    `Emitting event via policy`
-  );
-
-  switch (viewPolicy) {
-    case "everyone":
-      emitter.broadcast(event, data);
-      log.debug({ event }, "Broadcast event emitted");
-      break;
-    case "household":
-      emitter.emitToHousehold(ctx.householdKey, event, data);
-      log.debug({ event, householdKey: ctx.householdKey }, "Household event emitted");
-      break;
-    case "owner":
-      emitter.emitToUser(ctx.userId, event, data);
-      log.debug({ event, userId: ctx.userId }, "User event emitted");
-      break;
-  }
-}
+export const emitByPolicy = emitByPolicyBase;
 
 /**
  * Merges multiple async iterables into one.

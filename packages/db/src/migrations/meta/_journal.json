@@ -218,6 +218,62 @@
       "when": 1771424928200,
       "tag": "0030_add-apikey-configid",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1775124858745,
+      "tag": "0031_eager_princess_powerful",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1775130281448,
+      "tag": "0032_cool_metal_master",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1775224692251,
+      "tag": "0033_living_bromley",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1775653838164,
+      "tag": "0034_recipe_cook_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1775738400000,
+      "tag": "0035_recipe_import_review_support",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1787338085476,
+      "tag": "0036_eminent_meteorite",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1790950274606,
+      "tag": "0037_certain_magma",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1792590978399,
+      "tag": "0038_flat_malcolm_colcord",
+      "breakpoints": true
     }
   ]
 }
