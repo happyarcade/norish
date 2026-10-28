@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRecipeContext } from "@/app/(app)/recipes/[id]/context";
 import AIActionButton from "@/components/shared/ai-action-button";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { usePermissionsContext } from "@/context/permissions-context";
 import {
@@ -12,10 +14,13 @@ import {
   ExclamationTriangleIcon,
   FireIcon,
   HeartIcon,
+  ScaleIcon,
   ShieldExclamationIcon,
 } from "@heroicons/react/16/solid";
 import { Separator, Skeleton } from "@heroui-v3/react";
 import { useTranslations } from "next-intl";
+
+import { auditRecipeNutrition } from "@norish/shared/lib/nutrition-quality";
 
 import NutritionPortionControl from "./nutrition-portion-control";
 
@@ -140,7 +145,7 @@ function formatMetricValue(
 
 function NutritionDisplay({ inCard = true }: { inCard?: boolean }) {
   const { recipe, isEstimatingNutrition, estimateNutrition } = useRecipeContext();
-  const { isAIEnabled } = usePermissionsContext();
+  const { canEditRecipe, isAIEnabled } = usePermissionsContext();
   const t = useTranslations("recipes.nutrition");
   // Independent portion state - defaults to 1 (per serving)
   const [portions, setPortions] = useState(1);
@@ -177,6 +182,20 @@ function NutritionDisplay({ inCard = true }: { inCard?: boolean }) {
       servingSize: recipe.nutritionDetails?.servingSize ?? null,
     };
   }, [recipe, portions, isAIEnabled]);
+  const nutritionReview = useMemo(() => {
+    if (!recipe || (recipe.userId && !canEditRecipe(recipe.userId))) return null;
+
+    const audit = auditRecipeNutrition(recipe);
+
+    if (audit.status !== "review") return null;
+
+    return {
+      href: `/recipes/review/nutrition?search=${encodeURIComponent(recipe.name)}`,
+      message:
+        audit.issues.find((issue) => issue.severity !== "info")?.message ??
+        "These nutrition values may need checking.",
+    };
+  }, [canEditRecipe, recipe]);
 
   if (!nutritionData) return null;
 
@@ -263,6 +282,25 @@ function NutritionDisplay({ inCard = true }: { inCard?: boolean }) {
               {t("showingPortions", { count: portions })}
             </p>
           )}
+          {nutritionReview ? (
+            <div className="border-warning-200 bg-warning-50/70 mt-4 flex flex-col gap-3 rounded-lg border px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-start gap-2">
+                <ExclamationTriangleIcon className="text-warning-700 mt-0.5 h-4 w-4 shrink-0" />
+                <p className="text-warning-800 text-sm leading-5">{nutritionReview.message}</p>
+              </div>
+              <Button
+                as={Link}
+                className="w-full shrink-0 sm:w-auto"
+                href={nutritionReview.href}
+                radius="full"
+                size="sm"
+                startContent={<ScaleIcon className="h-4 w-4" />}
+                variant="warning-soft"
+              >
+                Review values
+              </Button>
+            </div>
+          ) : null}
         </>
       ) : (
         <div className="flex flex-col items-center gap-3 py-2">

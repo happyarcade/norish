@@ -2,6 +2,12 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useTRPC } from "@/app/providers/trpc-provider";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { Input } from "@/components/ui/input";
+import { addToast } from "@/lib/ui/toast";
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -10,13 +16,6 @@ import {
 } from "@heroicons/react/16/solid";
 import { Spinner } from "@heroui-v3/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import { useTRPC } from "@/app/providers/trpc-provider";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Chip } from "@/components/ui/chip";
-import { Input } from "@/components/ui/input";
-import { addToast } from "@/lib/ui/toast";
 
 const METRICS = [
   { key: "calories", label: "Calories", unit: "kcal" },
@@ -67,10 +66,14 @@ function NutritionGrid({ label, values }: { label: string; values: NutritionValu
   );
 }
 
-export default function NutritionReviewPage() {
+type NutritionReviewPageProps = {
+  initialSearch?: string;
+};
+
+export default function NutritionReviewPage({ initialSearch = "" }: NutritionReviewPageProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
   const [includeMissing, setIncludeMissing] = useState(false);
   const [includeReviewed, setIncludeReviewed] = useState(false);
   const queryInput = useMemo(
