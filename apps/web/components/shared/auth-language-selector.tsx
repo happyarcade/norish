@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { DropdownButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import { useLocaleCookie } from "@/hooks/user/use-locale-cookie";
 import { GlobeAltIcon } from "@heroicons/react/16/solid";
 import { Dropdown, Label, Skeleton } from "@heroui-v3/react";
@@ -31,7 +31,7 @@ export function AuthLanguageSelector() {
 
   return (
     <Dropdown>
-      <Button
+      <DropdownButtonTrigger
         isIconOnly
         aria-label={t("title")}
         isPending={isChanging}
@@ -39,7 +39,7 @@ export function AuthLanguageSelector() {
         variant="tertiary"
       >
         <GlobeAltIcon className="size-5" />
-      </Button>
+      </DropdownButtonTrigger>
       <Dropdown.Popover placement="bottom end">
         <Dropdown.Menu
           aria-label={t("title")}

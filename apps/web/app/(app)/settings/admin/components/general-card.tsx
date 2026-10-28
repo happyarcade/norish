@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PopoverButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import { Select, SelectItem } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
@@ -181,19 +182,16 @@ export default function GeneralCard() {
             <span className="text-default-500 text-base">{t("localesDescription")}</span>
           </div>
 
-          <Popover>
-            <Popover.Trigger>
-              <Button
-                className="max-w-xs justify-between"
-                endContent={<ChevronDownIcon className="h-4 w-4 shrink-0" />}
-                isDisabled={isLoading || isSaving}
-                variant="bordered"
-              >
-                <span className="truncate">
-                  {enabledLocaleOptions.map((l) => l.name).join(", ") || t("locales")}
-                </span>
-              </Button>
-            </Popover.Trigger>
+          <Popover isDisabled={isLoading || isSaving}>
+            <PopoverButtonTrigger
+              className="max-w-xs justify-between"
+              endContent={<ChevronDownIcon className="h-4 w-4 shrink-0" />}
+              variant="bordered"
+            >
+              <span className="truncate">
+                {enabledLocaleOptions.map((l) => l.name).join(", ") || t("locales")}
+              </span>
+            </PopoverButtonTrigger>
             <Popover.Content className="w-64 p-0" placement="bottom start">
               <Popover.Dialog className="flex w-full flex-col p-0">
                 {allLocales.map((locale) => (

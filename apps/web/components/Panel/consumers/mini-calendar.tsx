@@ -5,7 +5,7 @@ import { memo, useCallback, useMemo } from "react";
 import { PlannedItemThumbnail } from "@/components/calendar/planned-item-thumbnail";
 import Panel from "@/components/Panel/Panel";
 import { useIsDesktop } from "@/components/planner/use-is-desktop";
-import { Button } from "@/components/ui/button";
+import { DropdownButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import { useHouseholdQuery } from "@/hooks/households/use-household-query";
 import { usePlannerMutations, usePlannerRangeQuery } from "@/hooks/planner";
 import { PlusIcon } from "@heroicons/react/16/solid";
@@ -106,7 +106,7 @@ const MiniCalendarDay = memo(function MiniCalendarDay({
           </div>
 
           <Dropdown>
-            <Button
+            <DropdownButtonTrigger
               isIconOnly
               aria-label="Add to meal planner"
               className="text-default-500 hover:text-primary h-8 min-w-8 rounded-full shadow-sm transition-transform active:scale-95"
@@ -114,7 +114,7 @@ const MiniCalendarDay = memo(function MiniCalendarDay({
               variant="tertiary"
             >
               <PlusIcon className="h-4 w-4" />
-            </Button>
+            </DropdownButtonTrigger>
             <Dropdown.Popover placement="bottom end">
               <Dropdown.Menu aria-label="Choose planner slot">
                 {menu.explicitMeals.length > 0 ? (

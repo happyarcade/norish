@@ -34,6 +34,11 @@ export interface ButtonProps extends Omit<HeroUIButtonProps, "children" | "class
   variant?: LegacyButtonVariant;
 }
 
+export type ButtonClassNameOptions = Pick<
+  ButtonProps,
+  "className" | "color" | "fullWidth" | "isIconOnly" | "radius" | "size" | "variant"
+>;
+
 function resolveVariant(
   variant: LegacyButtonVariant | undefined,
   color: LegacyButtonColor | undefined
@@ -84,6 +89,29 @@ function legacyVariantClass(variant: LegacyButtonVariant | undefined): string | 
   return undefined;
 }
 
+export function getButtonClassName({
+  className,
+  color,
+  fullWidth,
+  isIconOnly,
+  radius,
+  size,
+  variant,
+}: ButtonClassNameOptions): string {
+  return cx(
+    buttonVariants({
+      fullWidth,
+      isIconOnly,
+      size,
+      variant: resolveVariant(variant, color),
+    }),
+    radiusClass(radius),
+    colorClass(color),
+    legacyVariantClass(variant),
+    className
+  );
+}
+
 export function Button({
   as: Component,
   children,
@@ -118,15 +146,15 @@ export function Button({
     return (
       <Component
         {...props}
-        className={cx(
-          buttonVariants({
-            fullWidth: props.fullWidth,
-            isIconOnly: props.isIconOnly,
-            size: props.size,
-            variant: resolvedVariant,
-          }),
-          resolvedClassName
-        )}
+        className={getButtonClassName({
+          className,
+          color,
+          fullWidth: props.fullWidth,
+          isIconOnly: props.isIconOnly,
+          radius,
+          size: props.size,
+          variant,
+        })}
         href={href}
       >
         {content}

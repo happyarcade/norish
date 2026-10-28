@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import ImportFromImageModal from "@/components/shared/import-from-image-modal";
 import ImportFromPasteModal from "@/components/shared/import-from-paste-modal";
 import ImportRecipeModal from "@/components/shared/import-recipe-modal";
-import { Button } from "@/components/ui/button";
+import { DropdownButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import { usePermissionsContext } from "@/context/permissions-context";
 import {
   ArrowDownTrayIcon,
@@ -65,7 +65,7 @@ export default function CreateRecipeButton() {
     <>
       {/* Desktop */}
       <Dropdown>
-        <Button
+        <DropdownButtonTrigger
           className="hidden font-medium md:flex"
           color="primary"
           id="create-recipe-menu-trigger-desktop"
@@ -74,7 +74,7 @@ export default function CreateRecipeButton() {
           startContent={<PlusIcon className="h-5 w-5" />}
         >
           {t("addRecipe")}
-        </Button>
+        </DropdownButtonTrigger>
         <Dropdown.Popover placement="bottom end">
           <Dropdown.Menu aria-label="Add recipe options">{menuItems}</Dropdown.Menu>
         </Dropdown.Popover>
@@ -82,7 +82,7 @@ export default function CreateRecipeButton() {
 
       {/* Mobile */}
       <Dropdown>
-        <Button
+        <DropdownButtonTrigger
           isIconOnly
           aria-label={t("addRecipe")}
           className="mx-2 md:hidden"
@@ -92,7 +92,7 @@ export default function CreateRecipeButton() {
           size="md"
         >
           <PlusIcon className="h-5 w-5" />
-        </Button>
+        </DropdownButtonTrigger>
         <Dropdown.Popover placement="bottom end">
           <Dropdown.Menu aria-label="Add recipe options">{menuItems}</Dropdown.Menu>
         </Dropdown.Popover>

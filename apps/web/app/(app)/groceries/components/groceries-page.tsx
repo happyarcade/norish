@@ -14,6 +14,7 @@ import { AddGroceryPanel } from "@/components/Panel/consumers";
 import EditGroceryPanel from "@/components/Panel/consumers/edit-grocery-panel";
 import GrocerySkeleton from "@/components/skeleton/grocery-skeleton";
 import { Button } from "@/components/ui/button";
+import { DropdownButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import { useComputedShoppingQuery } from "@/hooks/groceries/use-computed-shopping-query";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import {
@@ -252,9 +253,14 @@ export function GroceriesPage() {
               </Button>
               {/* Settings dropdown with view mode and store management */}
               <Dropdown>
-                <Button isIconOnly aria-label={t("viewMode")} size="sm" variant="tertiary">
+                <DropdownButtonTrigger
+                  isIconOnly
+                  aria-label={t("viewMode")}
+                  size="sm"
+                  variant="tertiary"
+                >
                   <Cog6ToothIcon className="h-5 w-5" />
-                </Button>
+                </DropdownButtonTrigger>
                 <Dropdown.Popover placement="bottom end">
                   <Dropdown.Menu aria-label={t("viewMode")}>
                     <Dropdown.Section>

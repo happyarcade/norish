@@ -1,8 +1,8 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DropdownButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import { useDroppable } from "@dnd-kit/core";
 import { PlusIcon } from "@heroicons/react/16/solid";
 import { Dropdown, Separator } from "@heroui-v3/react";
@@ -119,7 +119,7 @@ export const TimelineDaySection = memo(function TimelineDaySection({
           </div>
 
           <Dropdown>
-            <Button
+            <DropdownButtonTrigger
               isIconOnly
               aria-label={t("addItem")}
               className="bg-default-100 text-default-500 hover:text-primary h-8 min-w-8 rounded-full shadow-sm transition-transform active:scale-95"
@@ -127,7 +127,7 @@ export const TimelineDaySection = memo(function TimelineDaySection({
               variant="flat"
             >
               <PlusIcon className="h-4 w-4" />
-            </Button>
+            </DropdownButtonTrigger>
             <Dropdown.Popover placement="bottom end">
               <Dropdown.Menu
                 aria-label={tSlots("chooseSlot")}

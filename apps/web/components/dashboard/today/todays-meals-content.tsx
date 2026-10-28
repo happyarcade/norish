@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useTRPC } from "@/app/providers/trpc-provider";
 import PlannerRecipePickerPanel from "@/components/planner/planner-recipe-picker-panel";
 import TodaysMealsSkeleton from "@/components/skeleton/todays-meals-skeleton";
-import { Button } from "@/components/ui/button";
+import { DropdownButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import { useHouseholdQuery } from "@/hooks/households/use-household-query";
 import { usePlannerMutations, usePlannerRangeQuery } from "@/hooks/planner";
 import { PlusIcon } from "@heroicons/react/16/solid";
@@ -196,7 +196,7 @@ export default function TodaysMealsContent() {
 
         {!isLoading && addableFlexSlots.length > 0 ? (
           <Dropdown>
-            <Button
+            <DropdownButtonTrigger
               className="shrink-0"
               isDisabled={plannerMutations.isSaving}
               radius="full"
@@ -205,7 +205,7 @@ export default function TodaysMealsContent() {
               variant="flat"
             >
               Flex slot
-            </Button>
+            </DropdownButtonTrigger>
             <Dropdown.Popover placement="bottom end">
               <Dropdown.Menu aria-label="Choose flex slot">
                 {addableFlexSlots.map((slot) => (

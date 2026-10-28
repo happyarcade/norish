@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
+import { PopoverButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import { ArrowPathIcon, ClockIcon, InformationCircleIcon } from "@heroicons/react/16/solid";
 import { Pagination, Popover, Table } from "@heroui-v3/react";
 import { formatDistanceToNow } from "date-fns";
@@ -229,16 +230,14 @@ export default function CalDavSyncStatusCard() {
                       <Table.Cell>
                         {status.errorMessage ? (
                           <Popover>
-                            <Popover.Trigger>
-                              <Button
-                                isIconOnly
-                                aria-label={t("errorDetails")}
-                                size="sm"
-                                variant="danger-soft"
-                              >
-                                <InformationCircleIcon className="h-4 w-4" />
-                              </Button>
-                            </Popover.Trigger>
+                            <PopoverButtonTrigger
+                              isIconOnly
+                              aria-label={t("errorDetails")}
+                              size="sm"
+                              variant="danger-soft"
+                            >
+                              <InformationCircleIcon className="h-4 w-4" />
+                            </PopoverButtonTrigger>
                             <Popover.Content placement="left">
                               <Popover.Dialog className="max-w-xs">
                                 <Popover.Heading>{t("errorDetails")}</Popover.Heading>

@@ -2,6 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DropdownButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -215,7 +216,7 @@ function StoreSectionComponent({
       {/* Bulk actions dropdown */}
       {groceries.length > 0 && (
         <Dropdown>
-          <Button
+          <DropdownButtonTrigger
             isIconOnly
             aria-label={t("storeActions")}
             className="shrink-0"
@@ -223,7 +224,7 @@ function StoreSectionComponent({
             variant="tertiary"
           >
             <EllipsisVerticalIcon className="h-5 w-5" />
-          </Button>
+          </DropdownButtonTrigger>
           <Dropdown.Popover placement="bottom end">
             <Dropdown.Menu aria-label={t("storeActions")}>
               <Dropdown.Item

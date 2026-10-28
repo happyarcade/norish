@@ -10,6 +10,7 @@ import { StoreSelector } from "@/components/groceries/store-selector";
 import Panel from "@/components/Panel/Panel";
 import { useIsDesktop } from "@/components/planner/use-is-desktop";
 import { Button } from "@/components/ui/button";
+import { DropdownButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import {
   BookOpenIcon,
@@ -423,7 +424,7 @@ function SectionShell({
 
         {showActions && totalCount > 0 ? (
           <Dropdown>
-            <Button
+            <DropdownButtonTrigger
               isIconOnly
               aria-label={`${title} actions`}
               className="shrink-0"
@@ -431,7 +432,7 @@ function SectionShell({
               variant="tertiary"
             >
               <EllipsisVerticalIcon className="h-5 w-5" />
-            </Button>
+            </DropdownButtonTrigger>
             <Dropdown.Popover placement="bottom end">
               <Dropdown.Menu aria-label={`${title} actions`}>
                 <Dropdown.Item

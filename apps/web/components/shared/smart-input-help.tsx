@@ -9,14 +9,11 @@ export default function SmartInputHelp() {
 
   return (
     <Popover>
-      <Popover.Trigger>
-        <button
-          aria-label={t("helpAriaLabel")}
-          className="text-default-400 hover:text-default-600 hover:bg-default-100 focus:ring-primary/50 inline-flex h-5 w-5 items-center justify-center rounded-full transition-colors focus:ring-2 focus:outline-none"
-          type="button"
-        >
-          <QuestionMarkCircleIcon className="h-4 w-4" />
-        </button>
+      <Popover.Trigger
+        aria-label={t("helpAriaLabel")}
+        className="text-default-400 hover:text-default-600 hover:bg-default-100 focus:ring-primary/50 inline-flex h-5 w-5 items-center justify-center rounded-full transition-colors focus:ring-2 focus:outline-none"
+      >
+        <QuestionMarkCircleIcon className="h-4 w-4" />
       </Popover.Trigger>
       <Popover.Content className="max-w-xs" placement="top">
         <Popover.Arrow />

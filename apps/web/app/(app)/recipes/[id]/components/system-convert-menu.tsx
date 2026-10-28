@@ -2,6 +2,7 @@
 
 import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { DropdownButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import { Tooltip } from "@/components/ui/tooltip";
 import { usePermissionsContext } from "@/context/permissions-context";
 import { useUserContext } from "@/context/user-context";
@@ -86,7 +87,7 @@ export default function SystemConvertMenu() {
 
   return (
     <Dropdown>
-      <Button
+      <DropdownButtonTrigger
         className="bg-content2 text-foreground capitalize transition-opacity duration-150 data-[hover=true]:opacity-80"
         disabled={convertingTo != null}
         size="sm"
@@ -100,7 +101,7 @@ export default function SystemConvertMenu() {
         variant="flat"
       >
         {currentSystem}
-      </Button>
+      </DropdownButtonTrigger>
 
       <Dropdown.Popover placement="bottom end">
         <Dropdown.Menu

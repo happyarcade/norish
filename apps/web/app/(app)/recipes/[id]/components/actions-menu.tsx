@@ -7,6 +7,7 @@ import { MiniCalendar, MiniGroceries, MiniPrepTable } from "@/components/Panel/c
 import { MarkCookedModal } from "@/components/recipes/mark-cooked-modal";
 import { DeleteRecipeModal } from "@/components/shared/delete-recipe-modal";
 import { Button } from "@/components/ui/button";
+import { DropdownButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import { usePermissionsContext } from "@/context/permissions-context";
 import { useRecipesContext } from "@/context/recipes-context";
 import { useActiveAllergies } from "@/hooks/user";
@@ -310,7 +311,7 @@ export default function ActionsMenu({ id }: Props) {
   return (
     <>
       <Dropdown isOpen={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-        <Button
+        <DropdownButtonTrigger
           isIconOnly
           aria-label={t("actionsLabel")}
           className="transition active:scale-95"
@@ -318,7 +319,7 @@ export default function ActionsMenu({ id }: Props) {
           variant="light"
         >
           <EllipsisHorizontalIcon className="text-default-500 h-5 w-5" />
-        </Button>
+        </DropdownButtonTrigger>
 
         <Dropdown.Popover className="z-[500]" placement="bottom end">
           <Dropdown.Menu aria-label={t("actionsLabel")} items={menuItems}>
