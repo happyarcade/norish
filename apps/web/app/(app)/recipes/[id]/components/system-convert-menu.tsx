@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl";
 
 import { MeasurementSystem } from "@norish/shared/contracts";
 import { getShowConversionButtonPreference } from "@norish/shared/lib/user-preferences";
-import { cssAIGradientText, cssAIIconColor, cssButtonPill } from "@norish/web/config/css-tokens";
+import { cssAIGradientText, cssAIIconColor, cssMenuItemPill } from "@norish/web/config/css-tokens";
 
 import { useRecipeContextRequired } from "../context";
 
@@ -113,27 +113,21 @@ export default function SystemConvertMenu() {
           {(item: ConversionOption) => (
             <Dropdown.Item
               id={item.key}
-              className="!bg-transparent py-1 data-[focus=true]:!bg-transparent data-[hover=true]:!bg-transparent data-[selected=true]:!bg-transparent"
+              className={`mx-1 my-0.5 ${cssMenuItemPill}`}
               textValue={item.label}
+              onAction={() => handleConvert(item.key)}
             >
-              <Button
-                className={`w-full justify-start bg-transparent ${cssButtonPill}`}
-                radius="full"
-                size="md"
-                startContent={
-                  item.requiresAI ? (
-                    <SparklesIcon className={`size-4 ${cssAIIconColor}`} />
-                  ) : (
-                    <ArrowsRightLeftIcon className="text-default-400 size-4" />
-                  )
-                }
-                variant="light"
-                onPress={() => handleConvert(item.key)}
+              {item.requiresAI ? (
+                <SparklesIcon className={`size-4 ${cssAIIconColor}`} />
+              ) : (
+                <ArrowsRightLeftIcon className="text-default-400 size-4" />
+              )}
+              <span
+                data-slot="label"
+                className={`text-sm font-medium ${item.requiresAI ? cssAIGradientText : ""}`}
               >
-                <span className={`text-sm font-medium ${item.requiresAI ? cssAIGradientText : ""}`}>
-                  {item.label}
-                </span>
-              </Button>
+                {item.label}
+              </span>
             </Dropdown.Item>
           )}
         </Dropdown.Menu>

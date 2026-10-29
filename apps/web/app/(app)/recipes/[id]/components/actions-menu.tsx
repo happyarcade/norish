@@ -6,7 +6,6 @@ import { useTRPC } from "@/app/providers/trpc-provider";
 import { MiniCalendar, MiniGroceries, MiniPrepTable } from "@/components/Panel/consumers";
 import { MarkCookedModal } from "@/components/recipes/mark-cooked-modal";
 import { DeleteRecipeModal } from "@/components/shared/delete-recipe-modal";
-import { Button } from "@/components/ui/button";
 import { DropdownButtonTrigger } from "@/components/ui/overlay-button-trigger";
 import { usePermissionsContext } from "@/context/permissions-context";
 import { useRecipesContext } from "@/context/recipes-context";
@@ -28,7 +27,7 @@ import { Dropdown } from "@heroui-v3/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
-import { cssAIGradientText, cssAIIconColor, cssButtonPill } from "@norish/web/config/css-tokens";
+import { cssAIGradientText, cssAIIconColor, cssMenuItemPill } from "@norish/web/config/css-tokens";
 
 import { useRecipeContextRequired } from "../context";
 import { useWakeLockContext } from "./wake-lock-context";
@@ -326,26 +325,21 @@ export default function ActionsMenu({ id }: Props) {
             {(item: MenuItem) => (
               <Dropdown.Item
                 id={item.key}
-                className="py-1 data-[focus=true]:bg-transparent data-[hover=true]:bg-transparent"
+                className={`mx-1 my-0.5 ${cssMenuItemPill} ${item.className ?? ""}`}
+                isDisabled={item.isDisabled}
+                textValue={item.label}
+                onAction={() => {
+                  setIsDropdownOpen(false);
+                  item.onPress();
+                }}
               >
-                <Button
-                  className={`w-full justify-start bg-transparent ${cssButtonPill} ${item.className ?? ""}`}
-                  isDisabled={item.isDisabled}
-                  radius="full"
-                  size="md"
-                  startContent={
-                    <span className={item.iconClassName ?? "text-default-400"}>{item.icon}</span>
-                  }
-                  variant="light"
-                  onPress={() => {
-                    setIsDropdownOpen(false);
-                    item.onPress();
-                  }}
+                <span className={item.iconClassName ?? "text-default-400"}>{item.icon}</span>
+                <span
+                  data-slot="label"
+                  className={`text-sm font-medium ${item.labelClassName ?? ""}`}
                 >
-                  <span className={`text-sm font-medium ${item.labelClassName ?? ""}`}>
-                    {item.label}
-                  </span>
-                </Button>
+                  {item.label}
+                </span>
               </Dropdown.Item>
             )}
           </Dropdown.Menu>

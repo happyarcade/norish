@@ -47,7 +47,7 @@ export function DropdownButtonTrigger({
       {...props}
       aria-busy={pending || undefined}
       className={getButtonClassName({
-        className,
+        className: `!inline-flex ${className ?? ""}`,
         color,
         fullWidth,
         isIconOnly,

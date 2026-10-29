@@ -23,6 +23,7 @@ describe("overlay button triggers", () => {
 
     expect(container.querySelectorAll("button")).toHaveLength(1);
     expect(trigger.querySelector("button")).toBeNull();
+    expect(trigger.className).toContain("!inline-flex");
   });
 
   it("renders a popover trigger without nesting an interactive button", () => {
