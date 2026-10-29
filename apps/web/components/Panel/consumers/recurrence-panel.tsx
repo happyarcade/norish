@@ -175,6 +175,7 @@ export function RecurrencePanel({
             <div className="flex items-center gap-2">
               <Button
                 isIconOnly
+                aria-label="Decrease interval"
                 className="h-8 min-w-8 shrink-0"
                 isDisabled={pattern.interval <= 1}
                 size="sm"
@@ -201,6 +202,7 @@ export function RecurrencePanel({
               </div>
               <Button
                 isIconOnly
+                aria-label="Increase interval"
                 className="h-8 min-w-8 shrink-0"
                 size="sm"
                 variant="tertiary"

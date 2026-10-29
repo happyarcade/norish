@@ -1199,7 +1199,10 @@ function PlannerAddMenu({
   return (
     <Dropdown>
       {showEmptyState ? (
-        <Dropdown.Trigger className="text-default-400 hover:text-default-500 hover:border-default-300 border-default-200 flex h-full w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-6 transition-colors">
+        <Dropdown.Trigger
+          className="text-default-400 hover:text-default-500 hover:border-default-300 border-default-200 flex h-full w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-6 transition-colors"
+          style={{ display: "flex" }}
+        >
           <PlusIcon className="h-5 w-5" />
           <span className="text-xs">Plan a meal</span>
         </Dropdown.Trigger>

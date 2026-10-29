@@ -84,6 +84,7 @@ export default function RecipeMetadata({
 
         <Button
           isIconOnly
+          aria-label="Recipe options"
           className={`text-white ${cssGlassBackdropChip} h-6 w-6 min-w-0 p-0`}
           radius="full"
           size="sm"

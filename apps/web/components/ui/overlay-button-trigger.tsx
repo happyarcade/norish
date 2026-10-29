@@ -37,6 +37,7 @@ export function DropdownButtonTrigger({
   radius,
   size,
   startContent,
+  style,
   variant,
   ...props
 }: OverlayButtonTriggerProps) {
@@ -47,7 +48,7 @@ export function DropdownButtonTrigger({
       {...props}
       aria-busy={pending || undefined}
       className={getButtonClassName({
-        className: `!inline-flex ${className ?? ""}`,
+        className,
         color,
         fullWidth,
         isIconOnly,
@@ -56,6 +57,10 @@ export function DropdownButtonTrigger({
         variant,
       })}
       isDisabled={isDisabled || disabled || pending}
+      style={(renderProps) => ({
+        ...(typeof style === "function" ? style(renderProps) : style),
+        display: "inline-flex",
+      })}
     >
       {triggerContent(children, startContent, endContent, pending)}
     </Dropdown.Trigger>

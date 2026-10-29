@@ -194,6 +194,7 @@ export default function ImageCarousel({
         <div className="absolute top-1/2 left-2 z-10 -translate-y-1/2 sm:left-4">
           <Button
             isIconOnly
+            aria-label="Previous image"
             className="bg-black/30 text-white backdrop-blur-sm hover:bg-black/50"
             radius="full"
             size="sm"
@@ -205,6 +206,7 @@ export default function ImageCarousel({
         <div className="absolute top-1/2 right-2 z-10 -translate-y-1/2 sm:right-4">
           <Button
             isIconOnly
+            aria-label="Next image"
             className="bg-black/30 text-white backdrop-blur-sm hover:bg-black/50"
             radius="full"
             size="sm"
@@ -219,6 +221,7 @@ export default function ImageCarousel({
           {images.map((_, idx) => (
             <button
               key={idx}
+              aria-label={`Go to image ${idx + 1}`}
               className={`h-2 w-2 rounded-full transition-all ${
                 idx === currentIndex ? "w-4 bg-white" : "bg-white/50 hover:bg-white/80"
               }`}

@@ -324,7 +324,14 @@ function IngredientRow({
       {/* Remove button */}
       <div className="mt-1 h-8 w-8 min-w-8 flex-shrink-0">
         {showRemove && (
-          <Button isIconOnly className="h-full w-full" size="sm" variant="light" onPress={onRemove}>
+          <Button
+            isIconOnly
+            aria-label="Remove ingredient"
+            className="h-full w-full"
+            size="sm"
+            variant="light"
+            onPress={onRemove}
+          >
             <XMarkIcon className="h-4 w-4" />
           </Button>
         )}

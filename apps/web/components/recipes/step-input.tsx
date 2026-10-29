@@ -436,6 +436,7 @@ function StepRow({
               />
               <Button
                 isIconOnly
+                aria-label="Add step image"
                 isLoading={uploadingIndex === index}
                 size="sm"
                 variant="light"
@@ -448,7 +449,13 @@ function StepRow({
 
           {/* Remove button */}
           {showRemove && (
-            <Button isIconOnly size="sm" variant="light" onPress={onRemove}>
+            <Button
+              isIconOnly
+              aria-label="Remove step"
+              size="sm"
+              variant="light"
+              onPress={onRemove}
+            >
               <XMarkIcon className="h-4 w-4" />
             </Button>
           )}

@@ -107,6 +107,7 @@ export default function ImageLightbox({
               {/* Close button */}
               <Button
                 isIconOnly
+                aria-label="Close image viewer"
                 className="absolute right-4 z-50 bg-black/50 text-white hover:bg-black/70"
                 radius="full"
                 size="lg"
@@ -131,6 +132,7 @@ export default function ImageLightbox({
               {showNavigation && (
                 <Button
                   isIconOnly
+                  aria-label="Previous image"
                   className="absolute left-4 z-50 bg-black/50 text-white hover:bg-black/70"
                   radius="full"
                   size="lg"
@@ -177,6 +179,7 @@ export default function ImageLightbox({
               {showNavigation && (
                 <Button
                   isIconOnly
+                  aria-label="Next image"
                   className="absolute right-4 z-50 bg-black/50 text-white hover:bg-black/70"
                   radius="full"
                   size="lg"
@@ -193,6 +196,7 @@ export default function ImageLightbox({
                   {images.map((img, idx) => (
                     <button
                       key={`${img.src}-${idx}`}
+                      aria-label={`View image ${idx + 1}`}
                       className={`h-16 w-16 overflow-hidden rounded-lg border-2 transition-all ${
                         idx === currentIndex
                           ? "border-white opacity-100"

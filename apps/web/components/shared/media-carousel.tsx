@@ -367,6 +367,7 @@ export default function MediaCarousel({
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-between px-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:px-4">
           <Button
             isIconOnly
+            aria-label="Previous media"
             className="pointer-events-auto bg-black/30 text-white backdrop-blur-sm hover:bg-black/50"
             radius="full"
             size="sm"
@@ -376,6 +377,7 @@ export default function MediaCarousel({
           </Button>
           <Button
             isIconOnly
+            aria-label="Next media"
             className="pointer-events-auto bg-black/30 text-white backdrop-blur-sm hover:bg-black/50"
             radius="full"
             size="sm"
