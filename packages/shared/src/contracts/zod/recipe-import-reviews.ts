@@ -1,8 +1,9 @@
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import { z } from "zod";
+
 import { recipeImportReviews } from "@norish/db/schema";
 
-import { recipeCategorySchema } from "./recipe";
+import { recipeCategorySchema, RecipeSourceSummarySchema } from "./recipe";
 
 export const RecipeImportReviewSelectBaseSchema = createSelectSchema(recipeImportReviews).extend({
   issues: z.array(z.string()).default([]),
@@ -106,6 +107,7 @@ export const RecipeNutritionReviewItemSchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   image: z.string().nullable().optional(),
+  source: RecipeSourceSummarySchema.nullable().optional(),
   servings: z.number().int().positive(),
   nutrition: NutritionAuditValuesSchema,
   suggestedNutrition: NutritionAuditValuesSchema.nullable(),

@@ -59,6 +59,14 @@ export type NutritionAuditResult = {
   fingerprint: string;
 };
 
+export type NutritionReviewState = {
+  status: NutritionAuditResult["status"];
+  reviewed: boolean;
+  confidenceScore: number;
+  issueCount: number;
+  hasCriticalIssue: boolean;
+};
+
 export type NutritionAuditValues = {
   calories: number | null;
   fat: number | null;
@@ -408,6 +416,22 @@ export function auditRecipeNutrition(
         ? "review"
         : "none",
     fingerprint: getNutritionAuditFingerprint(recipe),
+  };
+}
+
+export function getNutritionReviewState(
+  recipe: KnownNutritionRecipe | null | undefined,
+  reviewedFingerprint?: string | null
+): NutritionReviewState {
+  const audit = auditRecipeNutrition(recipe);
+  const actionableIssues = audit.issues.filter((issue) => issue.severity !== "info");
+
+  return {
+    status: audit.status,
+    reviewed: Boolean(reviewedFingerprint && reviewedFingerprint === audit.fingerprint),
+    confidenceScore: audit.confidenceScore,
+    issueCount: actionableIssues.length,
+    hasCriticalIssue: actionableIssues.some((issue) => issue.severity === "critical"),
   };
 }
 

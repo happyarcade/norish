@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { usePantryMutations, usePantryQuery } from "@/hooks/pantry";
-import { useRecipeIngredients } from "@/hooks/recipes";
-import { HomeIcon } from "@heroicons/react/16/solid";
+import { useRecipeIngredients, useRecipeQuery } from "@/hooks/recipes";
+import { ExclamationTriangleIcon, HomeIcon, ScaleIcon } from "@heroicons/react/16/solid";
 import {
   ButtonGroup,
   Calendar,
@@ -67,6 +68,7 @@ export function MarkCookedModal({
   const [pantryError, setPantryError] = useState<string | null>(null);
   const { ingredients: fetchedIngredients, isLoading: isLoadingFetchedIngredients } =
     useRecipeIngredients(recipeId ?? null);
+  const { recipe } = useRecipeQuery(isOpen ? (recipeId ?? null) : null);
   const { items: pantryItems, isLoading: isLoadingPantry } = usePantryQuery();
   const { reconcilePantryIngredients, isReconciling } = usePantryMutations();
   const modalState = useOverlayState({ isOpen, onOpenChange });
@@ -84,6 +86,8 @@ export function MarkCookedModal({
   );
   const isLoadingPantryReview =
     isLoadingPantry || (isLoadingIngredients ?? isLoadingFetchedIngredients);
+  const nutritionNeedsReview =
+    recipe?.nutritionReview?.status === "review" && !recipe.nutritionReview.reviewed;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -147,6 +151,30 @@ export function MarkCookedModal({
                     <div className="text-default-500 text-sm">
                       Record when you cooked{" "}
                       <span className="text-foreground font-medium">{recipeName}</span>.
+                    </div>
+                  ) : null}
+                  {nutritionNeedsReview ? (
+                    <div className="border-warning-200 bg-warning-50/70 flex flex-col gap-3 rounded-lg border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-start gap-2">
+                        <ExclamationTriangleIcon className="text-warning-700 mt-0.5 h-4 w-4 shrink-0" />
+                        <p className="text-warning-800 text-sm leading-5">
+                          This recipe has unusual per-serving nutrition values. You can still record
+                          it as cooked, but planner totals may be unreliable until they are
+                          reviewed.
+                        </p>
+                      </div>
+                      <Button
+                        as={Link}
+                        className="w-full shrink-0 sm:w-auto"
+                        href={`/recipes/review/nutrition?search=${encodeURIComponent(recipe.name)}`}
+                        radius="full"
+                        size="sm"
+                        startContent={<ScaleIcon className="h-4 w-4" />}
+                        variant="warning-soft"
+                        onPress={() => onOpenChange(false)}
+                      >
+                        Review nutrition
+                      </Button>
                     </div>
                   ) : null}
                   <DatePicker

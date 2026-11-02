@@ -20,6 +20,13 @@ const mocks = vi.hoisted(() => ({
         },
       },
     },
+    nutritionReview: {
+      confidenceScore: 0.58,
+      hasCriticalIssue: false,
+      issueCount: 1,
+      reviewed: false,
+      status: "review",
+    },
     protein: 36,
     servings: 4,
     userId: "user-1",
@@ -92,6 +99,7 @@ describe("NutritionCard", () => {
   beforeEach(() => {
     mocks.canEdit = true;
     mocks.recipe.nutritionDetails.nutrients.cholesterol.value = 176;
+    mocks.recipe.nutritionReview.reviewed = false;
   });
 
   it("links suspicious values to the filtered nutrition review queue", () => {
@@ -117,6 +125,14 @@ describe("NutritionCard", () => {
 
   it("keeps credible nutrition uncluttered", () => {
     mocks.recipe.nutritionDetails.nutrients.cholesterol.value = 50;
+
+    render(<NutritionCard />);
+
+    expect(screen.queryByRole("link", { name: "Review values" })).toBeNull();
+  });
+
+  it("keeps confirmed nutrition quiet until its values change", () => {
+    mocks.recipe.nutritionReview.reviewed = true;
 
     render(<NutritionCard />);
 

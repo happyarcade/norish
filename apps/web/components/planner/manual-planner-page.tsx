@@ -56,7 +56,7 @@ import {
   toast,
 } from "@heroui-v3/react";
 
-import type { RecipeCategory } from "@norish/shared/contracts";
+import type { RecipeCategory, RecipeDashboardDTO } from "@norish/shared/contracts";
 import type {
   NutritionFocusMetricKey,
   NutritionMetricTargetsDto,
@@ -1653,7 +1653,10 @@ export default function ManualPlannerPage() {
     swapContext: options?.swapContext,
   });
 
-  const handleSelectRecipe = async (recipeId: string) => {
+  const handleSelectRecipe = async (
+    recipeId: string,
+    recipe?: Pick<RecipeDashboardDTO, "id" | "name" | "nutritionReview">
+  ) => {
     if (!pickerState) return;
 
     const nextEditState = pickerState.reopenEditor
@@ -1667,6 +1670,13 @@ export default function ManualPlannerPage() {
       append: pickerState.allowMultiple,
       role: pickerState.role,
     });
+
+    if (recipe?.nutritionReview?.status === "review" && !recipe.nutritionReview.reviewed) {
+      toast.warning("Meal added with nutrition to check", {
+        description: `${recipe.name} has unusual per-serving values. Review them before relying on planner totals.`,
+      });
+    }
+
     setPickerState(null);
     setEditState(nextEditState);
   };

@@ -11,10 +11,15 @@ import {
   getNutritionMetricDisplayName,
   getNutritionMetricShortLabel,
 } from "@/lib/nutrition/planner-health";
-import { ArrowPathIcon, ClockIcon, MagnifyingGlassIcon } from "@heroicons/react/16/solid";
+import {
+  ArrowPathIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/16/solid";
 import { InputGroup, Modal, Spinner, TextField, useOverlayState } from "@heroui-v3/react";
 
-import type { RecipeCategory } from "@norish/shared/contracts";
+import type { RecipeCategory, RecipeDashboardDTO } from "@norish/shared/contracts";
 import type { NutritionFocusMetricKey } from "@norish/shared/contracts/zod/user";
 import { formatMinutesHM } from "@norish/shared/lib/helpers";
 import {
@@ -55,7 +60,10 @@ type PlannerRecipePickerPanelProps = {
       carryover?: number;
     }[];
   };
-  onSelectRecipe: (recipeId: string) => Promise<void> | void;
+  onSelectRecipe: (
+    recipeId: string,
+    recipe?: Pick<RecipeDashboardDTO, "id" | "name" | "nutritionReview">
+  ) => Promise<void> | void;
 };
 
 type NutritionDelta = {
@@ -242,11 +250,13 @@ export default function PlannerRecipePickerPanel({
     startTransition(() => setSearch(value.trim()));
   };
 
-  const handleSelect = async (recipeId: string) => {
-    setSubmittingRecipeId(recipeId);
+  const handleSelect = async (
+    recipe: Pick<RecipeDashboardDTO, "id" | "name" | "nutritionReview">
+  ) => {
+    setSubmittingRecipeId(recipe.id);
 
     try {
-      await onSelectRecipe(recipeId);
+      await onSelectRecipe(recipe.id, recipe);
       onOpenChange(false);
       setRawInput("");
       setSearch("");
@@ -273,7 +283,7 @@ export default function PlannerRecipePickerPanel({
         return;
       }
 
-      await handleSelect(recipe.id);
+      await handleSelect(recipe);
     } finally {
       setIsPickingRandom(false);
     }
@@ -396,6 +406,8 @@ export default function PlannerRecipePickerPanel({
                     return Math.abs(right.delta) - Math.abs(left.delta);
                   })
                   .slice(0, 2);
+                const nutritionNeedsReview =
+                  recipe.nutritionReview?.status === "review" && !recipe.nutritionReview.reviewed;
 
                 return (
                   <button
@@ -403,7 +415,7 @@ export default function PlannerRecipePickerPanel({
                     className="bg-default-50 hover:bg-default-100 border-default-100 flex items-start gap-3 rounded-2xl border px-3 py-3 text-left transition-colors"
                     disabled={Boolean(submittingRecipeId)}
                     type="button"
-                    onClick={() => handleSelect(recipe.id)}
+                    onClick={() => handleSelect(recipe)}
                   >
                     <div className="bg-default-200 relative h-16 w-16 shrink-0 overflow-hidden rounded-xl">
                       {recipe.image ? (
@@ -429,6 +441,12 @@ export default function PlannerRecipePickerPanel({
                         {swapFit && swapFit.score > 0 && swapFit.knownMetricCount > 0 ? (
                           <span className="bg-success-100 text-success-700 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium tracking-[0.14em] uppercase">
                             Better fit
+                          </span>
+                        ) : null}
+                        {nutritionNeedsReview ? (
+                          <span className="bg-warning-100 text-warning-800 inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium tracking-[0.08em] uppercase">
+                            <ExclamationTriangleIcon className="h-3 w-3" />
+                            Check nutrition
                           </span>
                         ) : null}
                       </div>

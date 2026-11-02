@@ -184,6 +184,7 @@ function NutritionDisplay({ inCard = true }: { inCard?: boolean }) {
   }, [recipe, portions, isAIEnabled]);
   const nutritionReview = useMemo(() => {
     if (!recipe || (recipe.userId && !canEditRecipe(recipe.userId))) return null;
+    if (recipe.nutritionReview?.reviewed) return null;
 
     const audit = auditRecipeNutrition(recipe);
 

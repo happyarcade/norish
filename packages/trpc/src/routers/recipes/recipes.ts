@@ -1,8 +1,8 @@
-import type { PermissionAction } from "@norish/auth/permissions";
-import type { RecipeListContext } from "@norish/db";
-
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+
+import type { PermissionAction } from "@norish/auth/permissions";
+import type { RecipeListContext } from "@norish/db";
 import { canAccessResource, isAIEnabled as checkAIEnabled } from "@norish/auth/permissions";
 import { getRecipePermissionPolicy } from "@norish/config/server-config-loader";
 import {
@@ -63,7 +63,6 @@ import {
 import { emitByPolicy } from "../../helpers";
 import { authedProcedure } from "../../middleware";
 import { router } from "../../trpc";
-
 import { recipeEmitter } from "./emitter";
 
 interface UserContext {
@@ -596,16 +595,16 @@ const saveNutritionReview = authedProcedure
       });
     }
 
-    const updated = await getRecipeFull(input.recipeId, ctx.household?.id ?? null);
+    const auditedRecipe = await getRecipeFull(input.recipeId, ctx.household?.id ?? null);
 
-    if (!updated) {
+    if (!auditedRecipe) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to reload updated recipe",
       });
     }
 
-    const audit = auditRecipeNutrition(updated);
+    const audit = auditRecipeNutrition(auditedRecipe);
     const existingReview = await getRecipeImportReviewByRecipeId(input.recipeId);
 
     await upsertRecipeImportReview({
@@ -628,15 +627,19 @@ const saveNutritionReview = authedProcedure
       reviewedBy: existingReview?.reviewedBy ?? null,
     });
 
-    const policy = await getRecipePermissionPolicy();
+    const updated = await getRecipeFull(input.recipeId, ctx.household?.id ?? null);
 
-    emitByPolicy(
-      recipeEmitter,
-      policy.view,
-      { userId: ctx.user.id, householdKey: ctx.householdKey },
-      "updated",
-      { recipe: updated }
-    );
+    if (updated) {
+      const policy = await getRecipePermissionPolicy();
+
+      emitByPolicy(
+        recipeEmitter,
+        policy.view,
+        { userId: ctx.user.id, householdKey: ctx.householdKey },
+        "updated",
+        { recipe: updated }
+      );
+    }
 
     return { success: true };
   });
@@ -889,7 +892,14 @@ const getRandomRecipe = authedProcedure
       return null;
     }
 
-    return { id: selected.id, name: selected.name, image: selected.image };
+    const recipe = await dashboardRecipe(selected.id, ctx.household?.id ?? null);
+
+    return {
+      id: selected.id,
+      name: selected.name,
+      image: selected.image,
+      nutritionReview: recipe?.nutritionReview,
+    };
   });
 
 const importFromImagesProcedure = authedProcedure

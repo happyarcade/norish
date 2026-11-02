@@ -1,5 +1,6 @@
 import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import z from "zod";
+
 import { db } from "@norish/db/drizzle";
 import { recipeImportReviews, recipes } from "@norish/db/schema";
 import {
@@ -32,6 +33,27 @@ type RecipeMetadataReviewContext = {
 };
 
 const SLOT_OPTIONAL_TYPES = new Set(["side", "condiment", "drink"]);
+
+function buildRecipeSourceSummary(
+  sources:
+    | Array<{
+        siteName?: string | null;
+        sourceDomain?: string | null;
+        sourceUrl?: string | null;
+      }>
+    | null
+    | undefined
+) {
+  const source = sources?.[0];
+
+  if (!source) return null;
+
+  return {
+    siteName: source.siteName ?? null,
+    sourceDomain: source.sourceDomain ?? null,
+    sourceUrl: source.sourceUrl ?? null,
+  };
+}
 
 function toStringArray(value: unknown): string[] {
   return Array.isArray(value)
@@ -261,6 +283,15 @@ export async function listRecipeNutritionReviewItems(
           reviewOverrides: true,
         },
       },
+      sources: {
+        columns: {
+          siteName: true,
+          sourceDomain: true,
+          sourceUrl: true,
+        },
+        orderBy: (sources, { desc }) => [desc(sources.createdAt)],
+        limit: 1,
+      },
     },
     where: whereCondition,
     orderBy: [desc(recipes.updatedAt)],
@@ -309,6 +340,7 @@ export async function listRecipeNutritionReviewItems(
       name: row.name,
       description: row.description,
       image: row.image,
+      source: buildRecipeSourceSummary(row.sources),
       servings: row.servings,
       nutrition: getNutritionAuditValues(nutritionRecipe),
       suggestedNutrition: suggestedRecipe ? getNutritionAuditValues(suggestedRecipe) : null,

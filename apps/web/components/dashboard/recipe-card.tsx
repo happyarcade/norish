@@ -17,6 +17,7 @@ import {
   CalendarDaysIcon,
   ClockIcon,
   EllipsisHorizontalIcon,
+  ExclamationTriangleIcon,
   ShoppingBagIcon,
   StarIcon,
   TrashIcon,
@@ -119,6 +120,8 @@ function RecipeCardComponent({
   const description = recipe.description?.trim() || "";
   const cookHistoryLabel = formatCookHistoryShort(recipe.lastCookedAt, recipe.cookCount);
   const thumbnailImage = recipe.image;
+  const nutritionNeedsReview =
+    recipe.nutritionReview?.status === "review" && !recipe.nutritionReview.reviewed;
 
   function _canClick() {
     return !open && !mobileSearchOpen;
@@ -224,6 +227,19 @@ function RecipeCardComponent({
           {timeLabel}
         </Chip>
       )}
+
+      {nutritionNeedsReview ? (
+        <Chip
+          className="shrink-0 px-2 text-[11px]"
+          color="warning"
+          radius="full"
+          size="sm"
+          startContent={<ExclamationTriangleIcon className="h-3.5 w-3.5" />}
+          variant="flat"
+        >
+          Review nutrition
+        </Chip>
+      ) : null}
 
       {typeof servings === "number" && servings > 0 && (
         <Chip
@@ -440,6 +456,19 @@ function RecipeCardComponent({
               </p>
             )}
 
+            {nutritionNeedsReview ? (
+              <Chip
+                className="mt-2 w-fit px-2 text-[11px]"
+                color="warning"
+                radius="full"
+                size="sm"
+                startContent={<ExclamationTriangleIcon className="h-3.5 w-3.5" />}
+                variant="flat"
+              >
+                Review nutrition
+              </Chip>
+            ) : null}
+
             {cookHistoryLabel ? (
               <p className="text-default-400 mt-1 text-xs">{cookHistoryLabel}</p>
             ) : null}
@@ -502,6 +531,9 @@ const RecipeCard = memo(RecipeCardComponent, (prevProps, nextProps) => {
     prev.cookMinutes === next.cookMinutes &&
     prev.totalMinutes === next.totalMinutes &&
     prev.averageRating === next.averageRating &&
+    prev.nutritionReview?.status === next.nutritionReview?.status &&
+    prev.nutritionReview?.reviewed === next.nutritionReview?.reviewed &&
+    prev.nutritionReview?.confidenceScore === next.nutritionReview?.confidenceScore &&
     prevLastCookedAt === nextLastCookedAt &&
     prev.cookCount === next.cookCount &&
     prev.updatedAt?.getTime() === next.updatedAt?.getTime() &&

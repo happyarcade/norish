@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { addToast } from "@/lib/ui/toast";
 import {
   ArrowLeftIcon,
+  ArrowTopRightOnSquareIcon,
   CheckIcon,
   MagnifyingGlassIcon,
   ScaleIcon,
@@ -262,6 +263,19 @@ export default function NutritionReviewPage({ initialSearch = "" }: NutritionRev
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      {item.source?.sourceUrl ? (
+                        <Button
+                          as={Link}
+                          href={item.source.sourceUrl}
+                          radius="full"
+                          size="sm"
+                          startContent={<ArrowTopRightOnSquareIcon className="h-4 w-4" />}
+                          target="_blank"
+                          variant="flat"
+                        >
+                          Original source
+                        </Button>
+                      ) : null}
                       <Button
                         as={Link}
                         href={`/recipes/${item.recipeId}`}

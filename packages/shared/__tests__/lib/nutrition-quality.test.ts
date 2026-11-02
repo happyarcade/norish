@@ -6,6 +6,7 @@ import {
   divideRecipeNutritionByServings,
   getKnownNutritionConfidence,
   getKnownNutritionMetricValue,
+  getNutritionReviewState,
   scoreKnownNutritionSwapCandidate,
 } from "../../src/lib/nutrition-quality";
 
@@ -84,6 +85,35 @@ describe("nutrition quality helpers", () => {
     expect(audit.issues).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: "high_cholesterol", value: 176 })])
     );
+  });
+
+  it("trusts a reviewed fingerprint only while the nutrition values stay unchanged", () => {
+    const recipe = {
+      ...withNutrients({
+        cholesterolContent: { value: 176, label: "Cholesterol" },
+      }),
+      servings: 4,
+    };
+    const audit = auditRecipeNutrition(recipe);
+
+    expect(getNutritionReviewState(recipe, audit.fingerprint)).toMatchObject({
+      status: "review",
+      reviewed: true,
+      issueCount: 1,
+    });
+    expect(
+      getNutritionReviewState(
+        {
+          ...recipe,
+          nutritionDetails: {
+            nutrients: {
+              cholesterolContent: { value: 190, label: "Cholesterol" },
+            },
+          },
+        },
+        audit.fingerprint
+      ).reviewed
+    ).toBe(false);
   });
 
   it("detects nutrition that is likely stored for the whole recipe", () => {

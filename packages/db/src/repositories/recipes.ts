@@ -1,3 +1,5 @@
+import { and, asc, desc, eq, ilike, inArray, lte, or, sql } from "drizzle-orm";
+import z from "zod";
 
 import type { RecipePermissionPolicy } from "@norish/config/zod/server-config";
 import type {
@@ -20,10 +22,6 @@ import type {
   SortOrder,
 } from "@norish/shared/contracts/store-types";
 import type { WeeklyMealCandidate } from "@norish/shared/lib/weekly-meal-suggestions";
-import type { RecipeImportReviewInsertDto } from "./recipe-import-reviews";
-import type { RecipePlannerProfileInsertDto } from "./recipe-planner-profiles";
-import type { RecipeSourceInsertDto } from "./recipe-sources";
-
 import {
   DEFAULT_RECIPE_PERMISSION_POLICY,
   ServerConfigKeys,
@@ -33,11 +31,13 @@ import { stripHtmlTags } from "@norish/shared/lib/helpers";
 import {
   auditRecipeNutrition,
   getKnownNutritionMetricValue,
+  getNutritionReviewState,
 } from "@norish/shared/lib/nutrition-quality";
 import { isAliasedRecipeTag, matchesRecipeTagFilter } from "@norish/shared/lib/recipe-tag-aliases";
-import z from "zod";
-import { and, asc, desc, eq, ilike, inArray, lte, or, sql } from "drizzle-orm";
 
+import type { RecipeImportReviewInsertDto } from "./recipe-import-reviews";
+import type { RecipePlannerProfileInsertDto } from "./recipe-planner-profiles";
+import type { RecipeSourceInsertDto } from "./recipe-sources";
 import { db } from "../drizzle";
 import {
   ingredients,
@@ -58,7 +58,6 @@ import {
   FullRecipeUpdateSchema,
   RecipeDashboardSchema,
 } from "../zodSchemas";
-
 import { attachIngredientsToRecipeByInputTx } from "./ingredients";
 import { getRecipeCookStats, getRecipeCookStatsByRecipeIds } from "./recipe-cook-events";
 import { getNutritionReviewFingerprint, upsertRecipeImportReviewTx } from "./recipe-import-reviews";
@@ -321,6 +320,13 @@ function buildRecipeSourceSummary(
     sourceDomain: source.sourceDomain ?? null,
     sourceUrl: source.sourceUrl ?? null,
   };
+}
+
+function buildEmbeddedNutritionReviewState(
+  recipe: Parameters<typeof getNutritionReviewState>[0],
+  nutritionAuditOverride: unknown
+) {
+  return getNutritionReviewState(recipe, getNutritionReviewFingerprint(nutritionAuditOverride));
 }
 
 export async function listRecipes(
@@ -653,6 +659,11 @@ export async function listRecipes(
           orderBy: (sources, { desc }) => [desc(sources.createdAt)],
           limit: 1,
         },
+        importReviews: {
+          columns: {
+            reviewOverrides: true,
+          },
+        },
       },
       where: whereClause,
       orderBy,
@@ -697,6 +708,10 @@ export async function listRecipes(
       carbs: r.carbs != null ? Number(r.carbs) : null,
       protein: r.protein != null ? Number(r.protein) : null,
       nutritionDetails: r.nutritionDetails ?? null,
+      nutritionReview: buildEmbeddedNutritionReviewState(
+        r,
+        r.importReviews?.[0]?.reviewOverrides?.nutritionAudit
+      ),
       source: buildRecipeSourceSummary(r.sources),
       recipeTypes: r.plannerProfiles?.[0]?.recipeTypes ?? [],
       categories: r.categories ?? [],
@@ -819,6 +834,11 @@ export async function dashboardRecipe(
         orderBy: (sources, { desc }) => [desc(sources.createdAt)],
         limit: 1,
       },
+      importReviews: {
+        columns: {
+          reviewOverrides: true,
+        },
+      },
     },
     limit: 1,
   });
@@ -852,6 +872,10 @@ export async function dashboardRecipe(
     carbs: r.carbs != null ? Number(r.carbs) : null,
     protein: r.protein != null ? Number(r.protein) : null,
     nutritionDetails: r.nutritionDetails ?? null,
+    nutritionReview: buildEmbeddedNutritionReviewState(
+      r,
+      r.importReviews?.[0]?.reviewOverrides?.nutritionAudit
+    ),
     source: buildRecipeSourceSummary(r.sources),
     categories: r.categories ?? [],
     createdAt: r.createdAt,
@@ -1214,6 +1238,11 @@ export async function getRecipeFull(
         orderBy: (sources, { desc }) => [desc(sources.createdAt)],
         limit: 1,
       },
+      importReviews: {
+        columns: {
+          reviewOverrides: true,
+        },
+      },
     },
   });
 
@@ -1251,6 +1280,10 @@ export async function getRecipeFull(
     carbs: full.carbs ?? null,
     protein: full.protein ?? null,
     nutritionDetails: full.nutritionDetails ?? null,
+    nutritionReview: buildEmbeddedNutritionReviewState(
+      full,
+      full.importReviews?.[0]?.reviewOverrides?.nutritionAudit
+    ),
     source: buildRecipeSourceSummary(full.sources),
     ingredientGroups: full.ingredientGroups ?? [],
     categories: full.categories ?? [],

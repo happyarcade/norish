@@ -1,5 +1,6 @@
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import { z } from "zod";
+
 import { measurementSystemEnum, recipes } from "@norish/db/schema";
 
 import { RecipeImagesArraySchema, RecipeImageSchema } from "./recipe-images";
@@ -32,17 +33,28 @@ export const RecipeIngredientGroupSchema = z.object({
   ingredients: z.array(z.string()).default([]),
 });
 
-const NutritionDetailFilterSchema = z.preprocess((value) => {
-  if (value === "extended") return "core";
-  if (value === "missingExtended") return "missingCore";
+const NutritionDetailFilterSchema = z.preprocess(
+  (value) => {
+    if (value === "extended") return "core";
+    if (value === "missingExtended") return "missingCore";
 
-  return value;
-}, z.enum(["core", "complete", "missingCore"]));
+    return value;
+  },
+  z.enum(["core", "complete", "missingCore"])
+);
 
 export const RecipeSourceSummarySchema = z.object({
   siteName: z.string().nullable().optional(),
   sourceDomain: z.string().nullable().optional(),
   sourceUrl: z.string().nullable().optional(),
+});
+
+export const RecipeNutritionReviewStateSchema = z.object({
+  status: z.enum(["missing", "credible", "review"]),
+  reviewed: z.boolean(),
+  confidenceScore: z.number().min(0).max(1),
+  issueCount: z.number().int().nonnegative(),
+  hasCriticalIssue: z.boolean(),
 });
 
 export const EmbeddedRecipePlannerProfileSchema = RecipePlannerProfileSelectBaseSchema.omit({
@@ -57,15 +69,17 @@ export const RecipeSelectBaseSchema = createSelectSchema(recipes).extend({
   nutritionDetails: RecipeNutritionDetailsSchema.nullable().optional(),
   ingredientGroups: z.array(RecipeIngredientGroupSchema).default([]),
 });
-export const RecipeInsertBaseSchema = createInsertSchema(recipes).omit({
-  id: true,
-  updatedAt: true,
-  createdAt: true,
-  userId: true, // set from session server-side
-}).extend({
-  nutritionDetails: RecipeNutritionDetailsSchema.nullable().optional(),
-  ingredientGroups: z.array(RecipeIngredientGroupSchema).default([]),
-});
+export const RecipeInsertBaseSchema = createInsertSchema(recipes)
+  .omit({
+    id: true,
+    updatedAt: true,
+    createdAt: true,
+    userId: true, // set from session server-side
+  })
+  .extend({
+    nutritionDetails: RecipeNutritionDetailsSchema.nullable().optional(),
+    ingredientGroups: z.array(RecipeIngredientGroupSchema).default([]),
+  });
 export const RecipeUpdateBaseSchema = createUpdateSchema(recipes).extend({
   nutritionDetails: RecipeNutritionDetailsSchema.nullable().optional(),
   ingredientGroups: z.array(RecipeIngredientGroupSchema).optional(),
@@ -94,6 +108,7 @@ export const RecipeDashboardSchema = RecipeSelectBaseSchema.omit({
   lastCookedAt: z.coerce.date().nullable().optional(),
   cookCount: z.number().optional(),
   source: RecipeSourceSummarySchema.nullable().optional(),
+  nutritionReview: RecipeNutritionReviewStateSchema.optional(),
 });
 
 export const FullRecipeSchema = RecipeSelectBaseSchema.extend({
@@ -108,6 +123,7 @@ export const FullRecipeSchema = RecipeSelectBaseSchema.extend({
   lastCookedAt: z.coerce.date().nullable().optional(),
   cookCount: z.number().optional(),
   source: RecipeSourceSummarySchema.nullable().optional(),
+  nutritionReview: RecipeNutritionReviewStateSchema.optional(),
 });
 
 export const FullRecipeInsertSchema = RecipeInsertBaseSchema.extend({
