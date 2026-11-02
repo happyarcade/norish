@@ -22,6 +22,8 @@ import {
 import {
   ArrowRightIcon,
   BeakerIcon,
+  CalendarDaysIcon,
+  CheckCircleIcon,
   ExclamationTriangleIcon,
   ShoppingBagIcon,
 } from "@heroicons/react/16/solid";
@@ -108,11 +110,15 @@ function recipeTypeFiltersForSwap(slotKey: string, role: string): string[] | und
   }
 }
 
-function findNextPlannedSlot(days: PlannerDayResult[], now: Date) {
+export function findNextPlannedSlot(days: PlannerDayResult[], now: Date) {
   const todayKey = dateKey(now);
   const currentHour = now.getHours();
 
-  for (const day of days) {
+  const upcomingDays = [...days]
+    .filter((day) => day.date >= todayKey)
+    .sort((left, right) => left.date.localeCompare(right.date));
+
+  for (const day of upcomingDays) {
     const slots = [...day.slots]
       .filter((slot) => slot.items.length > 0)
       .sort(
@@ -125,7 +131,7 @@ function findNextPlannedSlot(days: PlannerDayResult[], now: Date) {
       day.date === todayKey
         ? slots.filter((slot) => (SLOT_HOUR_HINT[slot.definition.key] ?? 99) >= currentHour)
         : slots;
-    const slot = candidateSlots[0] ?? slots[0];
+    const slot = candidateSlots[0];
 
     if (!slot) continue;
 
@@ -139,47 +145,138 @@ function findNextPlannedSlot(days: PlannerDayResult[], now: Date) {
   return null;
 }
 
-function ProgressRing({
+function NutritionMetric({
   metric,
   value,
   threshold,
+  weeklyAverage,
 }: {
   metric: NutritionFocusMetricKey;
   value: number;
   threshold: number;
+  weeklyAverage: number;
 }) {
   const config = NUTRITION_FOCUS_CONFIG[metric];
   const progress = threshold > 0 ? value / threshold : 0;
-  const clamped = Math.min(progress, 1);
-  const ringColor = progress > 1 ? "#d97706" : "#3f6f49";
+  const isOutsideTarget = config.direction === "min" ? value < threshold : value > threshold;
+  const progressWidth = `${Math.min(progress, 1) * 100}%`;
 
   return (
-    <div className="flex items-center gap-4">
-      <div
-        className="relative h-20 w-20 shrink-0 rounded-full"
-        style={{
-          background: `conic-gradient(${ringColor} ${clamped * 360}deg, rgba(15,23,42,0.08) 0deg)`,
-        }}
-      >
-        <div className="bg-content1 absolute inset-3 rounded-full" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
+    <div className="min-w-0">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-default-500 text-xs font-medium uppercase">{config.shortLabel}</div>
+          <div className="text-foreground mt-1 text-base font-semibold">{config.label}</div>
+        </div>
+        <div className="text-right">
           <div className="text-foreground text-sm font-semibold">
-            {Math.round(Math.min(progress, 9.99) * 100)}%
+            {formatNutritionMetricValue(metric, value)}
           </div>
-          <div className="text-default-400 text-[10px] tracking-[0.12em] uppercase">
-            {config.shortLabel}
+          <div className="text-default-400 text-xs">
+            {config.direction === "min" ? "goal" : "limit"} {threshold}
+            {config.unit}
           </div>
         </div>
       </div>
 
-      <div className="min-w-0">
-        <div className="text-foreground font-semibold">{config.label}</div>
-        <div className="text-default-500 text-sm">
-          {formatNutritionMetricValue(metric, value)} / {threshold}
-          {config.unit}
-        </div>
+      <div className="bg-default-100 mt-3 h-1.5 overflow-hidden rounded-full">
+        <div
+          className={`h-full rounded-full ${isOutsideTarget ? "bg-warning" : "bg-primary"}`}
+          style={{ width: progressWidth }}
+        />
+      </div>
+
+      <div className="text-default-500 mt-2 flex items-center justify-between gap-2 text-xs">
+        <span>Week avg</span>
+        <span className="text-default-700 font-medium">
+          {formatNutritionMetricValue(metric, weeklyAverage)}
+        </span>
       </div>
     </div>
+  );
+}
+
+function EmptyDashboardState({
+  children,
+  action,
+}: {
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-start gap-3 py-2">
+      <p className="text-default-500 max-w-xl text-sm leading-6">{children}</p>
+      {action ? <div>{action}</div> : null}
+    </div>
+  );
+}
+
+function DashboardStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="text-foreground text-sm font-semibold">{value}</span>
+      <span className="text-default-500 text-xs">{label}</span>
+    </div>
+  );
+}
+
+function NextMealSummary({
+  title,
+  meta,
+  weeklyPlannedItems,
+  prepReminderCount,
+  watchoutCount,
+}: {
+  title: string;
+  meta: string;
+  weeklyPlannedItems: number;
+  prepReminderCount: number;
+  watchoutCount: number;
+}) {
+  return (
+    <section className="border-default-200 bg-content1 overflow-hidden rounded-lg border shadow-sm">
+      <div className="flex flex-col gap-5 p-5 md:flex-row md:items-center md:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
+          <div className="bg-primary/10 text-primary shrink-0 rounded-lg p-3">
+            <CalendarDaysIcon className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-default-400 text-[11px] font-medium tracking-[0.16em] uppercase">
+              Next meal
+            </div>
+            <h2 className="text-foreground mt-1 truncate text-xl font-semibold">{title}</h2>
+            <p className="text-default-500 mt-1 text-sm">{meta}</p>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Button
+            as={Link}
+            color="primary"
+            endContent={<ArrowRightIcon className="h-4 w-4" />}
+            href="/calendar"
+            size="sm"
+          >
+            Meal Planner
+          </Button>
+          <Button
+            as={Link}
+            href="/groceries"
+            size="sm"
+            startContent={<ShoppingBagIcon className="h-4 w-4" />}
+            variant="tertiary"
+          >
+            Groceries
+          </Button>
+        </div>
+      </div>
+
+      <div className="border-default-100 flex flex-wrap gap-x-6 gap-y-2 border-t px-5 py-3">
+        <DashboardStat label="planned this week" value={weeklyPlannedItems} />
+        <DashboardStat label="prep reminders" value={prepReminderCount} />
+        <DashboardStat label="watchouts" value={watchoutCount} />
+      </div>
+    </section>
   );
 }
 
@@ -193,12 +290,12 @@ function DashboardCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="rounded-3xl border border-black/5 shadow-sm">
-      <Card.Header className="flex flex-col items-start gap-1 px-6 pt-5">
+    <Card className="border-default-200 rounded-lg border shadow-sm">
+      <Card.Header className="flex flex-col items-start gap-1 px-5 pt-5">
         <div className="text-default-400 text-[11px] tracking-[0.18em] uppercase">{eyebrow}</div>
         <h2 className="text-foreground text-xl font-semibold">{title}</h2>
       </Card.Header>
-      <Card.Content className="px-6 pt-2 pb-6">{children}</Card.Content>
+      <Card.Content className="px-5 pt-3 pb-5">{children}</Card.Content>
     </Card>
   );
 }
@@ -244,6 +341,10 @@ export default function OverviewPage({ initialNowIso }: { initialNowIso: string 
     () => plannerData?.days.find((day) => day.date === todayKey) ?? null,
     [plannerData, todayKey]
   );
+  const todayPlannedItems = useMemo(
+    () => todayDay?.slots.reduce((total, slot) => total + slot.items.length, 0) ?? 0,
+    [todayDay]
+  );
   const todayTotals = useMemo(
     () => (todayDay ? calculatePlannerDayNutritionTotals(todayDay) : null),
     [todayDay]
@@ -254,10 +355,10 @@ export default function OverviewPage({ initialNowIso }: { initialNowIso: string 
   );
   const todayWarnings = useMemo(
     () =>
-      todayTotals
+      todayTotals && todayPlannedItems > 0
         ? evaluateNutritionWarnings(todayTotals, focusMetrics, nutritionTargets).slice(0, 3)
         : [],
-    [focusMetrics, nutritionTargets, todayTotals]
+    [focusMetrics, nutritionTargets, todayPlannedItems, todayTotals]
   );
   const weekWatchouts = useMemo(() => {
     if (!plannerData) return [];
@@ -291,16 +392,31 @@ export default function OverviewPage({ initialNowIso }: { initialNowIso: string 
       ) ?? 0,
     [plannerData]
   );
-  const heroTitle = nextPlannedSlot
-    ? nextPlannedSlot.slot.definition.label
+  const visibleWeekWatchouts = useMemo(
+    () =>
+      weekWatchouts
+        .filter(({ day }) => todayWarnings.length === 0 || day.date !== todayKey)
+        .slice(0, 4),
+    [todayKey, todayWarnings.length, weekWatchouts]
+  );
+  const nextMealTitle = nextPlannedSlot
+    ? (nextPlannedSlot.item.recipe?.name ?? nextPlannedSlot.item.title ?? "Untitled meal")
     : weeklyPlannedItems > 0
-      ? "All done"
-      : "Nothing planned";
-  const heroSubtitle = nextPlannedSlot
-    ? `${nextPlannedSlot.item.recipe?.name ?? nextPlannedSlot.item.title ?? "Untitled meal"} - ${nextPlannedSlot.day.date === todayKey ? "Today" : formatDateLabel(nextPlannedSlot.day.date, { weekday: "long", day: "numeric", month: "short" })}`
+      ? "Nothing else planned"
+      : "No meals planned yet";
+  const nextMealMeta = nextPlannedSlot
+    ? `${nextPlannedSlot.slot.definition.label} - ${
+        nextPlannedSlot.day.date === todayKey
+          ? "Today"
+          : formatDateLabel(nextPlannedSlot.day.date, {
+              weekday: "long",
+              day: "numeric",
+              month: "short",
+            })
+      }`
     : weeklyPlannedItems > 0
-      ? "No more meals are planned for the rest of this week."
-      : "Add meals to your planner to see what's next.";
+      ? "Your remaining week is clear."
+      : "Add a meal to start shaping the week.";
   const swapSuggestionTarget = useMemo<SwapSuggestionTarget | null>(() => {
     const baseDay =
       todayWarnings.length > 0 && todayDay ? todayDay : (weekWatchouts[0]?.day ?? null);
@@ -418,8 +534,8 @@ export default function OverviewPage({ initialNowIso }: { initialNowIso: string 
   }
 
   return (
-    <div className="flex w-full flex-col gap-6">
-      <div className="flex items-center justify-between">
+    <div className="flex w-full flex-col gap-5">
+      <header className="flex items-end justify-between gap-4">
         <div>
           <div className="text-default-400 text-[11px] tracking-[0.18em] uppercase">
             {formatDateLabel(todayKey, {
@@ -430,70 +546,52 @@ export default function OverviewPage({ initialNowIso }: { initialNowIso: string 
           </div>
           <h1 className="text-foreground mt-1 text-3xl font-bold">Dashboard</h1>
         </div>
-      </div>
+      </header>
 
-      <section
-        className="overflow-hidden rounded-[32px] px-8 py-8 text-white shadow-[0_18px_45px_-24px_rgba(0,0,0,0.45)]"
-        style={{
-          background:
-            "linear-gradient(135deg, rgb(38, 64, 50) 0%, rgb(51, 86, 64) 58%, rgb(86, 118, 89) 100%)",
-        }}
-      >
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-2xl">
-            <div className="text-sm tracking-[0.24em] text-[#d8b29d] uppercase">Next up</div>
-            <div className="mt-3 text-6xl font-medium tracking-tight">{heroTitle}</div>
-            <div className="mt-3 text-lg text-white/75">{heroSubtitle}</div>
-          </div>
+      <NextMealSummary
+        meta={nextMealMeta}
+        prepReminderCount={prepReminders.length}
+        title={nextMealTitle}
+        watchoutCount={todayWarnings.length + visibleWeekWatchouts.length}
+        weeklyPlannedItems={weeklyPlannedItems}
+      />
 
-          <div className="flex flex-wrap gap-3">
-            <Button
-              as={Link}
-              className="rounded-full bg-[#d28d66] font-medium text-white"
-              endContent={<ArrowRightIcon className="h-4 w-4" />}
-              href="/calendar"
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(19rem,0.75fr)]">
+        <DashboardCard eyebrow="Today" title="Nutrition snapshot">
+          {todayPlannedItems > 0 ? (
+            <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+              {focusMetrics.map((metricKey) => {
+                const config = NUTRITION_FOCUS_CONFIG[metricKey];
+                const threshold =
+                  config.direction === "min"
+                    ? (nutritionTargets[metricKey]?.min ?? config.defaultThreshold)
+                    : (nutritionTargets[metricKey]?.max ?? config.defaultThreshold);
+
+                return (
+                  <NutritionMetric
+                    key={metricKey}
+                    metric={metricKey}
+                    threshold={threshold}
+                    value={todayTotals?.metrics[metricKey] ?? 0}
+                    weeklyAverage={weeklyAverageTotals?.metrics[metricKey] ?? 0}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyDashboardState
+              action={
+                <Button as={Link} href="/calendar" size="sm" variant="tertiary">
+                  Plan today's meals
+                </Button>
+              }
             >
-              Open Meal Planner
-            </Button>
-            <Button
-              as={Link}
-              className="rounded-full bg-white/10 text-white"
-              href="/groceries"
-              startContent={<ShoppingBagIcon className="h-4 w-4" />}
-              variant="flat"
-            >
-              View Groceries
-            </Button>
-          </div>
-        </div>
-      </section>
+              No meals are planned today. Nutrition totals will appear as meals are added.
+            </EmptyDashboardState>
+          )}
+        </DashboardCard>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {focusMetrics.map((metricKey) => {
-          const config = NUTRITION_FOCUS_CONFIG[metricKey];
-          const threshold =
-            config.direction === "min"
-              ? (nutritionTargets[metricKey]?.min ?? config.defaultThreshold)
-              : (nutritionTargets[metricKey]?.max ?? config.defaultThreshold);
-          const value = todayTotals?.metrics[metricKey] ?? 0;
-          const weeklyAverage = weeklyAverageTotals?.metrics[metricKey] ?? 0;
-
-          return (
-            <DashboardCard key={metricKey} eyebrow="Today" title={config.label}>
-              <div className="space-y-4">
-                <ProgressRing metric={metricKey} threshold={threshold} value={value} />
-                <div className="text-default-500 text-sm">
-                  <span className="text-default-700 font-medium">Week avg:</span>{" "}
-                  {formatNutritionMetricValue(metricKey, weeklyAverage)}
-                </div>
-              </div>
-            </DashboardCard>
-          );
-        })}
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_1fr]">
-        <DashboardCard eyebrow="Tonight's Prep" title="Prep reminders">
+        <DashboardCard eyebrow="Coming Up" title="Prep reminders">
           {prepReminders.length > 0 ? (
             <div className="space-y-4">
               {prepReminders.map((session) => (
@@ -501,7 +599,7 @@ export default function OverviewPage({ initialNowIso }: { initialNowIso: string 
                   key={session.id}
                   className="border-default-100 flex items-start gap-3 border-b pb-3 last:border-b-0 last:pb-0"
                 >
-                  <div className="mt-0.5 rounded-full bg-orange-100 p-2 text-orange-600">
+                  <div className="bg-warning/10 text-warning mt-0.5 rounded-lg p-2">
                     <BeakerIcon className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
@@ -520,21 +618,31 @@ export default function OverviewPage({ initialNowIso }: { initialNowIso: string 
               ))}
             </div>
           ) : (
-            <p className="text-default-500 text-sm">No prep reminders queued for this week.</p>
+            <EmptyDashboardState
+              action={
+                <Button as={Link} href="/prep-table" size="sm" variant="tertiary">
+                  Open Prep Table
+                </Button>
+              }
+            >
+              No prep reminders are queued for the rest of this week.
+            </EmptyDashboardState>
           )}
         </DashboardCard>
+      </div>
 
-        <DashboardCard eyebrow="This Week" title="Watchouts">
-          {todayWarnings.length > 0 || weekWatchouts.length > 0 ? (
+      <DashboardCard eyebrow="This Week" title="Watchouts and useful swaps">
+        {todayWarnings.length > 0 || visibleWeekWatchouts.length > 0 ? (
+          <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-4">
               {todayWarnings.length > 0 ? (
-                <div>
+                <div className="border-default-100 border-b pb-4">
                   <div className="text-foreground mb-2 text-sm font-semibold">Today</div>
                   <div className="flex flex-wrap gap-2">
                     {todayWarnings.map((warning) => (
                       <span
                         key={`today-${warning.metric}`}
-                        className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800"
+                        className="bg-warning/10 text-warning rounded-full px-3 py-1 text-xs font-medium"
                       >
                         {warning.label}
                       </span>
@@ -543,9 +651,9 @@ export default function OverviewPage({ initialNowIso }: { initialNowIso: string 
                 </div>
               ) : null}
 
-              {weekWatchouts.slice(0, 4).map(({ day, warning }) => (
+              {visibleWeekWatchouts.map(({ day, warning }) => (
                 <div key={`${day.date}-${warning.metric}`} className="flex items-start gap-3">
-                  <div className="mt-0.5 rounded-full bg-amber-100 p-2 text-amber-700">
+                  <div className="bg-warning/10 text-warning mt-0.5 rounded-lg p-2">
                     <ExclamationTriangleIcon className="h-4 w-4" />
                   </div>
                   <div>
@@ -561,58 +669,56 @@ export default function OverviewPage({ initialNowIso }: { initialNowIso: string 
                   </div>
                 </div>
               ))}
-
-              {swapSuggestionTarget && swapSuggestions.length > 0 ? (
-                <div className="border-default-100 mt-5 border-t pt-4">
-                  <div className="text-foreground text-sm font-semibold">
-                    Swap ideas for {swapSuggestionTarget.slot.definition.label}
-                  </div>
-                  <div className="text-default-500 mt-1 text-sm">
-                    Lighter options for {swapSuggestionTarget.warning.label.toLowerCase()}.
-                  </div>
-                  <div className="mt-3 space-y-3">
-                    {swapSuggestions.map(({ recipe, metricValue }) => (
-                      <div
-                        key={recipe.id}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-black/5 px-4 py-3"
-                      >
-                        <div className="min-w-0">
-                          <div className="text-foreground truncate font-medium">{recipe.name}</div>
-                          <div className="text-default-500 text-sm">
-                            {formatNutritionMetricValue(
-                              swapSuggestionTarget.warning.metric,
-                              metricValue
-                            )}{" "}
-                            vs{" "}
-                            {formatNutritionMetricValue(
-                              swapSuggestionTarget.warning.metric,
-                              swapSuggestionTarget.metricValue
-                            )}
-                          </div>
-                        </div>
-                        <Button
-                          as={Link}
-                          className="rounded-full"
-                          href={`/recipes/${recipe.id}`}
-                          radius="full"
-                          size="sm"
-                          variant="flat"
-                        >
-                          View
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
             </div>
-          ) : (
-            <p className="text-default-500 text-sm">
-              No watchouts this week. Your focus metrics are sitting comfortably inside target.
+
+            {swapSuggestionTarget && swapSuggestions.length > 0 ? (
+              <div className="lg:border-default-100 lg:border-l lg:pl-6">
+                <div className="text-foreground text-sm font-semibold">
+                  Swap ideas for {swapSuggestionTarget.slot.definition.label}
+                </div>
+                <div className="text-default-500 mt-1 text-sm">
+                  Lighter options for {swapSuggestionTarget.warning.label.toLowerCase()}.
+                </div>
+                <div className="mt-3 divide-y">
+                  {swapSuggestions.map(({ recipe, metricValue }) => (
+                    <div
+                      key={recipe.id}
+                      className="border-default-100 flex items-center justify-between gap-3 py-3 first:pt-0"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-foreground truncate font-medium">{recipe.name}</div>
+                        <div className="text-default-500 text-sm">
+                          {formatNutritionMetricValue(
+                            swapSuggestionTarget.warning.metric,
+                            metricValue
+                          )}{" "}
+                          vs{" "}
+                          {formatNutritionMetricValue(
+                            swapSuggestionTarget.warning.metric,
+                            swapSuggestionTarget.metricValue
+                          )}
+                        </div>
+                      </div>
+                      <Button as={Link} href={`/recipes/${recipe.id}`} size="sm" variant="tertiary">
+                        View
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="flex items-start gap-3 py-2">
+            <div className="bg-success/10 text-success rounded-lg p-2">
+              <CheckCircleIcon className="h-4 w-4" />
+            </div>
+            <p className="text-default-500 pt-1 text-sm">
+              No watchouts this week. Your focus metrics are sitting inside target.
             </p>
-          )}
-        </DashboardCard>
-      </div>
+          </div>
+        )}
+      </DashboardCard>
     </div>
   );
 }
